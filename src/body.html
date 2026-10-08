@@ -1,0 +1,258 @@
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#menu" aria-label="Main menu">
+      <h1>Tracen <b>Ice</b> League</h1>
+      <span>Hockey simulator</span>
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#menu" data-view="menu">Menu</a>
+      <a href="#game" data-view="game">Quick Play</a>
+      <a href="#franchise" data-view="franchise">Franchise</a>
+      <a href="#bap" data-view="bap">Be A Player</a>
+      <a href="#lines" data-view="lines">Lines &amp; chemistry</a>
+      <a href="#roster" data-view="roster">Roster sheet</a>
+    </nav>
+    <div class="top-r"><span class="save-pill" id="savePill" data-s="idle">Loading roster…</span>
+      <button class="btn icon" id="testBtn" aria-haspopup="dialog" title="Test tools"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M21.7 18.3 13.4 10a5.5 5.5 0 0 0-7-7l3.3 3.3-1.4 3.6-3.6 1.4L1.4 8a5.5 5.5 0 0 0 7 7l8.3 8.3a2 2 0 0 0 2.8 0l2.2-2.2a2 2 0 0 0 0-2.8z"/></svg> Test tools</button>
+      <button class="btn icon" id="settingsBtn" aria-haspopup="dialog" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg> Settings</button></div>
+  </header>
+
+  <!-- MAIN MENU -->
+  <section id="view-menu" class="view" hidden>
+    <div class="menu-hero">
+      <div class="menu-ice" aria-hidden="true"></div>
+      <div class="menu-crowd" id="menuCrowd"></div>
+      <div class="menu-main">
+        <svg class="tl-logo" viewBox="0 0 420 300" role="img" aria-label="Tracen Ice League">
+          <defs>
+            <linearGradient id="tlShield" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1F3157"/><stop offset="1" stop-color="#0B1426"/></linearGradient>
+            <linearGradient id="tlGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE08A"/><stop offset="1" stop-color="#E0A526"/></linearGradient>
+          </defs>
+          <!-- crossed sticks behind the crest -->
+          <g stroke-linecap="round">
+            <path d="M92 52 L300 236" stroke="#C9D6EA" stroke-width="13"/><path d="M300 236 L344 232" stroke="#C9D6EA" stroke-width="15"/>
+            <path d="M328 52 L120 236" stroke="#C9D6EA" stroke-width="13"/><path d="M120 236 L76 232" stroke="#C9D6EA" stroke-width="15"/>
+            <path d="M104 63 L120 77 M316 63 L300 77" stroke="#D92E68" stroke-width="13"/>
+          </g>
+          <!-- crest -->
+          <path d="M210 30 L292 52 V138 C292 196 252 228 210 246 C168 228 128 196 128 138 V52 Z" fill="url(#tlShield)" stroke="url(#tlGold)" stroke-width="7"/>
+          <path d="M210 46 L278 64 V138 C278 186 246 214 210 230 C174 214 142 186 142 138 V64 Z" fill="none" stroke="#2F4A7C" stroke-width="2"/>
+          <!-- horseshoe and puck -->
+          <path d="M180 92 C180 160 240 160 240 92" fill="none" stroke="url(#tlGold)" stroke-width="15" stroke-linecap="round"/>
+          <g fill="#0B1426"><circle cx="183" cy="106" r="2.6"/><circle cx="189" cy="126" r="2.6"/><circle cx="210" cy="138" r="2.6"/><circle cx="231" cy="126" r="2.6"/><circle cx="237" cy="106" r="2.6"/></g>
+          <ellipse cx="210" cy="104" rx="15" ry="6" fill="#0B0F16"/><rect x="195" y="96" width="30" height="8" fill="#0B0F16"/><ellipse cx="210" cy="96" rx="15" ry="6" fill="#2A3344"/>
+          <path d="M210 168 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5 z" fill="#D92E68"/>
+          <!-- banner -->
+          <path d="M66 214 H354 L340 236 L354 258 H66 L80 236 Z" fill="#D92E68"/>
+          <text x="210" y="246" text-anchor="middle" font-family="Saira Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="34" letter-spacing="6" fill="#FFFFFF">TRACEN</text>
+          <text x="210" y="290" text-anchor="middle" font-family="Saira Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="30" letter-spacing="10" fill="#E5EBF4">ICE LEAGUE</text>
+        </svg>
+        <p class="menu-tag">Uma Musume hockey, simulated shift by shift.</p>
+        <nav class="menu-btns" aria-label="Game modes">
+          <a class="mbtn primary" href="#game"><b>Quick Play</b><span>Pick two teams and drop the puck</span></a>
+          <a class="mbtn" href="#franchise"><b>Franchise</b><span>Draft a club, manage the cap, chase the Cup</span></a>
+          <a class="mbtn" href="#bap"><b>Be A Player</b><span>Create a player and live her career</span></a>
+        </nav>
+        <div class="menu-links"><a href="#lines">Lines &amp; chemistry</a><a href="#roster">Roster sheet</a><button type="button" id="menuSettings">Settings</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE GAME -->
+  <section id="view-game" class="view" style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px">
+    <div class="fr-livebar" id="frLiveBar" hidden></div>
+    <div class="matchup">
+      <span class="label">Away</span>
+      <select id="awaySel" aria-label="Away team"></select>
+      <span class="at">@</span>
+      <span class="label">Home</span>
+      <select id="homeSel" aria-label="Home team"></select>
+      <button class="btn primary" id="newGameBtn">New game</button>
+      <span class="note" id="matchNote"></span>
+    </div>
+
+    <div>
+      <div class="board" id="board">
+        <div class="side away"><span class="chip" id="awayChip"></span><div class="tname"><div class="ab" id="awayAb">AWY</div><div class="full" id="awayName"></div><div class="sog" id="awaySog">SOG 0</div><div class="str" id="awayStr"></div></div><div class="score" id="awayScore">0</div></div>
+        <div class="clockbox"><div class="per" id="perTxt">1st</div><div class="clk" id="clkTxt">20:00</div></div>
+        <div class="side home"><span class="chip" id="homeChip"></span><div class="tname"><div class="ab" id="homeAb">HOM</div><div class="full" id="homeName"></div><div class="sog" id="homeSog">SOG 0</div><div class="str" id="homeStr"></div></div><div class="score" id="homeScore">0</div></div>
+      </div>
+      <div class="onice"><span id="awayIce"></span><span id="homeIce"></span></div>
+      <div class="stage"><div class="bug" id="bug" aria-live="off"></div>
+        <div class="rinkbox"><canvas id="rink" aria-label="Top-down rink showing the live game"></canvas><div class="banner" id="banner" hidden><div class="bt" id="bannerT"></div><div class="bs" id="bannerS"></div></div><div class="moment" id="moment" hidden role="dialog" aria-label="Your call"></div>
+          <div class="replay-ui" id="replayUi" hidden>
+            <div class="replay-tag"><span class="rec-dot" aria-hidden="true"></span>Replay <span id="replaySpeedTxt">· slow motion</span></div>
+            <div class="replay-who" id="replayWho"></div>
+            <div class="replay-card" id="replayCard" aria-live="polite"></div>
+            <div class="replay-actions"><div class="seg" role="group" aria-label="Replay speed" id="replaySpeedSeg"><button data-rs="0.15" aria-pressed="false">Super slow</button><button data-rs="0.3" aria-pressed="true">Slow</button><button data-rs="0.6" aria-pressed="false">Half</button></div><button class="btn" id="replayAgainBtn">Watch again</button><button class="btn primary" id="replaySkipBtn">Back to game</button></div>
+            <div class="replay-bar"><i id="replayBar"></i><b id="replayGoalMark"></b></div>
+          </div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn primary" id="playBtn" aria-label="Pause">❚❚ Pause</button>
+      <div class="seg" role="group" aria-label="Speed" id="speedSeg">
+        <button data-speed="0.5" aria-pressed="false">0.5×</button>
+        <button data-speed="1" aria-pressed="true">1×</button>
+        <button data-speed="2" aria-pressed="false">2×</button>
+        <button data-speed="3" aria-pressed="false">3×</button>
+      </div>
+      <button class="btn" id="skipPeriodBtn">Skip to end of period</button>
+      <button class="btn bap-skip" id="skipShiftBtn" hidden>Skip to my shift</button>
+      <button class="btn" id="skipGameBtn">Skip to end of game</button>
+      <div class="zoomer" role="group" aria-label="Rink zoom"><button class="btn" id="zoomOut" aria-label="Zoom out">−</button><span id="zoomTxt">120%</span><button class="btn" id="zoomIn" aria-label="Zoom in">+</button></div>
+      <label class="toggle">Scorebug <select id="netQuick" aria-label="Scorebug style"></select></label>
+      <span class="grow"></span>
+      <span class="note" id="simNote">1× runs the clock at 3 game seconds per real second.</span>
+    </div>
+    <div class="coachbar" id="coachBar" hidden aria-label="Coaching controls"></div>
+    <div class="panel coach-panel" id="coachPanel" hidden aria-label="Intermission coaching"></div>
+
+    <div class="game-grid">
+      <div class="panel">
+        <div class="panel-h"><span class="label">Play-by-play</span><label class="toggle"><input type="checkbox" id="showMinor"> Show every play</label></div>
+        <ul class="feed" id="feed"></ul>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="label">Box score</span><div class="seg" role="group" aria-label="Team" id="boxSeg"><button data-t="1" aria-pressed="true" id="boxAwayBtn">Away</button><button data-t="0" aria-pressed="false" id="boxHomeBtn">Home</button></div></div>
+        <div id="starsBox"></div>
+        <div class="box"><table class="stats" id="boxTable"></table></div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="panel">
+        <div class="panel-h"><span class="label">Shot map</span>
+          <div class="seg" role="group" aria-label="Shots from period" id="shotPerSeg"><button data-p="0" aria-pressed="true">All</button><button data-p="1" aria-pressed="false">1st</button><button data-p="2" aria-pressed="false">2nd</button><button data-p="3" aria-pressed="false">3rd</button><button data-p="4" aria-pressed="false">OT</button></div>
+        </div>
+        <div class="chart-wrap"><svg id="shotMap" viewBox="-102 -45 204 90" role="img" aria-label="Shot map: every shot attempt plotted where it was taken"></svg><div class="ctip" id="shotTip" hidden></div></div>
+        <div class="legend-row" id="shotLegend"></div>
+        <div class="panel-h split"><span class="label">Player tracking</span></div>
+        <div class="trk-grid" id="trackTiles"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="label">By period</span></div>
+        <div class="box"><table class="stats per" id="periodTable"></table></div>
+        <div class="panel-h split"><span class="label">Win probability</span><span class="note" id="wpNow"></span></div>
+        <div class="chart-wrap"><svg id="wpChart" viewBox="0 0 640 230" role="img" aria-label="Win probability over the game"></svg><div class="ctip" id="wpTip" hidden></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FRANCHISE -->
+  <section id="view-franchise" class="view" hidden><div id="frRoot" class="fr-root"></div></section>
+
+  <!-- BE A PLAYER -->
+  <section id="view-bap" class="view" hidden><div id="bapRoot" class="fr-root"></div></section>
+
+  <!-- LINES -->
+  <section id="view-lines" class="view" style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px" hidden>
+    <div class="section-h">
+      <h2>Lines &amp; chemistry</h2>
+      <div class="legend"><span class="link friend">Friends +6</span><span class="link">Same circle +2</span><span>Chemistry is counted for whoever is on the ice together, including the goalie. Each group starts at 40.</span></div>
+    </div>
+    <p class="note" style="margin:0">Open a team to edit it. Pick a player in any slot to move them there; whoever held the slot swaps into their old spot, and the roster sheet updates to match. Power-play and penalty-kill slots can stay on Auto (dashed) or be set by hand. Forward lines and defense pairs rotate on their own, so line 1 often skates with pair 2.</p>
+    <div class="lines-grid" id="linesGrid"></div>
+  </section>
+
+  <!-- ROSTER -->
+  <section id="view-roster" class="view" style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px" hidden>
+    <div class="section-h">
+      <h2>Roster sheet</h2>
+      <span class="note" id="rosterCount"></span>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="label">Teams</span><button class="btn" id="addTeamBtn">Add team</button></div>
+      <div class="sheet-wrap"><table class="sheet" id="teamTable"></table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">
+        <div class="toolbar">
+          <input type="search" id="search" placeholder="Search players" aria-label="Search players">
+          <select id="teamFilter" aria-label="Filter by team"></select>
+          <button class="btn primary" id="addPlayerBtn">Add player</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="ioBtn" aria-expanded="false">Import / export</button>
+          <span id="resetWrap"><button class="btn danger" id="resetBtn">Reset to defaults</button></span>
+        </div>
+      </div>
+      <div class="io" id="ioPanel" hidden>
+        <div class="row">
+          <div class="seg" role="group" aria-label="Format" id="fmtSeg"><button data-f="csv" aria-pressed="true">CSV</button><button data-f="json" aria-pressed="false">JSON</button></div>
+          <button class="btn" id="copyBtn">Copy</button>
+          <button class="btn" id="saveFileBtn" hidden>Save as file</button>
+          <span class="grow"></span>
+          <label class="btn" for="fileIn">Load file…</label>
+          <input type="file" id="fileIn" accept=".csv,.json,.txt" hidden>
+          <button class="btn primary" id="importBtn">Import from text box</button>
+        </div>
+        <textarea id="ioText" spellcheck="false" aria-label="Roster as text"></textarea>
+        <div class="msgline note" id="ioMsg">CSV columns: name, short, no, team, pos, line, style, sht, pas, hnd, skt, spd, def, chk, fo, sta, dis, clu, goal, friends, groups. Older files with a single off column still import. Separate friends and circles with semicolons. Importing CSV replaces players; JSON replaces teams and players.</div>
+      </div>
+      <div class="sheet-wrap"><table class="sheet" id="sheet"></table></div>
+    </div>
+    <p class="note" style="margin:0">Positions: C, LW, RW, D, G. Lines 1–3 dress a skater on that forward line or defense pair; goalies are Starter or Backup; Extra sits a player. Shooting and Passing replace the old Offense rating. Hands sets how well a player dekes, dangles, saucers passes and protects the puck. Skating is acceleration, edges and balance; Speed is top speed. Checking wins hits and board battles, Faceoffs wins draws, Stamina sets how fast a player tires and recovers, Discipline sets how often they take penalties, and Clutch lifts (or sinks) a player late in close games, in overtime and in shootouts. Hover a column header for details. Stats run 1–99 with Uma-style letter grades. Changes save automatically and apply from the next game.</p>
+  </section>
+
+  <dialog class="settings pcard" id="pcardDlg" aria-labelledby="pcardTitle"><div class="dlg-in"><button class="btn sm fr-x" data-close aria-label="Close">Close</button><div id="pcardBody"></div></div></dialog>
+  <dialog class="settings confirm" id="confirmDlg" aria-labelledby="confirmMsg"><form method="dialog"><p id="confirmMsg"></p><div class="confirm-btns"><button class="btn" value="no">Cancel</button><button class="btn primary" id="confirmYes" value="yes">OK</button></div></form></dialog>
+  <dialog class="settings fr-box" id="frBoxDlg" aria-labelledby="frBoxTitle"><div class="dlg-in"><button class="btn sm fr-x" data-close aria-label="Close">Close</button><div id="frBoxBody"></div></div></dialog>
+  <dialog class="settings" id="testDlg" aria-labelledby="testTitle">
+    <form method="dialog">
+      <div class="set-h"><h2 id="testTitle">Test tools</h2><button class="btn" value="close" aria-label="Close test tools">Done</button></div>
+      <section><p class="note">These change the game that's on right now, so you can check how something looks without waiting for it.</p></section>
+      <section>
+        <h3>Force a goal</h3>
+        <div class="test-row"><button type="button" class="btn" data-test="goal" data-t="1" id="tGoalA">Away</button><button type="button" class="btn" data-test="goal" data-t="0" id="tGoalH">Home</button></div>
+      </section>
+      <section>
+        <h3>Force a power play</h3>
+        <div class="test-row"><button type="button" class="btn" data-test="pp" data-t="1" id="tPPA">Away</button><button type="button" class="btn" data-test="pp" data-t="0" id="tPPH">Home</button></div>
+      </section>
+      <section>
+        <h3>Skip ahead</h3>
+        <div class="test-row"><button type="button" class="btn" data-test="ot">Overtime</button><button type="button" class="btn" data-test="so">Shootout</button></div>
+        <p class="msgline note" id="testMsg" aria-live="polite"></p>
+      </section>
+    </form>
+  </dialog>
+  <dialog class="settings" id="settingsDlg" aria-labelledby="setTitle">
+    <form method="dialog">
+      <div class="set-h"><h2 id="setTitle">Settings</h2><button class="btn" value="close" aria-label="Close settings">Done</button></div>
+      <section>
+        <h3>Broadcast</h3>
+        <p class="note">Pick a scorebug. Any scorebug replaces the full scoreboard above the rink; Classic brings the full scoreboard back.</p>
+        <div class="net-grid" id="netGrid" role="radiogroup" aria-label="Scorebug style"></div>
+        <label class="set-range"><span>Scorebug size</span><input type="range" id="setBug" data-range="bugSize" min="60" max="150" step="5"><output id="setBugOut"></output></label>
+      </section>
+      <section>
+        <h3>Animations</h3>
+        <div class="seg-radio" role="radiogroup" aria-label="Animations">
+          <label class="set-row"><input type="radio" name="motion" value="device"><span>Match my device <small class="note" id="motionNote"></small></span></label>
+          <label class="set-row"><input type="radio" name="motion" value="full"><span>Full motion: goal graphics slide, wipe and spin</span></label>
+          <label class="set-row"><input type="radio" name="motion" value="reduced"><span>Reduced motion: goal graphics fade in and out</span></label>
+        </div>
+      </section>
+      <section>
+        <h3>Replays</h3>
+        <label class="set-row"><input type="checkbox" id="autoReplay" checked><span>Show a slow-motion replay after every goal</span></label>
+      </section>
+      <section>
+        <h3>On the rink</h3>
+        <label class="set-range"><span>Rink zoom</span><input type="range" id="setZoom" data-range="zoom" min="100" max="200" step="10"><output id="setZoomOut"></output></label>
+        <label class="set-range"><span>Player size</span><input type="range" id="setIcon" data-range="icon" min="70" max="160" step="5"><output id="setIconOut"></output></label>
+        <p class="note">At 100% the whole rink is in view. Past that the camera zooms in and follows the play.</p>
+        <label class="set-row"><input type="checkbox" data-set="names"><span>Player names</span></label>
+        <label class="set-row"><input type="checkbox" data-set="arrows"><span>Facing arrows</span></label>
+        <label class="set-row"><input type="checkbox" data-set="sticks"><span>Sticks</span></label>
+        <label class="set-row"><input type="checkbox" data-set="rings"><span>Energy rings</span></label>
+        <label class="set-row"><input type="checkbox" data-set="passes"><span>Pass lines</span></label>
+        <label class="set-row"><input type="checkbox" data-set="lineInfo"><span>Line, chemistry and energy under the scoreboard</span></label>
+      </section>
+    </form>
+  </dialog>
+</div>
