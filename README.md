@@ -21,7 +21,10 @@ You can also just open `index.html` in a browser. Some browsers block the charac
 
 ## Saving
 
-Everything saves in the visitor's own browser (localStorage): Quick Play rosters and lines, franchises and Be A Player careers. Saves don't move between browsers or devices, and clearing site data erases them. Use **Settings** in the game to export and import rosters as JSON or CSV.
+Everything saves in the visitor's own browser (localStorage): Quick Play rosters and lines, franchises and Be A Player careers. Clearing site data erases them, so back up what matters:
+
+- **Franchises and careers:** use **Download save** (in the club or career header, or on the saves screen) to get a `.json` file, and **Import save file** on the Franchise or Be A Player screen to load it back, on this device or another one.
+- **Quick Play rosters:** Roster sheet → **Import / export**, as CSV or JSON.
 
 Online leagues with friends would need a shared backend (for example Supabase) and aren't part of this build yet.
 

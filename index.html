@@ -1003,6 +1003,47 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
 .link.fam { background: color-mix(in srgb, var(--ok) 16%, transparent); }
 .pc-tag[data-pname] { cursor: pointer; }
 .pc-tag[data-pname]:hover { border-color: var(--accent); }
+.fr-intro-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fr-intro .fr-intro-btns .btn:not(.primary) { background: rgba(255,255,255,.1); color: var(--board-ink); border-color: rgba(255,255,255,.25); }
+
+/* ---------- personalities ---------- */
+.pc-pers { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0 10px; }
+.pc-arch { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .8rem; padding: 2px 10px; border-radius: 99px; background: var(--accent); color: #fff; }
+.pc-arch.sub { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.pc-blurb { flex-basis: 100%; margin: 0; font-style: italic; }
+.fr-wants { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 3px; font-size: .78rem; }
+.fr-wants .pc-tag { padding: 0 7px; }
+.fr-wants .pc-tag.sub { opacity: .7; }
+.fr-wants small { font-weight: 700; }
+.fr-wants small.good { color: var(--ok); } .fr-wants small.bad { color: var(--bad); }
+
+/* ---------- moods ---------- */
+.mood { display: inline-flex; align-items: center; justify-content: center; vertical-align: -2px; min-width: 18px; height: 16px; padding: 0 3px; border-radius: 5px; color: #fff; line-height: 1; }
+.mood svg { display: block; }
+.mood.m-great { background: #E2457F; } .mood.m-good { background: #EE8323; } .mood.m-normal { background: #C9A300; }
+.mood.m-bad { background: #3D77D6; } .mood.m-awful { background: #7E4FC2; }
+.fr-kpis .mood { height: 22px; min-width: 30px; } .fr-kpis .mood svg { width: 15px; height: 15px; }
+.pc-mood { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -2px 0 10px; font-size: .9rem; }
+.pc-mood .good { color: var(--ok); } .pc-mood .bad { color: var(--bad); }
+.fr-moodbars { display: flex; gap: 3px; margin: 4px 14px 10px; height: 28px; }
+.fr-moodbar { display: flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 700; font-size: .82rem; color: #fff; overflow: hidden; white-space: nowrap; min-width: 0; }
+.fr-moodbar.m-great { background: #E2457F; } .fr-moodbar.m-good { background: #EE8323; } .fr-moodbar.m-normal { background: #C9A300; } .fr-moodbar.m-bad { background: #3D77D6; } .fr-moodbar.m-awful { background: #7E4FC2; }
+.fr-moodbar .mood { background: transparent; padding: 0; min-width: 0; }
+
+/* ---------- unique skills ---------- */
+.skillpop { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 16px 6px 8px; border-radius: 99px; color: #fff; z-index: 4; pointer-events: none;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--tc, #C9961A) 85%, #000) 0%, #1A1404 70%); border: 2px solid #F2C14E; box-shadow: 0 0 0 3px rgba(242,193,78,.25), 0 8px 24px rgba(0,0,0,.35); }
+.skillpop span { display: grid; line-height: 1.1; }
+.skillpop i { font-style: normal; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: #F2C14E; font-weight: 700; }
+.skillpop b { font-family: var(--f-display); font-size: 1.15rem; text-transform: uppercase; letter-spacing: .02em; }
+.skillpop small { font-size: .78rem; opacity: .85; }
+.skillpop.in { animation: skin 2.6s ease both; }
+@keyframes skin { 0% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(.9); } 10% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.04); } 16% { transform: translateX(-50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .skillpop.in { animation: none; } }
+.skstar { color: #C9961A; font-weight: 700; }
+.pc-skill { display: grid; gap: 2px; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid #E5C25A; background: color-mix(in srgb, #F2C14E 12%, var(--surface)); }
+.pc-sk-n { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #A97A0C; }
+.pc-sk-g { font-style: italic; }
 </style>
 </head><body>
 <div class="wrap">
@@ -1086,7 +1127,7 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
       </div>
       <div class="onice"><span id="awayIce"></span><span id="homeIce"></span></div>
       <div class="stage"><div class="bug" id="bug" aria-live="off"></div>
-        <div class="rinkbox"><canvas id="rink" aria-label="Top-down rink showing the live game"></canvas><div class="banner" id="banner" hidden><div class="bt" id="bannerT"></div><div class="bs" id="bannerS"></div></div><div class="moment" id="moment" hidden role="dialog" aria-label="Your call"></div>
+        <div class="rinkbox"><canvas id="rink" aria-label="Top-down rink showing the live game"></canvas><div class="banner" id="banner" hidden><div class="bt" id="bannerT"></div><div class="bs" id="bannerS"></div></div><div class="moment" id="moment" hidden role="dialog" aria-label="Your call"></div><div class="skillpop" id="skillPop" hidden aria-live="polite"></div>
           <div class="replay-ui" id="replayUi" hidden>
             <div class="replay-tag"><span class="rec-dot" aria-hidden="true"></span>Replay <span id="replaySpeedTxt">· slow motion</span></div>
             <div class="replay-who" id="replayWho"></div>
@@ -1191,20 +1232,21 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
         <div class="row">
           <div class="seg" role="group" aria-label="Format" id="fmtSeg"><button data-f="csv" aria-pressed="true">CSV</button><button data-f="json" aria-pressed="false">JSON</button></div>
           <button class="btn" id="copyBtn">Copy</button>
-          <button class="btn" id="saveFileBtn" hidden>Save as file</button>
+          <button class="btn" id="saveFileBtn">Save as file</button>
           <span class="grow"></span>
           <label class="btn" for="fileIn">Load file…</label>
           <input type="file" id="fileIn" accept=".csv,.json,.txt" hidden>
           <button class="btn primary" id="importBtn">Import from text box</button>
         </div>
         <textarea id="ioText" spellcheck="false" aria-label="Roster as text"></textarea>
-        <div class="msgline note" id="ioMsg">CSV columns: name, short, no, team, pos, line, style, sht, pas, hnd, skt, spd, def, chk, fo, sta, dis, clu, goal, friends, groups. Older files with a single off column still import. Separate friends and circles with semicolons. Importing CSV replaces players; JSON replaces teams and players.</div>
+        <div class="msgline note" id="ioMsg">CSV columns: name, short, no, team, pos, line, style, sht, pas, hnd, skt, spd, def, chk, fo, sta, dis, clu, goal, friends, personality, personality2, cares1, cares2. Older files with a single off column still import. Separate friends with semicolons. Importing CSV replaces players; JSON replaces teams and players.</div>
       </div>
       <div class="sheet-wrap"><table class="sheet" id="sheet"></table></div>
     </div>
     <p class="note" style="margin:0">Positions: C, LW, RW, D, G. Lines 1–3 dress a skater on that forward line or defense pair; goalies are Starter or Backup; Extra sits a player. Shooting and Passing replace the old Offense rating. Hands sets how well a player dekes, dangles, saucers passes and protects the puck. Skating is acceleration, edges and balance; Speed is top speed. Checking wins hits and board battles, Faceoffs wins draws, Stamina sets how fast a player tires and recovers, Discipline sets how often they take penalties, and Clutch lifts (or sinks) a player late in close games, in overtime and in shootouts. Hover a column header for details. Stats run 1–99 with Uma-style letter grades. Changes save automatically and apply from the next game.</p>
   </section>
 
+  <input type="file" id="saveFileIn" accept=".json,application/json" hidden>
   <dialog class="settings pcard" id="pcardDlg" aria-labelledby="pcardTitle"><div class="dlg-in"><button class="btn sm fr-x" data-close aria-label="Close">Close</button><div id="pcardBody"></div></div></dialog>
   <dialog class="settings confirm" id="confirmDlg" aria-labelledby="confirmMsg"><form method="dialog"><p id="confirmMsg"></p><div class="confirm-btns"><button class="btn" value="no">Cancel</button><button class="btn primary" id="confirmYes" value="yes">OK</button></div></form></dialog>
   <dialog class="settings fr-box" id="frBoxDlg" aria-labelledby="frBoxTitle"><div class="dlg-in"><button class="btn sm fr-x" data-close aria-label="Close">Close</button><div id="frBoxBody"></div></div></dialog>
@@ -1249,6 +1291,10 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
         <label class="set-row"><input type="checkbox" id="autoReplay" checked><span>Show a slow-motion replay after every goal</span></label>
       </section>
       <section>
+        <h3>Quick Play</h3>
+        <label class="set-row"><input type="checkbox" data-set="qpMoods"><span>Give every player a random mood each game (Great to Awful, up to ±4% to her play)</span></label>
+      </section>
+      <section>
         <h3>On the rink</h3>
         <label class="set-range"><span>Rink zoom</span><input type="range" id="setZoom" data-range="zoom" min="100" max="200" step="10"><output id="setZoomOut"></output></label>
         <label class="set-range"><span>Player size</span><input type="range" id="setIcon" data-range="icon" min="70" max="160" step="5"><output id="setIconOut"></output></label>
@@ -1265,7 +1311,7 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
 </div>
 <script>
 // ---------- Default league data ----------
-const LEAGUE_VERSION = 11;
+const LEAGUE_VERSION = 12;
 // roster size every team dresses: 3 forward lines, 2 defense pairs, 2 goalies
 const N_FLINES = 3, N_DPAIRS = 2;
 // original sample league, still used to upgrade very old saves
@@ -1436,6 +1482,7 @@ function upgradeLeague(L) {
   }
   if ((L.version || 1) < 10) resetClubIdentity(L); // v10: the clubs go back to their own names, colors and crests
   if ((L.version || 1) < 11) applyFriendsV11(L.players); // v11: the new friends list; circles are gone
+  if ((L.version || 1) < 12) applyPersonalities(L.players); // v12: every player gets a personality
   L.version = LEAGUE_VERSION;
   return L;
 }
@@ -1519,7 +1566,7 @@ const NEW_FA = [
 // [name, short, no, pos, style, OFF, DEF, HND, SPD, STA, DIS, GOAL, friends, circles]
 const NEW_V9 = [
   ["Happy Meek", "Meek", 1, "C", "Two-Way", 82, 80, 82, 84, 88, 88, 10, "", ""],
-  ["Little Coco", "Coco", 52, "LW", "Speedster", 76, 62, 78, 92, 74, 78, 10, "", ""],
+  ["Little Cocon", "Cocon", 52, "LW", "Speedster", 76, 62, 78, 92, 74, 78, 10, "", ""],
   ["Bitter Glasse", "Glasse", 39, "G", "Butterfly", 40, 40, 50, 70, 84, 84, 79, "", ""],
   ["Fujimasa March", "March", 3, "RW", "Sniper", 82, 64, 80, 86, 78, 70, 10, "Oguri Cap", "Kasamatsu"],
   ["Belno Light", "Belno", 44, "D", "Two-Way", 64, 74, 64, 74, 80, 84, 10, "Oguri Cap, Norn Ace", "Kasamatsu"],
@@ -1677,6 +1724,49 @@ function chemLabel(v) {
 
 // friendships (v11): who is friends with whom, from the friends sheet. Friendship goes both ways.
 const FRIENDS_V11 = {"Admire Groove":["Air Groove","Cesario","Duramente","Neo Universe","Red Desire","Rulership","Still In Love","Sweep Tosho","Zenno Rob Roy"],"Admire Vega":["Curren Chan","Meisho Doto","Narita Top Road","Silence Suzuka","T.M. Opera O"],"Agnes Digital":["Agnes Tachyon","Air Shakur","Chrono Genesis","Haru Urara","King Halo","Loves Only You","Meisho Doto","Shinko Windy","Smart Falcon","Special Week","T.M. Opera O","Tap Dance City","Zenno Rob Roy"],"Agnes Tachyon":["Agnes Digital","Air Shakur","Calstone Light O","Daiwa Scarlet","Dantsu Flame","Jungle Pocket","Manhattan Cafe","Mejiro Ardan","Nakayama Festa","Silence Suzuka","Smart Falcon","Sweep Tosho","Tanino Gimlet"],"Air Groove":["Admire Groove","Air Messiah","Bubblegum Fellow","Daiichi Ruby","Daiwa Scarlet","Duramente","Eishin Flash","El Condor Pasa","Fine Motion","Fuji Kiseki","Grass Wonder","Hishi Amazon","Kiseki","Maruzensky","Matikanefukukitaru","Matikanetannhauser","Mejiro Dober","Narita Brian","Rulership","Silence Suzuka","Sweep Tosho","Symboli Rudolf","T.M. Opera O","Taiki Shuttle","Winning Ticket"],"Air Messiah":["Air Groove","Air Shakur","Cesario","Daring Heart","Jungle Pocket","Rhein Kraft","Vivlos"],"Air Shakur":["Agnes Digital","Agnes Tachyon","Air Messiah","Fine Motion","Manhattan Cafe","Meisho Doto","T.M. Opera O","Tap Dance City"],"Almond Eye":["Blast Onepiece","Curren Bouquetd'or","Daring Tact","Fusaichi Pandora","Gentildonna","Gran Alegria","Kiseki","Lucky Lilac","Mejiro Bright","Rhein Kraft","Seiun Sky","Smart Falcon","Vivlos"],"Aston Machan":["Curren Chan","Daiwa Scarlet","Dream Journey","Gentildonna","North Flight","Sweep Tosho","Twin Turbo","Vodka","Yamanin Zephyr"],"Bamboo Memory":["Daitaku Helios","Fenomeno","Gold City","Inari One","K.S. Miracle","Mejiro Ardan","Oguri Cap","Sakura Bakushin O","Yaeno Muteki"],"Believe":["Buena Vista","Calstone Light O","Curren Chan","Daiwa Scarlet","Dantsu Flame","Durandal","Lucky Lilac","Transcend","Win Variation","Wonder Acute"],"Biko Pegasus":["Curren Chan","Fenomeno","Hishi Akebono","Hishi Amazon","Mayano Top Gun","Narita Brian","Shinko Windy","Sweep Tosho"],"Biwa Hayahide":["Gold City","Narita Brian","Narita Taishin","Phalaenopsis","Royce and Royce","T.M. Opera O","Winning Ticket"],"Blast Onepiece":["Almond Eye","Kiseki","Lucky Lilac"],"Bubblegum Fellow":["Air Groove","Fenomeno","Sakura Laurel"],"Buena Vista":["Believe","Cesario","Daiwa Scarlet","Dream Journey","Eishin Flash","Espoir City","Fusaichi Pandora","Gentildonna","Katsuragi Ace","Kawakami Princess","Lucky Lilac","Maruzensky","Nakayama Festa","Orfevre","Red Desire","Rose Kingdom","Rulership","Special Week","Tosen Jordan","Transcend","Victoire Pisa","Win Variation","Wonder Acute"],"Calstone Light O":["Agnes Tachyon","Believe","Durandal","Gold City","Jungle Pocket","K.S. Miracle","Sakura Bakushin O"],"Cesario":["Admire Groove","Air Messiah","Buena Vista","Daring Heart","Fusaichi Pandora","King Halo","Rhein Kraft","Special Week","Symboli Kris S"],"Cheval Grand":["Kitasan Black","Satono Crown","Satono Diamond","Verxina","Vivlos","Win Variation"],"Chrono Genesis":["Agnes Digital","Curren Bouquetd'or","Gold Ship","Gran Alegria","Grass Wonder","Kiseki","Loves Only You","Lucky Lilac"],"Copano Rickey":["Curren Chan","Espoir City","Furioso","Hokko Tarumae","Kitasan Black","Matikanefukukitaru","Seiun Sky","Smart Falcon","Transcend","Wonder Acute"],"Curren Bouquetd'or":["Almond Eye","Chrono Genesis","Curren Chan","Gran Alegria","Kawakami Princess","Loves Only You","Lucky Lilac","Yamanin Zephyr"],"Curren Chan":["Admire Vega","Aston Machan","Biko Pegasus","Curren Bouquetd'or","Dream Journey","Durandal","Eishin Flash","Fenomeno","Gold City","Hishi Akebono","King Halo","Mayano Top Gun","Nishino Flower","Sakura Chiyono O","Smart Falcon","Sweep Tosho","Taiki Shuttle","Transcend"],"Daiichi Ruby":["Air Groove","Daitaku Helios","Ikuno Dictus","K.S. Miracle","Matikanetannhauser","Mr. C.B.","Winning Ticket","Yamanin Zephyr"],"Daitaku Helios":["Daiichi Ruby","Fusaichi Pandora","Ines Fujin","K.S. Miracle","Katsuragi Ace","Matikanetannhauser","Mejiro Ardan","Mejiro Palmer","Tap Dance City","Tosen Jordan","Yamanin Zephyr"],"Daiwa Scarlet":["Agnes Tachyon","Air Groove","Aston Machan","Believe","Buena Vista","Curren Chan","Dream Journey","Eishin Flash","Gold Ship","Kitasan Black","Mejiro McQueen","Mejiro Ryan","Silence Suzuka","Special Week","Sweep Tosho","Tokai Teio","Vodka","Win Variation"],"Dantsu Flame":["Agnes Tachyon","Hishi Miracle","Jungle Pocket","Manhattan Cafe","No Reason"],"Daring Heart":["Air Messiah","Cesario","Daring Tact","Fusaichi Pandora","Rhein Kraft"],"Daring Tact":["Almond Eye","Cesario","Daring Heart","Epiphaneia","Satono Crown","Symboli Kris S","Vivlos"],"Dream Journey":["Aston Machan","Buena Vista","Curren Chan","Daiwa Scarlet","Durandal","Fenomeno","Gold Ship","Kawakami Princess","Lucky Lilac","Mejiro McQueen","Nakayama Festa","Orfevre","Red Desire","Rulership","Seeking the Pearl","Stay Gold","Sweep Tosho","Tosen Jordan","Vodka","Win Variation"],"Duramente":["Admire Groove","Air Groove","Kitasan Black","Satono Crown","Vivlos"],"Durandal":["Believe","Calstone Light O","Curren Chan","Dream Journey","Fine Motion","K.S. Miracle","Mayano Top Gun","No Reason","Orfevre","Sweep Tosho","Tanino Gimlet"],"Efforia":["Epiphaneia","Titleholder"],"Eishin Flash":["Curren Chan","Daiwa Scarlet","Gold Ship","Nakayama Festa","Rose Kingdom","Rulership","Smart Falcon","Victoire Pisa"],"El Condor Pasa":["Air Groove","Fuji Kiseki","Grass Wonder","Hishi Amazon","King Halo","Maruzensky","Narita Brian","Phalaenopsis","Seeking the Pearl","Seiun Sky","Special Week","Symboli Rudolf","T.M. Opera O","Taiki Shuttle","Tsurumaru Tsuyoshi"],"Epiphaneia":["Cesario","Daring Tact","Efforia","Gentildonna","Rulership","Special Week","Symboli Kris S","Win Variation"],"Espoir City":["Copano Rickey","Furioso","Hokko Tarumae","Smart Falcon","Transcend"],"Fenomeno":["Bamboo Memory","Biko Pegasus","Bubblegum Fellow","Curren Chan","Dream Journey","Eishin Flash","Gentildonna","Gold Ship","Nakayama Festa","Orfevre","Stay Gold","Tosen Jordan"],"Fine Motion":["Air Groove","Air Shakur","Durandal","Kawakami Princess","Symboli Kris S","Tanino Gimlet"],"Forever Young":["Loves Only You","Marche Lorraine"],"Fuji Kiseki":["Agnes Tachyon","Air Groove","El Condor Pasa","Grass Wonder","Hishi Akebono","Hishi Amazon","Jungle Pocket","Maruzensky","Marvelous Sunday","Narita Brian","Special Week","Sweep Tosho","Symboli Rudolf","T.M. Opera O","Taiki Shuttle"],"Furioso":["Copano Rickey","Espoir City","Hokko Tarumae","Oguri Cap","Smart Falcon","Transcend","Wonder Acute"],"Fusaichi Pandora":["Almond Eye","Buena Vista","Cesario","Daitaku Helios","Daring Heart","Fuji Kiseki","Hishi Akebono","Hishi Miracle","Jungle Pocket","Kawakami Princess","King Halo","North Flight","Rhein Kraft","Rulership","Sweep Tosho"],"Gentildonna":["Aston Machan","Buena Vista","Eishin Flash","Fenomeno","Gold Ship","Gran Alegria","Orfevre","Tosen Jordan","Verxina","Vivlos"],"Gold City":["Bamboo Memory","Calstone Light O","Inari One","Oguri Cap","Tamamo Cross","Tosen Jordan","Yukino Bijin"],"Gold Ship":["Chrono Genesis","Daiwa Scarlet","Dream Journey","Eishin Flash","Fenomeno","Fuji Kiseki","Gentildonna","Grass Wonder","Hishi Amazon","Kitasan Black","Mejiro McQueen","Nakayama Festa","Narita Brian","Orfevre","Rice Shower","Rulership","Silence Suzuka","Smart Falcon","Special Week","Stay Gold","Tokai Teio","Tosen Jordan","Verxina","Vodka","Winning Ticket"],"Gran Alegria":["Almond Eye","Bubblegum Fellow","Chrono Genesis","Curren Bouquetd'or","Gentildonna","Loves Only You","Symboli Kris S","Taiki Shuttle","Vivlos","Zenno Rob Roy"],"Grass Wonder":["Air Groove","Chrono Genesis","El Condor Pasa","Fuji Kiseki","Gold Ship","Hishi Amazon","King Halo","Maruzensky","Narita Brian","Nishino Flower","Phalaenopsis","Seiun Sky","Special Week","Symboli Rudolf","T.M. Opera O","Tsurumaru Tsuyoshi"],"Haru Urara":["Agnes Digital","El Condor Pasa","Grass Wonder","King Halo","Mayano Top Gun","Narita Top Road","Rice Shower","Seiun Sky","Special Week","T.M. Opera O","Yukino Bijin"],"Hishi Akebono":["Biko Pegasus","Curren Chan","Fuji Kiseki","Fusaichi Pandora","Hishi Miracle","Marvelous Sunday","Mayano Top Gun","Nishino Flower","Sakura Chiyono O","Seeking the Pearl","Taiki Shuttle"],"Hishi Amazon":["Air Groove","Biko Pegasus","El Condor Pasa","Fuji Kiseki","Grass Wonder","Maruzensky","Narita Brian","Shinko Windy","Symboli Rudolf","T.M. Opera O","Taiki Shuttle"],"Hishi Miracle":["Dantsu Flame","Fine Motion","Hishi Akebono","K.S. Miracle","Narita Top Road","Neo Universe","No Reason","Symboli Kris S","Tanino Gimlet","Tap Dance City"],"Hokko Tarumae":["Copano Rickey","Katsuragi Ace","Smart Falcon","Still In Love","Verxina","Wonder Acute"],"Ikuno Dictus":["Daiichi Ruby","Matikanetannhauser","Mejiro McQueen","Nice Nature","Royce and Royce","Sounds of Earth","Twin Turbo","Yamanin Zephyr"],"Inari One":["Kitasan Black","Oguri Cap","Super Creek","Tamamo Cross","Twin Turbo"],"Ines Fujin":["Daitaku Helios","Maruzensky","Mejiro McQueen","Mejiro Ryan","Mihono Bourbon","Silence Suzuka","Smart Falcon"],"Jungle Pocket":["Agnes Tachyon","Air Messiah","Calstone Light O","Dantsu Flame","Fuji Kiseki","Fusaichi Pandora","Manhattan Cafe","Narita Top Road","Tosen Jordan"],"K.S. Miracle":["Bamboo Memory","Calstone Light O","Daiichi Ruby","Daitaku Helios","Durandal","Hishi Miracle","Ines Fujin","Matikanefukukitaru","Mejiro Palmer","Mejiro Ryan","Sakura Bakushin O","Yamanin Zephyr"],"Katsuragi Ace":["Buena Vista","Daitaku Helios","Hokko Tarumae","Ikuno Dictus","Kawakami Princess","Maruzensky","Mejiro Ardan","Mejiro Palmer","Mejiro Ramonu","Mr. C.B.","Sirius Symboli","Symboli Rudolf","Tap Dance City","Twin Turbo"],"Kawakami Princess":["Biko Pegasus","Curren Bouquetd'or","Daiwa Scarlet","Dream Journey","Fusaichi Pandora","Katsuragi Ace","King Halo","Mejiro Dober","Nishino Flower","Seeking the Pearl","Sweep Tosho","Vodka"],"King Halo":["Agnes Digital","Cesario","El Condor Pasa","Fusaichi Pandora","Grass Wonder","Haru Urara","Kawakami Princess","Phalaenopsis","Rhein Kraft","Seiun Sky","Special Week","Tsurumaru Tsuyoshi"],"Kiseki":["Air Groove","Almond Eye","Blast Onepiece","Chrono Genesis","Kitasan Black","Loves Only You","Lucky Lilac","Marche Lorraine","Rulership","Sounds of Earth","Still In Love","Vivlos"],"Kitasan Black":["Cheval Grand","Copano Rickey","Daiwa Scarlet","Duramente","Gold Ship","Inari One","Mejiro McQueen","Nice Nature","Sakura Bakushin O","Satono Crown","Satono Diamond","Silence Suzuka","Special Week","Sweep Tosho","Tokai Teio","Vodka"],"Loves Only You":["Agnes Digital","Almond Eye","Chrono Genesis","Curren Bouquetd'or","Curren Chan","Espoir City","Gran Alegria","Kiseki","Marche Lorraine"],"Lucky Lilac":["Almond Eye","Believe","Blast Onepiece","Buena Vista","Chrono Genesis","Curren Bouquetd'or","Dream Journey","Gold Ship","Kiseki","Loves Only You","Marche Lorraine","Nakayama Festa","Orfevre","Red Desire","Stay Gold","Tamamo Cross"],"Manhattan Cafe":["Agnes Tachyon","Dantsu Flame","Jungle Pocket","Red Desire","Still In Love","Yukino Bijin","Zenno Rob Roy"],"Marche Lorraine":["Kiseki","Loves Only You","Lucky Lilac","Stay Gold"],"Maruzensky":["Air Groove","El Condor Pasa","Fuji Kiseki","Grass Wonder","Hishi Amazon","Ines Fujin","Katsuragi Ace","Mejiro Ardan","Mejiro Ramonu","Mihono Bourbon","Mr. C.B.","Narita Brian","Rice Shower","Sakura Chiyono O","Silence Suzuka","Smart Falcon","Special Week","Symboli Rudolf","T.M. Opera O","Taiki Shuttle","Winning Ticket"],"Marvelous Sunday":["Fuji Kiseki","Hishi Akebono","Mayano Top Gun","Nice Nature","Sakura Laurel"],"Matikanefukukitaru":["Air Groove","Copano Rickey","K.S. Miracle","Matikanetannhauser","Meisho Doto","Mejiro Dober","Silence Suzuka","Stay Gold","Taiki Shuttle"],"Matikanetannhauser":["Air Groove","Daiichi Ruby","Daitaku Helios","Ikuno Dictus","Kitasan Black","Matikanefukukitaru","Mejiro Palmer","Mihono Bourbon","Nice Nature","Rice Shower","Royce and Royce","Satono Diamond","Sounds of Earth","Special Week","Twin Turbo","Winning Ticket"],"Mayano Top Gun":["Biko Pegasus","Curren Chan","Durandal","Haru Urara","Hishi Akebono","Hishi Amazon","Maruzensky","Marvelous Sunday","Narita Brian","Nice Nature","Nishino Flower","Super Creek","Sweep Tosho","Tokai Teio","Yukino Bijin"],"Meisho Doto":["Admire Vega","Agnes Digital","Air Shakur","Haru Urara","Matikanefukukitaru","Narita Top Road","T.M. Opera O","Taiki Shuttle"],"Mejiro Ardan":["Agnes Tachyon","Daitaku Helios","Katsuragi Ace","Maruzensky","Mejiro Bright","Mejiro Dober","Mejiro McQueen","Mejiro Palmer","Mejiro Ramonu","Mejiro Ryan","Sakura Chiyono O","Super Creek","Yaeno Muteki"],"Mejiro Bright":["Almond Eye","Mejiro Ardan","Mejiro Dober","Mejiro McQueen","Mejiro Palmer","Mejiro Ramonu","Mejiro Ryan","Seeking the Pearl","Tsurumaru Tsuyoshi"],"Mejiro Dober":["Air Groove","Kawakami Princess","Matikanefukukitaru","Mejiro Ardan","Mejiro Bright","Mejiro McQueen","Mejiro Palmer","Mejiro Ramonu","Mejiro Ryan","Rulership","Seeking the Pearl","Taiki Shuttle"],"Mejiro McQueen":["Daiwa Scarlet","Dream Journey","Gold Ship","Ikuno Dictus","Kitasan Black","Mejiro Ardan","Mejiro Bright","Mejiro Dober","Mejiro Palmer","Mejiro Ramonu","Mejiro Ryan","Narita Brian","Orfevre","Rice Shower","Satono Diamond","Silence Suzuka","Special Week","Stay Gold","Tokai Teio","Vodka","Winning Ticket"],"Mejiro Palmer":["Daitaku Helios","Gold City","Katsuragi Ace","Matikanetannhauser","Mejiro Ardan","Mejiro Bright","Mejiro Dober","Mejiro McQueen","Mejiro Ramonu","Mejiro Ryan","Narita Brian","Narita Taishin","Tosen Jordan"],"Mejiro Ramonu":["Katsuragi Ace","Maruzensky","Mejiro Ardan","Mejiro Bright","Mejiro Dober","Mejiro McQueen","Mejiro Palmer","Mejiro Ryan","Mr. C.B.","Sirius Symboli","Still In Love","Symboli Kris S","Symboli Rudolf","Tanino Gimlet"],"Mejiro Ryan":["Daiwa Scarlet","Ines Fujin","Mejiro Ardan","Mejiro Bright","Mejiro Dober","Mejiro McQueen","Mejiro Palmer","Mejiro Ramonu","Oguri Cap"],"Mihono Bourbon":["Ines Fujin","Maruzensky","Nishino Flower","Rice Shower","Sakura Bakushin O","Silence Suzuka","Smart Falcon","Transcend"],"Mr. C.B.":["Daiichi Ruby","Katsuragi Ace","Maruzensky","Mejiro Ramonu","Sakura Chiyono O","Symboli Rudolf"],"Nakayama Festa":["Agnes Tachyon","Buena Vista","Dream Journey","Eishin Flash","El Condor Pasa","Fenomeno","Gold Ship","Orfevre","Red Desire","Satono Diamond","Sirius Symboli","Stay Gold","Tosen Jordan","Wonder Acute"],"Narita Brian":["Air Groove","Biwa Hayahide","El Condor Pasa","Fuji Kiseki","Gold Ship","Grass Wonder","Hishi Amazon","Maruzensky","Mayano Top Gun","Mejiro McQueen","Mejiro Palmer","Narita Taishin","No Reason","Phalaenopsis","Rice Shower","Sakura Laurel","Silence Suzuka","Special Week","Symboli Rudolf","T.M. Opera O","Taiki Shuttle","Tanino Gimlet","Winning Ticket"],"Narita Taishin":["Biwa Hayahide","Mejiro Palmer","Narita Brian","Rice Shower","Super Creek","Winning Ticket"],"Narita Top Road":["Admire Vega","Haru Urara","Jungle Pocket","Rice Shower","T.M. Opera O"],"Neo Universe":["Admire Groove","Hishi Miracle","Sounds of Earth","Still In Love","Victoire Pisa","Zenno Rob Roy"],"Nice Nature":["Ikuno Dictus","Kitasan Black","Marvelous Sunday","Matikanetannhauser","Mayano Top Gun","Mejiro McQueen","Mejiro Ryan","Royce and Royce","Sounds of Earth","Tokai Teio","Twin Turbo","Win Variation"],"Nishino Flower":["Air Groove","Eishin Flash","Grass Wonder","Hishi Akebono","Kawakami Princess","Mayano Top Gun","Mihono Bourbon","Sakura Bakushin O","Seiun Sky","Super Creek","Sweep Tosho","Taiki Shuttle","Tosen Jordan","Yamanin Zephyr"],"No Reason":["Dantsu Flame","Durandal","Hishi Miracle","Narita Brian","Phalaenopsis","Symboli Kris S","Tanino Gimlet","Yaeno Muteki"],"North Flight":["Aston Machan","Royce and Royce","Sakura Bakushin O"],"Oguri Cap":["Bamboo Memory","Belno Light","Fujimasa March","Inari One","Mejiro Ardan","Norn Ace","Obey Your Master","Sakura Chiyono O","Special Week","Super Creek","Symboli Rudolf","T.M. Opera O","Tamamo Cross","Yaeno Muteki"],"Orfevre":["Buena Vista","Dream Journey","Durandal","Fenomeno","Gentildonna","Gold Ship","Lucky Lilac","Nakayama Festa","Rulership","Stay Gold","Sweep Tosho","Tanino Gimlet","Win Variation"],"Phalaenopsis":["Biwa Hayahide","El Condor Pasa","Grass Wonder","King Halo","Narita Brian","No Reason","Seiun Sky","Special Week","Tsurumaru Tsuyoshi"],"Red Desire":["Admire Groove","Buena Vista","Dream Journey","Lucky Lilac","Manhattan Cafe","Nakayama Festa","Tosen Jordan","Transcend","Victoire Pisa","Vodka"],"Rhein Kraft":["Air Messiah","Almond Eye","Cesario","Daring Heart","Fusaichi Pandora","King Halo","Sweep Tosho"],"Rice Shower":["Gold Ship","Haru Urara","Matikanetannhauser","Mejiro McQueen","Mihono Bourbon","Narita Brian","Narita Taishin","Narita Top Road","Silence Suzuka","Special Week","Winning Ticket","Zenno Rob Roy"],"Rose Kingdom":["Eishin Flash","Rulership","Tanino Gimlet","Victoire Pisa"],"Royce and Royce":["Biwa Hayahide","Ikuno Dictus","Matikanetannhauser","Nice Nature","North Flight","Shinko Windy","Sounds of Earth","Twin Turbo"],"Rulership":["Admire Groove","Air Groove","Buena Vista","Dream Journey","Eishin Flash","Epiphaneia","Fusaichi Pandora","Gold Ship","Kiseki","Mejiro Dober","Orfevre","Rose Kingdom","Stay Gold","Transcend","Victoire Pisa"],"Sakura Bakushin O":["Bamboo Memory","Biko Pegasus","Calstone Light O","Kitasan Black","Mihono Bourbon","Nishino Flower","North Flight","Rice Shower","Sakura Chiyono O","Sakura Laurel","Yamanin Zephyr"],"Sakura Chiyono O":["Curren Chan","Hishi Akebono","Maruzensky","Mejiro Ardan","Mr. C.B.","Oguri Cap","Sakura Bakushin O","Sakura Laurel","Yaeno Muteki"],"Sakura Laurel":["Marvelous Sunday","Mayano Top Gun","Narita Brian","Sakura Bakushin O","Sakura Chiyono O","Seiun Sky"],"Satono Crown":["Cheval Grand","Duramente","Kitasan Black","Satono Diamond","Vivlos"],"Satono Diamond":["Cheval Grand","Kitasan Black","Mejiro McQueen","Satono Crown"],"Seeking the Pearl":["Dream Journey","El Condor Pasa","Grass Wonder","Hishi Akebono","Kawakami Princess","King Halo","Mejiro Bright","Mejiro Dober","Shinko Windy","Stay Gold","Taiki Shuttle"],"Seiun Sky":["Almond Eye","El Condor Pasa","Grass Wonder","King Halo","Nishino Flower","Phalaenopsis","Sakura Laurel","Special Week","Titleholder","Tsurumaru Tsuyoshi"],"Shinko Windy":["Agnes Digital","Biko Pegasus","Hishi Amazon","Royce and Royce","Seeking the Pearl","Taiki Shuttle"],"Silence Suzuka":["Admire Vega","Air Groove","Daiwa Scarlet","Gold Ship","Ines Fujin","Kitasan Black","Maruzensky","Matikanefukukitaru","Mejiro McQueen","Mihono Bourbon","Narita Brian","Rice Shower","Smart Falcon","Special Week","Stay Gold","Taiki Shuttle","Tokai Teio","Vodka","Winning Ticket"],"Sirius Symboli":["Mejiro Ramonu","Nakayama Festa","Symboli Rudolf"],"Smart Falcon":["Agnes Digital","Agnes Tachyon","Copano Rickey","Curren Chan","Eishin Flash","Espoir City","Fuji Kiseki","Furioso","Ines Fujin","Maruzensky","Mihono Bourbon","Silence Suzuka","Symboli Rudolf"],"Sounds of Earth":["Cheval Grand","Duramente","Ikuno Dictus","Kiseki","Kitasan Black","Matikanetannhauser","Neo Universe","Nice Nature","Royce and Royce","Satono Crown","Satono Diamond","Twin Turbo","Victoire Pisa","Vivlos"],"Special Week":["Agnes Digital","Buena Vista","Cesario","Daiwa Scarlet","El Condor Pasa","Epiphaneia","Gold Ship","Grass Wonder","Haru Urara","King Halo","Kitasan Black","Maruzensky","Mejiro Bright","Mejiro McQueen","Phalaenopsis","Seiun Sky","Silence Suzuka","Tokai Teio","Tsurumaru Tsuyoshi","Vodka"],"Stay Gold":["Dream Journey","Fenomeno","Gold Ship","Lucky Lilac","Matikanefukukitaru","Mejiro Bright","Mejiro McQueen","Nakayama Festa","Orfevre","Rulership","Seeking the Pearl","Silence Suzuka","Special Week","Sweep Tosho","T.M. Opera O","Taiki Shuttle"],"Still In Love":["Admire Groove","Hokko Tarumae","Kiseki","Manhattan Cafe","Mejiro Ramonu","Neo Universe","Sweep Tosho","Zenno Rob Roy"],"Super Creek":["Gold Ship","Inari One","Maruzensky","Mejiro Ardan","Narita Taishin","Oguri Cap","Tamamo Cross"],"Sweep Tosho":["Admire Groove","Agnes Tachyon","Air Groove","Aston Machan","Biko Pegasus","Curren Chan","Daiwa Scarlet","Dream Journey","Durandal","Fuji Kiseki","Fusaichi Pandora","Kawakami Princess","Kitasan Black","Mayano Top Gun","Nishino Flower","Orfevre","Rhein Kraft","Stay Gold","Still In Love","Tokai Teio","Vodka","Zenno Rob Roy"],"Symboli Kris S":["Bamboo Memory","Cesario","Epiphaneia","Espoir City","Fine Motion","Furioso","Hishi Miracle","Mejiro Ramonu","No Reason","Sirius Symboli","Symboli Rudolf","Tanino Gimlet","Tap Dance City","Transcend","Yaeno Muteki","Zenno Rob Roy"],"Symboli Rudolf":["Air Groove","El Condor Pasa","Fuji Kiseki","Hishi Amazon","Katsuragi Ace","Maruzensky","Mejiro Ramonu","Mr. C.B.","Narita Brian","Sirius Symboli","Special Week","T.M. Opera O","Taiki Shuttle","Tokai Teio","Tsurumaru Tsuyoshi"],"T.M. Opera O":["Admire Vega","Agnes Digital","Air Groove","Air Shakur","Biwa Hayahide","El Condor Pasa","Fuji Kiseki","Grass Wonder","Haru Urara","Hishi Amazon","Maruzensky","Meisho Doto","Narita Brian","Narita Top Road","Oguri Cap","Symboli Rudolf","Taiki Shuttle","Wonder Acute","Zenno Rob Roy"],"Taiki Shuttle":["Air Groove","El Condor Pasa","Fuji Kiseki","Gran Alegria","Grass Wonder","Hishi Akebono","Hishi Amazon","Maruzensky","Matikanefukukitaru","Meisho Doto","Mejiro Dober","Narita Brian","Nishino Flower","Seeking the Pearl","Silence Suzuka","Stay Gold","Symboli Rudolf","T.M. Opera O","Zenno Rob Roy"],"Tamamo Cross":["Inari One","Lucky Lilac","Oguri Cap","Super Creek"],"Tanino Gimlet":["Durandal","Hishi Miracle","Narita Brian","No Reason","Orfevre","Rose Kingdom","Symboli Kris S","Tap Dance City","Vodka"],"Tap Dance City":["Agnes Digital","Air Shakur","Daitaku Helios","Hishi Miracle","Katsuragi Ace","Symboli Kris S"],"Titleholder":["Duramente","Efforia","Seiun Sky"],"Tokai Teio":["Daiwa Scarlet","Gold Ship","Kitasan Black","Mayano Top Gun","Mejiro McQueen","Nice Nature","Silence Suzuka","Special Week","Sweep Tosho","Symboli Rudolf","Tsurumaru Tsuyoshi","Twin Turbo","Vodka","Yamanin Zephyr"],"Tosen Jordan":["Buena Vista","Daitaku Helios","Dream Journey","Eishin Flash","Fenomeno","Gold City","Gold Ship","Jungle Pocket","Mejiro Palmer","Nakayama Festa","Red Desire","Winning Ticket"],"Transcend":["Curren Chan","Espoir City","Furioso","Mihono Bourbon","Red Desire","Rulership","Smart Falcon","Wonder Acute"],"Tsurumaru Tsuyoshi":["El Condor Pasa","Grass Wonder","King Halo","Mejiro Bright","Phalaenopsis","Seiun Sky","Special Week","Symboli Rudolf","Tokai Teio"],"Twin Turbo":["Aston Machan","Ikuno Dictus","Inari One","Katsuragi Ace","Matikanetannhauser","Nice Nature","Royce and Royce","Sounds of Earth","Tokai Teio"],"Verxina":["Cheval Grand","Gentildonna","Gold Ship","Hokko Tarumae","Vivlos","Win Variation"],"Victoire Pisa":["Buena Vista","Eishin Flash","Neo Universe","Red Desire","Rose Kingdom","Rulership","Sounds of Earth","Transcend","Wonder Acute"],"Vivlos":["Air Messiah","Almond Eye","Cheval Grand","Duramente","Gentildonna","Gran Alegria","Kiseki","Satono Crown","Satono Diamond","Sounds of Earth","Verxina"],"Vodka":["Aston Machan","Daiwa Scarlet","Dream Journey","Gold Ship","Kawakami Princess","Kitasan Black","Mejiro McQueen","Narita Brian","Red Desire","Silence Suzuka","Special Week","Sweep Tosho","T.M. Opera O","Tanino Gimlet","Tokai Teio"],"Win Variation":["Believe","Buena Vista","Cheval Grand","Daiwa Scarlet","Dream Journey","Nice Nature","Orfevre","Verxina"],"Winning Ticket":["Air Groove","Biwa Hayahide","Daiichi Ruby","Gold Ship","Matikanetannhauser","Mejiro McQueen","Narita Brian","Narita Taishin","Rice Shower","Silence Suzuka","Special Week","Tosen Jordan","Yukino Bijin"],"Wonder Acute":["Buena Vista","Copano Rickey","Espoir City","Furioso","Hokko Tarumae","Nakayama Festa","Smart Falcon","T.M. Opera O","Tosen Jordan","Transcend","Victoire Pisa"],"Yaeno Muteki":["Bamboo Memory","Inari One","Mejiro Ardan","No Reason","Oguri Cap","Sakura Chiyono O","Super Creek","Tamamo Cross"],"Yamanin Zephyr":["Aston Machan","Curren Bouquetd'or","Daiichi Ruby","Daitaku Helios","Ikuno Dictus","K.S. Miracle","Nishino Flower","Sakura Bakushin O","Tokai Teio"],"Yukino Bijin":["Gold City","Haru Urara","Manhattan Cafe","Mayano Top Gun","Sakura Bakushin O","Winning Ticket"],"Zenno Rob Roy":["Admire Groove","Agnes Digital","Manhattan Cafe","Neo Universe","Rice Shower","Sweep Tosho","Symboli Kris S","T.M. Opera O","Taiki Shuttle"]};
+
+// personalities (v12): [archetype, secondary, first priority, second priority, short description], researched from character profiles and race records
+const PERSONALITY = {"Mejiro Ramonu":["Ace","Free Spirit","Winning","Loyalty","Elegant, self-assured and a little aloof, she chases the ultimate race on her own terms while hiding a teasing, candid streak."],"Fenomeno":["Leader","Hothead","Winning","Loyalty","A principled discipline-committee member who wants to be a role model, but her fierce glare and easily provoked temper show when rivals tease her."],"K.S. Miracle":["Team Player","Hard Worker","Loyalty","Friends","Gentle and calm, she pours everything into each day to repay those who helped her through hard times, always supporting her friends."],"Buena Vista":["Hard Worker","Team Player","Winning","Friends","Earnest and widely liked, she chases a promised breathtaking view with steady determination and a warm, attentive manner toward others."],"Calstone Light O":["Speed Demon","Showboat","Ice time","Winning","Obsessed with raw velocity and openly boastful about it, she is a quirky perfectionist who wants to be fastest at everything."],"Katsuragi Ace":["Ace","Free Spirit","Winning","Ice time","Bold, upbeat and fearless prankster who hates being boxed in and is set on becoming the true ace, while encouraging her juniors."],"Special Week":["Hard Worker","Team Player","Friends","Winning","Cheerful, honest country girl with a big appetite who trains tirelessly to keep her promise of becoming Japan's best."],"Silence Suzuka":["Speed Demon","Timid","Ice time","Friends","Quiet and reserved, she lives to run out in front alone, chasing the scenery only the leader can see."],"Tokai Teio":["Showboat","Ace","Winning","Ice time","Cocky, bubbly and attention-loving, she idolizes Symboli Rudolf and insists she'll be the undefeated star, bouncing back from every setback."],"Daiwa Scarlet":["Hothead","Ace","Winning","Ice time","A polished honor student on the surface but fiercely competitive underneath, obsessed with being number one and beating Vodka."],"Vodka":["Hothead","Showboat","Winning","Ice time","Tomboyish and hot-blooded, she strives to look cool at all times and constantly butts heads with her rival Scarlet."],"Kitasan Black":["Team Player","Hard Worker","Loyalty","Friends","Festive, big-hearted helper from a downtown family who loves lending a hand and wants to make everyone smile through her running."],"Mejiro McQueen":["Leader","Analyst","Loyalty","Winning","Refined and proud heiress who carries the Mejiro family's honor seriously, though her sweet tooth and baseball fandom slip through."],"Satono Diamond":["Leader","Hard Worker","Winning","Friends","Graceful, curious young lady determined to break her family's jinx, with a quietly stubborn competitive drive and deep friendship with Kitasan."],"Rice Shower":["Timid","Hard Worker","Friends","Loyalty","Shy and self-doubting, she fears bringing misfortune to others yet quietly works to become someone who brings happiness instead."],"Mihono Bourbon":["Hard Worker","Analyst","Loyalty","Winning","Robotic, deadpan and literal-minded, she executes punishing training plans with machine-like dedication and devotion to her trainer."],"Gold Ship":["Free Spirit","Showboat","Money","Friends","Wildly unpredictable prankster with bizarre schemes and side hustles, impossible to read but brilliant when she feels like running."],"Narita Brian":["Ace","Hothead","Winning","Ice time","Aloof lone wolf who craves fierce competition and only feels alive when hunting down strong opponents."],"Air Groove":["Leader","Analyst","Winning","Loyalty","Strict, disciplined student council vice-president who holds herself and others to high standards while caring deeply underneath."],"Taiki Shuttle":["Team Player","Speed Demon","Friends","Winning","Bubbly, affectionate American transfer who loves hugs, parties and making friends, bringing boundless cheerful energy everywhere."],"El Condor Pasa":["Showboat","Ace","Winning","Ice time","Loud, theatrical masked luchadora who declares herself the world's strongest and thrives on grand, dramatic entrances."],"Grass Wonder":["Leader","Hothead","Winning","Friends","Gentle, traditional and polite on the surface, but hides a fierce competitive spirit that surfaces when she races."],"Sakura Bakushin O":["Speed Demon","Leader","Winning","Friends","Boundlessly enthusiastic self-appointed class rep who charges full speed at everything, well-meaning but oblivious to the chaos she leaves behind."],"Symboli Rudolf":["Leader","Analyst","Winning","Loyalty","Regal, composed student council president who wants every runner to be happy, carries enormous responsibility, and secretly loves terrible puns."],"Maruzensky":["Ace","Speed Demon","Ice time","Friends","Laid-back, glamorous big-sister figure with dated slang and a love of fast cars, quietly dominant and hungry for the chances she was denied."],"Hishi Amazon":["Hothead","Leader","Winning","Loyalty","Hot-blooded, honor-bound competitor who lives for head-to-head showdowns, yet is a dependable dorm leader who sincerely salutes anyone who beats her."],"Fuji Kiseki":["Showboat","Leader","Friends","Ice time","Charming, princely dorm leader and amateur magician who loves dazzling an audience while gently looking after the younger girls around her."],"Eishin Flash":["Analyst","Hard Worker","Winning","Loyalty","Precise, punctual German-raised runner who plans everything to the minute and gets flustered when life refuses to follow her schedule."],"Oguri Cap":["Ace","Hard Worker","Winning","Loyalty","Quiet, stoic country girl with a bottomless appetite and slightly spacey manner who becomes an unstoppable force once the race begins."],"Tamamo Cross":["Ace","Hothead","Money","Winning","Fast-talking, sharp-tongued Kansai firecracker from a poor family who burns with competitive fire, especially against her rival Oguri."],"Super Creek":["Team Player","Leader","Friends","Loyalty","Gentle, endlessly nurturing caretaker who wants to pamper everyone around her, hiding real stamina and steel beneath her motherly warmth."],"Inari One":["Hothead","Free Spirit","Winning","Ice time","Brash, stylish Edo-born scrapper with a mischievous grin who loves a good-natured tussle but scorns cheap or underhanded tricks."],"Bamboo Memory":["Hothead","Hard Worker","Winning","Loyalty","Intensely passionate rival-seeker and strict disciplinary committee member who pours fierce determination into every contest and loves enforcing order."],"Yaeno Muteki":["Hard Worker","Hothead","Loyalty","Winning","Disciplined martial-arts devotee with a warrior's code, fair-minded and dutiful toward her grandparents, though her temper occasionally flares."],"Narita Taishin":["Hothead","Ace","Winning","Ice time","Prickly, aloof loner who hates being underestimated for her small frame and channels bitter rivalry into proving everyone wrong."],"Winning Ticket":["Speed Demon","Hard Worker","Winning","Friends","Loud, wear-her-heart-on-her-sleeve bundle of energy who befriends everyone and burns with single-minded desire to win the Derby."],"Sakura Chiyono O":["Hard Worker","Team Player","Friends","Loyalty","Sincere, warm and diligent junior who idolizes Maruzensky, strives to stand beside her, and scribbles cryptic proverbs into her notes."],"Marvelous Sunday":["Free Spirit","Hothead","Friends","Winning","Bubbly optimist who finds everything 'marvelous' and spreads cheer, but turns moody and fiery when her urge to win kicks in."],"Biwa Hayahide":["Analyst","Leader","Winning","Friends","Coolly logical theorist who calculates every race in advance, yet is touchy about her voluminous hair and devoted to her younger sister."],"Twin Turbo":["Speed Demon","Hothead","Ice time","Friends","Hyperactive, loud and reckless front-runner who blasts off at full throttle every time, whether or not she has anything left at the end."],"Nice Nature":["Timid","Team Player","Friends","Loyalty","Self-deprecating, kind-hearted girl who insists she is just a supporting character, quietly caring for others while doubting her own shine."],"Matikanetannhauser":["Hard Worker","Free Spirit","Ice time","Friends","Cheerful, clumsy self-proclaimed ordinary girl who keeps trying her hardest to stand out, bouncing back from every mishap with a smile."],"Haru Urara":["Free Spirit","Hard Worker","Friends","Loyalty","Sunny, carefree optimist who loves running for its own sake, loses constantly, and never lets it dim her joy or effort."],"King Halo":["Showboat","Hard Worker","Winning","Ice time","Proud, elegant young lady who insists on being first-class, stubbornly determined to succeed on her own terms beyond her mother's shadow."],"Seiun Sky":["Free Spirit","Analyst","Friends","Money","Lazy-seeming nap and fishing lover who drifts along at her own pace, but quietly schemes and uses her slack act to catch rivals off guard."],"Ikuno Dictus":["Analyst","Hard Worker","Ice time","Winning","Precise, rule-minded planner who double-checks everything and manages her body carefully, stubbornly determined to keep competing as long as possible."],"Agnes Tachyon":["Free Spirit","Analyst","Money","Ice time","Brilliant, reckless self-styled scientist chasing the limits of speed through odd experiments, neglecting daily life and teasing those around her."],"Mejiro Palmer":["Team Player","Speed Demon","Friends","Loyalty","Bright, easygoing and perceptive; she masks insecurity about her elite family with relentless forward momentum and genuinely cheers on friends and rivals."],"Daitaku Helios":["Speed Demon","Free Spirit","Friends","Ice time","Loud, nonstop party girl who turns everything into a good time and only gets louder when told to settle down; relies on close friends when low."],"Manhattan Cafe":["Timid","Free Spirit","Loyalty","Friends","Quiet, enigmatic loner who prefers solitude and speaks of an invisible companion, yet stays quietly devoted to the few friends she lets close."],"T.M. Opera O":["Showboat","Ace","Ice time","Money","Theatrical self-proclaimed sovereign who constantly trumpets her own brilliance, though she also tries to help unconfident friends see their worth."],"Admire Vega":["Ace","","Winning","Ice time","Aloof, brooding competitor carrying a private grief, racing as a kind of atonement and determined to win even if entirely on her own."],"Narita Top Road":["Leader","Hard Worker","Winning","Loyalty","Earnest, responsible class president who works hard to meet fans' hopes and openly respects rivals, often cast in a supporting role."],"Mayano Top Gun":["Free Spirit","Speed Demon","Ice time","Friends","Hyperactive, attention-craving prodigy who chases every shiny new idea, relying on sharp instinct rather than planning to find the right move."],"Agnes Digital":["Team Player","Free Spirit","Friends","Ice time","Gushing superfan of her fellow racers who just wants to be near and support them, while politely trying not to intrude."],"Smart Falcon":["Showboat","Speed Demon","Ice time","Money","Self-assured aspiring idol who wants to win while looking adorable and be center stage, but stays warm and loyal toward others."],"Nishino Flower":["Timid","Team Player","Friends","Loyalty","Gentle, sweet youngster who quietly looks after others and wants to be dependable, though she is unsure of herself and easily scared."],"Meisho Doto":["Timid","Hard Worker","Friends","Loyalty","Clumsy, anxious pessimist with little self-esteem who trips over her words, yet keeps trying hard to grow and chase her idol Opera O."],"Mejiro Dober":["Timid","Hard Worker","Loyalty","Winning","Reserved and guarded, especially with strangers, she feels pressure to match her role models while working to succeed on her own terms."],"Matikanefukukitaru":["Free Spirit","Team Player","Friends","Winning","Eccentric fortune-telling enthusiast who trusts luck and omens over planning, cheerfully supportive of friends but quietly eager to beat Suzuka."],"Mejiro Ryan":["Hard Worker","Team Player","Winning","Loyalty","Sporty, gym-obsessed powerhouse with an unladylike energy, hiding a tender heart and insecurity about measuring up to McQueen."],"Mejiro Ardan":["Team Player","Hard Worker","Ice time","Loyalty","Gentle, thoughtful and caring; despite a fragile body she refuses bitterness and resolves to leave her mark, however short her career."],"Satono Crown":["Hard Worker","Leader","Winning","Loyalty","Upbeat, determined heiress who thrives under adversity and family expectation, tackling problems head-on and looking out for those around her."],"Mejiro Bright":["Free Spirit","Team Player","Loyalty","Friends","Unhurried, dreamy and a little scatterbrained, she moves at her own gentle pace and teaches others to relax and enjoy themselves."],"Curren Chan":["Showboat","","Ice time","Money","Image-conscious, selfie-loving charmer who craves attention and envies rivals who steal the spotlight, yet remains a loyal, caring friend."],"Sirius Symboli":["Ace","Hothead","Winning","Ice time","Blunt, charismatic star-in-waiting who hates flattery and pretense, driven almost obsessively to outshine her rival Symboli Rudolf."],"Symboli Kris S":["Analyst","Leader","Winning","Loyalty","Quiet, stoic and efficiency-minded, she treats racing as a duty to her family and quietly looks after younger teammates."],"Fine Motion":["Team Player","Free Spirit","Friends","Winning","A gracious, sheltered princess whose curiosity pulls her into odd situations; she prizes harmony and making memories with friends."],"Air Shakur":["Analyst","","Winning","Ice time","A blunt, rebellious numbers-cruncher who trusts only her own data, guarded with outsiders but quietly kind to close friends."],"Tosen Jordan":["Free Spirit","Hothead","Friends","Money","A trendy, easygoing city girl who dodges pointless effort but locks in when she cares, and absolutely hates losing to rivals."],"Yukino Bijin":["Hard Worker","Team Player","Winning","Friends","A sincere, cheerful farm girl from Iwate who never backs down from a challenge and dreams of becoming a polished city girl."],"Sakura Laurel":["Hard Worker","Team Player","Winning","Ice time","Gentle yet stubbornly persistent, she keeps smiling and bouncing back from injury after injury while chasing her Arc dream."],"Nakayama Festa":["Free Spirit","Hothead","Money","Winning","A thrill-chasing gambler who loves high-stakes risks and bends rules, yet has a soft spot for stray cats and her friends."],"Gold City":["Ace","Hothead","Winning","Money","A blunt, prideful model determined to be respected for her running rather than her looks, disciplined but prickly-tempered."],"Kawakami Princess":["Hothead","Showboat","Winning","Ice time","A loud, hot-tempered spitfire chasing royalty, eager to crush opponents with flair while fiercely defending her friends."],"Jungle Pocket":["Hothead","Ace","Winning","Friends","A brash, wild competitor obsessed with being the strongest, fuelled by her rivalry with Tachyon and loyal to her supporters."],"Hishi Akebono":["Team Player","Free Spirit","Friends","Loyalty","A big-hearted, sumo-loving cook who lives to feed others and see them smile, with a goofy, whimsical streak."],"Duramente":["Ace","Hothead","Winning","Ice time","Stoic and serious off the track but ferociously wild once racing starts, she is driven to prove herself the very strongest."],"Cheval Grand":["Hard Worker","Timid","Ice time","Friends","Ambitious but shy and pessimistic, she grinds hard to escape her gifted sisters' shadow while caring deeply for family and friends."],"Vivlos":["Showboat","Free Spirit","Money","Ice time","A pampered, glamour-loving rich girl who wants celebrity status, playful and teasing yet genuinely caring toward her sisters."],"Copano Rickey":["Free Spirit","Team Player","Friends","Winning","A bubbly, affectionate luck fanatic devoted to feng shui and charms, always trying to spread good fortune to everyone around her."],"Hokko Tarumae":["Hard Worker","Team Player","Loyalty","Winning","A cheerful, somewhat over-serious local idol who promotes her hometown tirelessly and believes success comes from effort, not luck."],"Hishi Miracle":["Team Player","Timid","Friends","Loyalty","Laid-back and warm, she likes making people happy and teasing friends, though she privately doubts she measures up to her peers."],"Zenno Rob Roy":["Timid","Hard Worker","Winning","Friends","A soft-spoken, crowd-shy bookworm who secretly dreams of writing her own heroic legend, gaining courage with trusted friends."],"Tap Dance City":["Showboat","Hothead","Money","Friends","A loud, party-loving showoff who openly races for cash and fame, tap dancing before races and fiercely loyal to her crew."],"Daring Tact":["Hard Worker","Team Player","Loyalty","Winning","Polite, cheerful and relentlessly determined, she trains hard to show off her rugged homeland, with a sentimental, gentle core."],"Cesario":["Leader","Analyst","Winning","Loyalty","Intelligent, disciplined and composed, she wants to guide the next generation, flipping from stoic focus to playful warmth among friends."],"Air Messiah":["Hard Worker","Timid","Winning","Loyalty","Honest, steady and quietly insecure, she grinds dependably to win the titles her mother never could while working to come out of her shell."],"Blast Onepiece":["Team Player","","Friends","Loyalty","Sunny, sociable girl who adores people and their history, collects little treasures, and is easily spooked by anything ghostly."],"Almond Eye":["Ace","Hard Worker","Winning","Ice time","Perfectionist star who loathes losing, drives herself past her physical limits, yet quietly looks after younger friends."],"Stay Gold":["Free Spirit","","Friends","Winning","Aloof, philosophical wanderer who vanishes on impulsive trips and skips class, yet keeps a protective eye on close friends."],"Sounds of Earth":["Showboat","Team Player","Ice time","Friends","Music-obsessed artist who treats every race as a performance with rivals as bandmates, flirtatious but considerate."],"Win Variation":["Hard Worker","","Winning","Friends","Athletic, earnest grinder who gets knocked down by stronger rivals but always gets back up for another try."],"Dream Journey":["Analyst","Leader","Friends","Loyalty","Polished, courteous honor-student type who hides a guarded, manipulative streak and fiercely dotes on her sister Orfevre."],"Furioso":["Hard Worker","Hothead","Loyalty","Winning","Quiet, sincere local-circuit pride who wants to beat central racers for Funabashi's honor and becomes fiercely loyal once trusting."],"Believe":["Hard Worker","Speed Demon","Winning","Loyalty","Disciplined, reserved sprinter convinced speed comes from persistence; shuns attention but is a dependable, grateful senior."],"Wonder Acute":["Team Player","Leader","Friends","Loyalty","Warm, grandmotherly peacemaker with a slow-and-steady mindset who turns steely and resolute when race day arrives."],"Gentildonna":["Ace","","Winning","Money","Proud, exacting champion who equates strength with righteousness, can seem coldly ruthless, and cares deeply about refined fashion."],"Verxina":["Ace","Leader","Winning","Friends","Confident self-styled queen and protective eldest sister who refuses to quit, haunted by a superstitious streak of second places."],"Durandal":["Leader","","Loyalty","Winning","Gallant, mannered would-be knight seeking a worthy master, who secretly craves praise and fears the dark."],"Tanino Gimlet":["Showboat","Hothead","Ice time","Winning","Bold, stylish 'god of destruction' with a dramatic personal aesthetic, philosophical speech, and a habit of breaking things artfully."],"No Reason":["Hothead","Free Spirit","Winning","Friends","Eccentric, warrior-spirited would-be shogun who battles rivals hard, cheers on underdogs, and is prone to big blunders."],"Bubblegum Fellow":["Leader","Ace","Winning","Loyalty","Fearless, quick-witted vanguard-captain type driven by rivalries, with playful rituals like popping huge gum bubbles pre-race."],"Dantsu Flame":["Timid","Hard Worker","Friends","Ice time","Easygoing, indecisive girl short on confidence who gets pushed around, yet works hard and secretly dreams of stardom."],"Ines Fujin":["Leader","Hard Worker","Money","Loyalty","Cheerful, responsible big sister juggling part-time jobs to support her family, unable to refuse anyone's request."],"Still In Love":["Timid","Hothead","Winning","Friends","Soft-spoken, easily overlooked and crowd-shy, but harbors a fierce competitive hunger she keeps tightly reined in."],"Mr. C.B.":["Free Spirit","","Ice time","Friends","Cheerful, mysterious, stubborn free spirit who races in wild ways and throws herself into whatever seems interesting."],"Orfevre":["Ace","Hothead","Winning","Ice time","Imperious, kingly and domineering with a teasing streak, secretly gentle with children and touchy about her image."],"Transcend":["Free Spirit","Speed Demon","Friends","Ice time","Thrill-seeking, gadget-loving socialite who hates predictable plans; a bit cocky but genuinely helpful to friends and rivals."],"Loves Only You":["Showboat","Team Player","Ice time","Friends","Bubbly, love-themed streamer devoted to her fans, brimming with playful confidence and supportive of her childhood friend."],"Seeking the Pearl":["Showboat","Ace","Ice time","Winning","Bubbly, confident globetrotter who loves standing out on the world stage, covering shaky English with big gestures and showmanship."],"Sweep Tosho":["Hothead","Free Spirit","Winning","Ice time","Headstrong, somewhat spoiled aspiring witch who forces her way through when her magic fails, secretly scared of ghosts and often late."],"Admire Groove":["Ace","Analyst","Winning","Ice time","Aloof prodigy who claims she needs no friends, avoids contact and interviews, and hides a softer side behind an intense rivalry."],"Aston Machan":["Free Spirit","Showboat","Friends","Ice time","Quirky, mysterious would-be mascot who photobombs cameras and carries her doll everywhere, desperate to be remembered and loved."],"Biko Pegasus":["Speed Demon","Showboat","Friends","Winning","Boundlessly energetic hero fan who roleplays as a champion of justice, climbs trees, and charges into everything with a big heart."],"Chrono Genesis":["Analyst","Timid","Winning","Loyalty","Quiet racing-history buff who studies past races obsessively, predicts results, and takes careful notes on everything she sees."],"Curren Bouquetd'or":["Team Player","Timid","Friends","Loyalty","Gentle, thoughtful flower lover who always considers others first and quietly proves her overlooked talent."],"Daiichi Ruby":["Leader","Analyst","Loyalty","Winning","Stately heiress of a famous family who lives by its code of conduct, plays chess, and seems distant but bears no malice."],"Daring Heart":["Leader","Showboat","Friends","Winning","Proud, magnetic big-sister type who draws a crowd, mentors juniors, and refuses to let anyone see her weaknesses."],"Epiphaneia":["Free Spirit","Speed Demon","Friends","Winning","Loud, enthusiastic believer in fate whose impulsive energy drags friends along on unpredictable detours."],"Espoir City":["Hothead","Hard Worker","Winning","Ice time","Defiant, challenge-loving rebel who bristles at authority and puts up a tough front to hide her insecurities."],"Forever Young":["Ace","Analyst","Winning","Money","Boastful innovator who vows to revolutionize her world, chasing big goals through logic and creative thinking."],"Fusaichi Pandora":["Free Spirit","Showboat","Friends","Ice time","Carefree self-declared genius with a sweet tooth who works in short bursts, yet hides real determination beneath the playfulness."],"Gran Alegria":["Speed Demon","Ace","Winning","Ice time","Innocent but very assertive miler with sharp reflexes who follows her own personal rulebook and counts every mile."],"Kiseki":["Ace","Free Spirit","Ice time","Winning","Manga-obsessed artist who dreams of being the story's protagonist and frames her rivalries as dramatic showdown arcs."],"Lucky Lilac":["Leader","Free Spirit","Winning","Friends","Kansai-born girl striving for elegant poise while her playful, comedic side keeps slipping out; fiercely motivated by her rival."],"Marche Lorraine":["Timid","Team Player","Friends","Loyalty","Painfully shy artist who speaks through a lively hand puppet and has long supported her best friend from the background."],"Neo Universe":["Hard Worker","Free Spirit","Friends","Winning","Diligent, clear-headed stargazer whose odd way of talking earns her the nickname alien, yet she quietly looks out for others."],"North Flight":["Team Player","Hothead","Friends","Winning","Stylish designer who loves dressing up friends and bringing out their shine, while keeping a fierce rivalry on the track."],"Phalaenopsis":["Leader","Hard Worker","Loyalty","Winning","Regal, bold girl who overcame a frail childhood and is determined to repay the club that made her strong."],"Red Desire":["Free Spirit","Team Player","Winning","Friends","Self-styled saint convinced she is destined for another world, kind and caring but earnestly theatrical about her fate."],"Rhein Kraft":["Speed Demon","Team Player","Friends","Winning","Sunny, high-energy, easygoing crafter with a stubborn streak who mentors juniors and chases titles with her best friend."],"Rose Kingdom":["Leader","Hard Worker","Loyalty","Winning","A sheltered noble heiress who carries her family's racing name as a duty; reserved at first but slowly learning to value friends."],"Royce and Royce":["Showboat","Hard Worker","Ice time","Winning","Image-conscious and polished, she believes stars need fans as much as wins, and works hard to look like a hard worker."],"Rulership":["Analyst","Timid","Winning","Loyalty","A board-game strategist who loves controlling how a contest unfolds, but her fragile ego makes her retreat when plans collapse."],"Shinko Windy":["Free Spirit","Hothead","Friends","Ice time","A mischievous self-styled wild wolf who pranks, bites and causes chaos, mostly because she secretly craves attention."],"Tsurumaru Tsuyoshi":["Hard Worker","Speed Demon","Winning","Ice time","Bright and endlessly determined, she pours everything into chasing the Triple Crown even when her fragile body can't keep up."],"Victoire Pisa":["Team Player","Analyst","Friends","Loyalty","Warm-hearted and hating loneliness, she sticks by anyone struggling until they find hope, with a precise, orderly streak."],"Yamanin Zephyr":["Free Spirit","Speed Demon","Ice time","Friends","A breezy, nature-loving girl who drifts wherever the wind takes her, yet turns fast and fierce once the race starts."],"Happy Meek":["Timid","Free Spirit","Loyalty","Winning","Gentle, quiet and dreamy, she says little, often zones out, and remains hard for anyone to read."],"Little Cocon":["Ace","Hard Worker","Winning","Ice time","Cool, blunt and uncompromising, she struggles in groups but is hungry for strength, with a hidden compassionate side."],"Bitter Glasse":["Hard Worker","Ace","Winning","Ice time","An intensely competitive training addict who wants to be strongest at everything and doesn't mind going it alone."],"Fujimasa March":["Hothead","Hard Worker","Winning","Money","A stern, intimidating scholarship student fixated on the Tokai Derby, whose prickly rivalry with Oguri grows into respect."],"Belno Light":["Analyst","Team Player","Friends","Loyalty","A perceptive, studious friend who supports Oguri from the sidelines with gear, advice and careful race analysis."],"Norn Ace":["Hothead","Showboat","Ice time","Friends","A smug, scheming bully whose jealousy masks insecurity; after losing to Oguri she softens and opens up."],"Obey Your Master":["Analyst","Free Spirit","Winning","Money","Laid-back and quirky on the surface, she quietly watches everyone and competes with a cool, calculating mind."],"Deep Impact":["Ace","Speed Demon","Winning","Loyalty","An overwhelming champion who won by wide margins and set records, an unbeaten Triple Crown star who seemed to fly."],"Equinox":["Leader","Ace","Winning","Money","A calm, adaptable champion who could lead or close as needed, the complete package rated the world's best."],"Lord Kanaloa":["Speed Demon","Ace","Winning","Loyalty","A dominant, reliable sprint specialist who sat near the pace and blew rivals away in the stretch."],"Contrail":["Ace","","Winning","Loyalty","A small, keen unbeaten Triple Crown winner with a powerful late surge, who could lose focus once in front."],"Liberty Island":["Analyst","Leader","Winning","Loyalty","A calm, intelligent Triple Tiara filly who waited patiently in the pack before unleashing a decisive closing kick."],"Just a Way":["Hard Worker","Ace","Winning","Loyalty","A late bloomer who kept improving until he became the world's top-rated horse, held back early then exploding late."],"Do Deuce":["Hard Worker","Ace","Loyalty","Winning","An honest, steadily improving closer who started slowly but surged past leaders, staying with one jockey throughout."],"Efforia":["Analyst","Leader","Winning","Loyalty","A clever, smooth racer who stalked the leaders and picked his moment, peaking brilliantly before fading."],"Titleholder":["Ace","Hard Worker","Winning","Loyalty","Bold and unflinching, she grabs the lead from the opening whistle and dares everyone to catch her, trusting her stamina to outlast them all."],"Sodashi":["Showboat","Speed Demon","Ice time","Money","A dazzling fan favourite, sharp and highly sensitive, who thrives under the spotlight but can get rattled by small things before a game."],"Heart's Cry":["Hothead","Hard Worker","Winning","Money","A rivalry-fuelled battler who will change her whole game just to beat the unbeatable, and never forgets who she wants to topple."],"Rey de Oro":["Leader","Ace","Winning","Loyalty","A relaxed, regal champion who stays calm under pressure and keeps finding another gear when the game is on the line."],"Lys Gracieux":["Hard Worker","Team Player","Winning","Loyalty","A gracious late bloomer who kept finishing second without complaint, then patiently grew into a dominant star who lifts everyone around her."],"Stars on Earth":["Leader","Hard Worker","Winning","Friends","Steady and resilient, she shrugs off bad breaks and awkward starts, quietly working her way to the front when it matters most."],"Panthalassa":["Speed Demon","Showboat","Money","Ice time","A fearless pace-setter who sprints off to an enormous lead every shift, loves the roar of the crowd, and never slows down to think."],"Fierement":["Free Spirit","Analyst","Winning","Ice time","Laid-back and sometimes drifting off mentally, yet she saves her energy wisely and somehow wins the closest finishes by a whisker."],"Danon Premium":["Analyst","Team Player","Winning","Ice time","A smart, poised prodigy who reads the play well and adapts anywhere, though bad luck and traffic often leave her just short of glory."],"Indy Champ":["Free Spirit","Ace","Winning","Ice time","Quirky and easily distracted when out in front, she prefers lurking in the pack before slicing through traffic for a big finish."],"Geoglyph":["Hard Worker","Timid","Ice time","Loyalty","Strong and dogged when she feels right, but moody and sensitive, she once upset a superstar teammate and then struggled to repeat it."],"King Kamehameha":["Leader","Ace","Winning","Loyalty","A commanding, dominant champion who handled every challenge with authority and became the respected figure an entire generation looks up to."],"Screen Hero":["Hard Worker","Hothead","Winning","Loyalty","An overlooked underdog who rises to meet any opponent and fights tooth and nail to stay ahead once the battle is joined."],"Daiwa Major":["Ace","Hard Worker","Winning","Friends","A big, powerful presence who was erratic early but matured into a gritty star who digs in and refuses to be passed."],"Vermilion":["Leader","Hard Worker","Loyalty","Winning","Intelligent and remarkably durable, she grew from an immature youngster into a dependable veteran who wins year after year."],"Dance Partner":["Free Spirit","Leader","Friends","Winning","An adventurous traveller who happily tried her luck abroad, consistently competitive and proud to be the trailblazer of a famous family."]};
+const PERS_PRIORITIES = ["Winning", "Friends", "Ice time", "Loyalty", "Money"];
+const PERS_TYPES = ["Ace", "Showboat", "Leader", "Team Player", "Hothead", "Free Spirit", "Analyst", "Timid", "Speed Demon", "Hard Worker"];
+// clean up a personality from a save, a roster import or the roster sheet
+function normPers(pr, p) {
+  const r = PERSONALITY[p.name], d = r ? { a: r[0], b: r[1] || "", p1: r[2], p2: r[3] } : persDefault(p);
+  if (!pr || typeof pr !== "object") return d;
+  const pick = (v, list) => list.find(x => x.toLowerCase() === String(v || "").trim().toLowerCase()) || "";
+  const a = pick(pr.a, PERS_TYPES) || d.a, b = pick(pr.b, PERS_TYPES), p1 = pick(pr.p1, PERS_PRIORITIES) || d.p1;
+  let p2 = pick(pr.p2, PERS_PRIORITIES) || d.p2; if (p2 === p1) p2 = PERS_PRIORITIES.find(x => x !== p1);
+  return { a, b: b === a ? "" : b, p1, p2 };
+}
+// a personality for anyone without one on file (created players, imports): read it from her playstyle
+function persDefault(p) {
+  const a = { Sniper: "Ace", Playmaker: "Team Player", "Power Forward": "Hard Worker", "Two-Way": "Leader", Grinder: "Hard Worker", Speedster: "Speed Demon", Enforcer: "Hothead", Offensive: "Free Spirit", "Stay-at-Home": "Analyst", Butterfly: "Analyst", Hybrid: "Leader", Reflex: "Free Spirit" }[p.style] || "Hard Worker";
+  return { a, b: "", p1: "Winning", p2: "Ice time" };
+}
+function applyPersonalities(players) {
+  for (const p of players) {
+    if (p.name === "Little Coco") { p.name = "Little Cocon"; p.tag = "Cocon"; } // the game's spelling
+    if (p.friends) p.friends = p.friends.map(f => f === "Little Coco" ? "Little Cocon" : f);
+  }
+  for (const p of players) { const r = PERSONALITY[p.name]; p.pers = r ? { a: r[0], b: r[1] || "", p1: r[2], p2: r[3] } : (p.pers || persDefault(p)); }
+}
+// ---------- moods: Great, Good, Normal, Bad, Awful ----------
+// md is a running value from -2.5 to 2.5; the level is what shows and what plays
+const MOODS = { "2": { k: "great", name: "Great", fx: "+4%" }, "1": { k: "good", name: "Good", fx: "+2%" }, "0": { k: "normal", name: "Normal", fx: "±0" }, "-1": { k: "bad", name: "Bad", fx: "−2%" }, "-2": { k: "awful", name: "Awful", fx: "−4%" } };
+function moodLevel(md) { return md == null || isNaN(md) ? 0 : md >= 1.5 ? 2 : md >= 0.5 ? 1 : md > -0.5 ? 0 : md > -1.5 ? -1 : -2; }
+// a mood arrow, Uma-style: up for great, flat for normal, down for awful
+function moodBadge(level, extra) {
+  const m = MOODS[String(level)] || MOODS["0"], rot = { 2: -90, 1: -45, 0: 0, "-1": 45, "-2": 90 }[level] ?? 0;
+  return `<span class="mood m-${m.k}" title="Mood: ${m.name} (${m.fx})${extra ? " · " + String(extra).replace(/"/g, "") : ""}" aria-label="Mood ${m.name}"><svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M2 8h9M8 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(${rot} 8 8)"/></svg>${level === 2 || level === -2 ? `<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true" style="margin-left:-5px"><path d="M2 8h9M8 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(${rot} 8 8)"/></svg>` : ""}</span>`;
+}
+function persInfo(p) { return (p && p.pers) || persDefault(p || {}); }
+function persBlurb(p) { const r = p && PERSONALITY[p.name]; return r ? r[4] : ""; }
+
+// unique skills (v13): [skill name, hockey trigger, hockey effect, 1 if original to this game, what it does in the Uma game]
+const SKILLS = {"Mejiro Ramonu":["Unbreakable Knot","late","defense",0,"Pace Chaser speeds up near the front at 300m left; big boost near the lead"],"Fenomeno":["Target Locked! Justice Served!","rush","speed",0,"Speed up from midpack on second-half straights; stronger in long races"],"K.S. Miracle":["Blue Light of Happiness","late","speed",0,"Moves forward when well-positioned early in the late race; stronger in sprint/mile"],"Buena Vista":["To Our Vista","rush","pass",0,"Moves up at the race midpoint from midpack or behind; stronger at mile/mid"],"Calstone Light O":["A Singular Path","start","speed",0,"Brief speed burst near the front in the 4th furlong; huge if combo skills used"],"Katsuragi Ace":["Sunrise Banner—Katsuragi Ace!","lead","shot",0,"Speed up and recover endurance when leading on the third corner"],"Special Week":["Shooting Star","late","shot",0,"Surges ahead with extra acceleration after overtaking into the front late-race"],"Silence Suzuka":["The View from the Lead Is Mine!","lead","speed",0,"Speed boost when leading by a margin in the second half"],"Tokai Teio":["Sky-High Teio Step","late","shot",0,"Big speed boost on the final straight while closing on runners ahead"],"Daiwa Scarlet":["Resplendent Red Ace","lead","physical",0,"Speed and acceleration when in first or second in the second half"],"Vodka":["Cut and Drive!","traffic","physical",0,"Speed up challenging close rivals near the front in the last 200m"],"Kitasan Black":["Victory Cheer!","lead","physical",0,"Speed up near the front on the third corner or late backstretch"],"Mejiro McQueen":["The Duty of Dignity Calls","lead","defense",0,"Speed up to keep the lead at the front on the final corner"],"Satono Diamond":["Eternal Encompassing Shine","late","shot",0,"Speed up at start of final straight if 2nd-5th and close to leader"],"Rice Shower":["Blue Rose Closer","behind","defense",0,"Speed up on the final straight after passing into the front group late"],"Mihono Bourbon":["G00 1st. F∞;","lead","shot",0,"Speed up near the front on final straight; more if she led throughout"],"Gold Ship":["Anchors Aweigh!","goalie","save",0,"Long steady spurt from the back half starting at mid-race"],"Narita Brian":["Shadow Break","traffic","physical",0,"Speed up passing on the outside from final corner; more if blocked mid-race"],"Air Groove":["Blazing Pride","behind","shot",0,"Speed up when overtaking from midpack or behind on the final corner"],"Taiki Shuttle":["Shooting for Victory!","slot","shot",0,"Acceleration boost when well-positioned late on the final corner"],"El Condor Pasa":["Victoria por plancha ☆","late","shot",0,"Strong speed boost near the front with energy left on final straight"],"Grass Wonder":["Where There's a Will, There's a Way","behind","shot",0,"Speed up when overtaking from the back on the final straight"],"Sakura Bakushin O":["Genius x Bakushin = Victory","traffic","speed",0,"Speed boost when near the front and challenged side-by-side in the second half"],"Symboli Rudolf":["Behold Thine Emperor's Divine Might","late","pass",0,"Big speed boost on the final straight after overtaking three runners late"],"Maruzensky":["Red Shift/LP1211-M","lead","speed",0,"Shifts gears for acceleration when near the front from the final corner on"],"Hishi Amazon":["You and Me! One-on-One!","traffic","physical",0,"Speed boost on the final straight after passing a rival around the outside late"],"Fuji Kiseki":["Lights of Vaudeville","behind","pass",0,"Big speed boost when breaking from the pack toward the front late"],"Eishin Flash":["Schwarzes Schwert","late","save",0,"Speed boost on the final straight from 3rd or lower after a calm race"],"Oguri Cap":["Triumphant Pulse","traffic","physical",0,"Forces a path out of the pack with 200m left when near the front"],"Tamamo Cross":["White Lightning Comin' Through!","rush","shot",0,"Lightning surge on a straight in the second half when well placed or overtaking"],"Super Creek":["Pure Heart","tired","stamina",0,"Large stamina recovery when well positioned mid-race"],"Inari One":["Now We're Cruisin'!","traffic","physical",0,"Big speed boost when dueling for position from midpack or behind in the second half"],"Bamboo Memory":["Red-Hot Discipline!","behind","speed",0,"Acceleration closing from behind on the final corner, growing with each pass"],"Yaeno Muteki":["Peerless Dance of Flowering Flames","late","physical",0,"Speed boost in the last 300m near the front after passing on the final corner"],"Narita Taishin":["Nemesis","behind","physical",0,"Speed boost when moving up from midpack and overtaking on the final corner"],"Winning Ticket":["Our Ticket to Win!","late","shot",0,"Speed boost on the final straight in the top five after being boxed in"],"Sakura Chiyono O":["Ambition to Surpass the Sakura","late","shot",0,"Speed boost in the last 300m when near the front and right behind a rival"],"Marvelous Sunday":["Magical☆Marvelous★World","traffic","defense",0,"Speed boost mid-race when close to others in midpack, stronger in a crowd"],"Biwa Hayahide":["∴win Q.E.D.","late","save",0,"Speed boost near the front on the final corner, bigger after a calm race"],"Twin Turbo":["Turbo BLAST!","lead","speed",0,"Long steady speed boost when leading by a clear margin mid-race; fades at the end"],"Nice Nature":["Just a Little Farther!","goalie","save",0,"Speed boost late in the race when in 3rd with a rival right behind"],"Matikanetannhauser":["Go, Go, Mun!","goalie","save",0,"Recovers stamina and gains speed in midpack around the halfway point"],"Haru Urara":["Super-Duper Climax","goalie","save",0,"Recovers stamina near the back on the final corner when others are close"],"King Halo":["Prideful King","late","pass",0,"Big speed boost with 200m left from mid-pack after a calm race"],"Seiun Sky":["Angling and Scheming","lead","speed",0,"Accelerates at the right moment when leading on a late-race corner"],"Ikuno Dictus":["Tempered Through a Hundred Trials","late","defense",0,"If she stays calm, steadily gains a little speed during the last spurt"],"Agnes Tachyon":["Introduction to Physiology","tired","stamina",0,"Recovers stamina when saving energy on a corner in the race's second half"],"Mejiro Palmer":["Keep Pushing Ahead","lead","speed",0,"Running up front from start to second half restores stamina and steadily adds speed"],"Daitaku Helios":["Hands in the Air Like Ya Don't Care!","lead","speed",0,"Speed boost when running near the front approaching the late race"],"Manhattan Cafe":["Chasing After You","late","save",0,"From mid-pack in second half, gradually builds speed and slightly unnerves runners ahead"],"T.M. Opera O":["This Dance Is for Vittoria!","slot","pass",0,"Speed boost when battling for the front on the final corner"],"Admire Vega":["Shooting Star of Dioskouroi","behind","shot",0,"Speed boost on the final straight when far behind the leader; bigger near the back"],"Narita Top Road":["Road to Glory","late","speed",0,"In long races, big speed burst with 400m left when near the lead"],"Mayano Top Gun":["Flashy☆Landing","traffic","hands",0,"Breaks out of the pack after jostling for the lead on the final corner"],"Agnes Digital":["OMG! (ﾟ∀ﾟ) The Final Sprint! ☆","behind","pass",0,"After overtaking two rivals late, gains speed and better lane movement"],"Smart Falcon":["SPARKLY☆STARDOM","lead","speed",0,"Keeps the spotlight mid-race when up front on a straight with a rival close behind"],"Nishino Flower":["Budding Blossom","traffic","physical",0,"After being boxed in mid-race, accelerates when well-placed late in the race"],"Meisho Doto":["I Never Goof Up!","behind","speed",0,"Pushes determinedly for the front after passing a runner late in the race"],"Mejiro Dober":["Moving Past, and Beyond","rush","pass",0,"After a calm race, accelerates when making her move from mid-pack on a corner"],"Matikanefukukitaru":["I See Victory in My Future!","goalie","save",0,"Fortune-telling clears a path when boxed in late in the race"],"Mejiro Ryan":["Let's Pump Some Iron!","behind","physical",0,"Accelerates to move up from behind on a late-race corner"],"Mejiro Ardan":["A Lifelong Dream, A Moment's Flight","late","pass",0,"Big speed burst on final straight with a rival close behind, costing a little stamina"],"Satono Crown":["Reversal Illusion","behind","speed",0,"From mid-pack on the final corner, speeds up inside the last 400m"],"Mejiro Bright":["Lovely Spring Breeze","rush","speed",0,"From mid-pack in the second half, steady slight speed gain lasting by remaining stamina"],"Curren Chan":["LookatCurren","goalie","save",0,"Gains momentum and moves up after passing a rival around mid-race"],"Sirius Symboli":["Seirios","rush","physical",0,"Slight acceleration from mid-pack with 800m left; big if favored in a 2400m race"],"Symboli Kris S":["Mission: Triumph","rush","speed",0,"Mid-race speed boost on a straight while positioned mid-pack."],"Fine Motion":["Fairy Tale","traffic","pass",0,"Second-half speed boost near the front after being boxed in on the side."],"Air Shakur":["trigger:BEAT","late","save",0,"Final-straight speed and lane-change boost when coming off the inside mid-pack."],"Tosen Jordan":["Pop & Polish","late","defense",0,"Speed boost on the final straight while near the front and overtaking."],"Yukino Bijin":["Snow Bright, Snow Flight","late","save",0,"Speed boost in the last 300m when close behind the leader."],"Sakura Laurel":["World in Bloom","rush","speed",0,"Speed boost at the race midpoint from mid-pack; recovers stamina in long races."],"Nakayama Festa":["Laugh at the Odds","behind","shot",0,"Final-corner overtake speed boost from mid-pack; stronger when she's an underdog."],"Gold City":["KEEP IT REAL.","rush","speed",0,"Second-half speed boost while overtaking from mid-pack."],"Kawakami Princess":["A Princess Must Seize Victory!","traffic","physical",0,"Speed boost on the final straight after being blocked on the side."],"Jungle Pocket":["Faith in the Feral","rush","physical",0,"Big speed boost at the race midpoint from mid-pack, stronger at medium distance."],"Hishi Akebono":["YUMMY☆SPEED!","goalie","save",0,"Mid-race acceleration while overtaking near the front."],"Duramente":["Scarlet Ascension of the Rakshasa","behind","shot",0,"Midpoint speed boost from the back half; extra burst overtaking on the final corner."],"Cheval Grand":["Celeste Oath","rush","speed",0,"Mid-race speed boost near the front plus stamina recovery, stronger in long races."],"Vivlos":["Deluxe☆Fountain","late","pass",0,"Speed boost in the last 300m from mid-pack; stronger if she stayed calm."],"Copano Rickey":["Luck Runs My Way","rush","physical",0,"Speed and acceleration boost at a random point in the second half."],"Hokko Tarumae":["Shine On, Tomakomai! ☆","late","speed",0,"Acceleration at last-spurt start near the front on dirt after being boxed in mid-race."],"Hishi Miracle":["Bang! Miracle Shot ☆","slot","shot",0,"Speed boost in the second half of the final corner from mid-pack; stronger as underdog."],"Zenno Rob Roy":["Raise My Soul's Blade!","late","save",0,"Speed boost with 400m left while near the front; stronger in G1 when favored."],"Tap Dance City":["Billions of Stars","lead","speed",0,"Speed boost on the final straight while in first place."],"Daring Tact":["Unblemished White Tiara","late","shot",1,""],"Cesario":["Guiding Sea","behind","speed",0,"Speed and acceleration burst with 800m left from near the back."],"Air Messiah":["Traced Bloodline, Budding Future","rush","speed",0,"Speed boost at the race midpoint from mid-to-back, stronger on an uphill."],"Blast Onepiece":["Blast-Off Barricade","goalie","save",1,""],"Almond Eye":["Peerless Heroine","rush","speed",0,"Surges on a mid-race corner near the front, then bursts again in top 3 during spurt."],"Stay Gold":["In Search of Gold","late","speed",0,"Long races: closer gains speed in second half, then extra acceleration on final spurt."],"Sounds of Earth":["Vivace Volare","traffic","speed",0,"Boxed in mid-pack early, recovers a little stamina then surges on mid-race straight."],"Win Variation":["Spirited Allegro","behind","speed",0,"After overtaking mid-race, big speed boost entering the final straight; stronger for closers."],"Dream Journey":["Well Then, Have a Good Trip","behind","speed",0,"Trailing at the final stretch, she briefly pushes forward; bigger surge at Nakayama/Hanshin."],"Furioso":["Funabashi's Strongest!","late","save",0,"After dueling side by side up front mid-race, gains late speed; longer at local tracks."],"Believe":["Because I Believe","lead","speed",0,"Pace chaser near the front entering the final stretch gets a small, lasting speed boost."],"Wonder Acute":["Never Say Never","late","speed",0,"Near the front with 300m left, gains speed; extra surge on dirt near the leader."],"Gentildonna":["Baptism of Blazing Blossoms","late","save",0,"Speed up on early corners when in front, then strong burst on final straight in lead group."],"Verxina":["Queen's Rebirth","goalie","save",0,"Early-corner speed when in front; on the final straight, edges ahead when rivals close in."],"Durandal":["Lame de vent","behind","speed",0,"After passing on the final corner, big last-spurt speed in sprint/mile, strongest from mid-pack."],"Tanino Gimlet":["Sublimated Thunder","behind","speed",0,"After running in the back half late, speed burst on the final straight; huge at Tokyo."],"No Reason":["Deceive by Dusk, Never Imperiled","rush","speed",0,"Mid-pack at the third corner gets a speed boost, then more speed when overtaking late."],"Bubblegum Fellow":["Swelling Dreams, Pioneer's Path","lead","defense",0,"Late in the race near the front, speeds up; big boost at 1600-2000m near the lead."],"Dantsu Flame":["My Flame Lights the Way","rush","speed",0,"Well positioned around mid-race, gains speed; stronger in middle-distance races."],"Ines Fujin":["All Charged! It's Go Time!","late","speed",0,"Near the front with about 300m left, speed boost; larger coming off an uphill."],"Still In Love":["Scarlet Lily's Exaltation","late","speed",0,"In mid-pack with 300m left, big speed boost; corner acceleration in certain mid races."],"Mr. C.B.":["Lyrical Journey","behind","speed",0,"Running near the back late, gains sustained speed; stronger the further behind the leader."],"Orfevre":["Nothing Bars My Path of Conquest","behind","shot",0,"Closer with 1000m left keeps pushing forward; stronger with all stats at 1000+."],"Transcend":["Info: Acquired","lead","defense",0,"Staying in the front pack late, edges ahead when a rival fires an acceleration skill."],"Loves Only You":["Circulating Love♡","late","team",0,"Late surger gains late speed; in middle races scales with fan love up to triple."],"Seeking the Pearl":["I'm Possible!","late","save",0,"Speed boost with 200m left when chasing within a few lengths of the leader"],"Sweep Tosho":["Victory belongs to me—Strelitzia! ☆","behind","speed",0,"After saving energy at the back, keeps accelerating with about 300m left"],"Admire Groove":["Distant Far North","rush","pass",0,"Mid-race speed boost on turf mid-distance, lasting longer from mid-pack or behind"],"Aston Machan":["Silent Letter","lead","speed",0,"In the last 400m while leading under pressure, breaks clear of the pack"],"Biko Pegasus":["Gale Rush Pegasus Dash!","late","save",0,"After passing rivals late, huge short speed burst near the finish from up front"],"Chrono Genesis":["Weaving History","rush","speed",0,"Pace-chaser speed boost around mid-race on turf, doubled in longer races"],"Curren Bouquetd'or":["Blooming Butterfly Wall","goalie","save",1,""],"Daiichi Ruby":["Ever Supreme","defend","defense",0,"Surges from the back in the late race and slightly unnerves the front runners"],"Daring Heart":["With All My Heart","late","speed",0,"Brief speed boost near the final stretch of mile races, stronger when in front"],"Epiphaneia":["Shine! Burst! Supernova!","late","shot",0,"Acceleration burst in the final spurt after steadily building speed in long races"],"Espoir City":["Punkish Bite","late","physical",0,"Front-runner edges ahead in late-race corners, stronger on dirt"],"Forever Young":["Stretch Duel Defiance","traffic","physical",1,""],"Fusaichi Pandora":["Hop Step Getcha♡","start","pass",0,"Speed up in early-race corners when well positioned, sustained in 2200m races"],"Gran Alegria":["¡Qué alegría!","rush","speed",0,"Short mid-race burst from mid-pack, plus big final-spurt burst in sprints and miles"],"Kiseki":["Imagination × Creation = ∞","rush","physical",0,"Long forward push early mid-race from mid-pack or ahead; can recover stamina instead"],"Lucky Lilac":["The Smiling Star","rush","pass",0,"With 1000m left near the front, speeds up and keeps pressing toward the lead"],"Marche Lorraine":["Del Mar Thunderbolt","pp","shot",1,""],"Neo Universe":["Ad Astra","rush","speed",0,"Mid-pack speed boost at halfway, much stronger in mid-distance after many skills fire"],"North Flight":["Shining Runway","slot","shot",0,"Speed boost at the final corner when sitting 2nd to 5th, longer in miles"],"Phalaenopsis":["Fierce Bloom","goalie","save",0,"Slight speed gain when overtaking in mid-race corners, extra push on straights in mid-distance"],"Red Desire":["Innocent Prayer: Holy Light","behind","shot",0,"Final-spurt speed burst from mid-pack or behind with stamina to spare"],"Rhein Kraft":["Connect × Dreams & Future","start","speed",0,"Slight speed gain in early-race corners from mid-pack, sustained in sprints and miles"],"Rose Kingdom":["Grand Command of Épanouissement","traffic","speed",0,"When passed or contesting the lead early/mid race, keeps pushing slightly ahead"],"Royce and Royce":["Absolute Strongest☆Appeal Declaration!","traffic","physical",0,"Speed boost mid-race when boxed in from the side; extra push while dueling"],"Rulership":["Peerless Tactics","start","pass",0,"Long speed boost after a good start; big boost from the rear after a bad one"],"Shinko Windy":["Ding Dong, Boo!","traffic","physical",0,"Moderate speed boost while dueling a rival; extra acceleration on dirt"],"Tsurumaru Tsuyoshi":["A Blazing, Absolute Will","late","shot",0,"Speed boost on the final straight after overtaking a rival late in the race"],"Victoire Pisa":["Ring-a-Link","behind","pass",0,"From the back of the pack mid-race, surges forward as the late stage nears"],"Yamanin Zephyr":["Sunny Breeze","slot","shot",0,"Long acceleration boost in the late final corner, stronger when running second"],"Happy Meek":["Unwavering Quiet Stride","late","speed",1,""],"Little Cocon":["Cocoon Breakout","rush","speed",1,""],"Bitter Glasse":["Shatterproof Glass","goalie","save",1,""],"Fujimasa March":["Kasamatsu Pride Finish","slot","shot",1,""],"Belno Light":["Guiding Light","defend","pass",1,""],"Norn Ace":["Back-Alley Ace","traffic","physical",1,""],"Obey Your Master":["Master's Command","pp","pass",1,""],"Deep Impact":["Flight of the Hero","behind","speed",1,""],"Equinox":["Perfect Equilibrium","lead","hands",1,""],"Lord Kanaloa":["Sprint King's Tide","rush","speed",1,""],"Contrail":["Vapor Trail Strike","slot","shot",1,""],"Liberty Island":["Torch of Liberty","behind","pass",1,""],"Just a Way":["One Way to Glory","late","shot",1,""],"Do Deuce":["Double Down Drive","traffic","physical",1,""],"Efforia":["Euphoria Overdrive","rush","pass",1,""],"Titleholder":["Wire-to-Wire Crown","lead","speed",1,""],"Sodashi":["Pure White Breakaway","start","speed",1,""],"Heart's Cry":["Giant-Felling Cry","behind","physical",1,""],"Rey de Oro":["Golden King's Stride","rush","hands",1,""],"Lys Gracieux":["Graceful Lily Bloom","late","pass",1,""],"Stars on Earth":["Starlight Pursuit","behind","speed",1,""],"Panthalassa":["Endless Ocean Escape","lead","speed",1,""],"Fierement":["Proud Long Haul","tired","stamina",1,""],"Danon Premium":["Premium Delivery","rush","pass",1,""],"Indy Champ":["Champ Threads the Gap","traffic","hands",1,""],"Geoglyph":["Carved Into the Earth","traffic","physical",1,""],"King Kamehameha":["Royal Point Blast","pp","shot",1,""],"Screen Hero":["Silver Screen Stand","defend","defense",1,""],"Daiwa Major":["Major Key Breakout","rush","pass",1,""],"Vermilion":["Vermilion Wall","pk","defense",1,""],"Dance Partner":["Steady Partner Step","goalie","save",1,""]};
+const SKILL_TRIG = { start: "In the opening minutes", late: "Late in a close game", lead: "When her team leads", behind: "When her team trails", rush: "Carrying the puck up ice", slot: "With the puck in scoring range", traffic: "Battling in traffic", pp: "On the power play", pk: "Killing a penalty", tired: "When she's running out of legs", defend: "Defending her own zone", goalie: "Facing a flurry of shots" };
+const SKILL_FX = { speed: "a burst of speed", shot: "a much harder, sharper shot", pass: "sharper passing and playmaking", hands: "slicker hands and puck protection", defense: "a quicker stick and better blocks", physical: "wins every battle", stamina: "gets her legs back", team: "lifts everyone on the ice with her", slow: "slows the opponents around her", save: "a hot glove and quick pads" };
+function skillOf(p) { if (!p) return null; if (p.skill && p.skill.n) return p.skill; const r = SKILLS[p.name]; return r ? { n: r[0], t: r[1], e: r[2], o: r[3], g: r[4] } : null; }
 
 // ---------- Lineups ----------
 // fLines: up to 3 x [C, LW, RW]; dPairs: up to 2 x [D, D]; goalies [starter, backup]; pp/pk special-teams units
@@ -1863,6 +1953,46 @@ function segDist(px, py, ax, ay, bx, by) {
   return { d: Math.hypot(px - (ax + dx * t), py - (ay + dy * t)), t };
 }
 function fmtClock(sec) { sec = Math.max(0, Math.ceil(sec)); return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); }
+// ---------- personalities: how a player's character nudges her decisions ----------
+// carry/pass/shoot/deke scale those options; pace favors carrying through the neutral zone over dumping in;
+// risk = saucers, stretch and bank passes, pinches; hit/pen = physical play and penalties; work = winning battles;
+// jit = how much her choices vary from the "best" play; picky = only shoots from good looks
+const PERS_ARCH = {
+  "Ace":         { carry: 1.15, shoot: 1.12, pass: 0.92, deke: 1.05 },
+  "Showboat":    { deke: 1.4, carry: 1.1, risk: 1.25, pass: 0.97 },
+  "Leader":      { pass: 1.05, risk: 0.85, pen: 0.8, jit: 0.8 },
+  "Team Player": { pass: 1.15, shoot: 0.9, carry: 0.92 },
+  "Hothead":     { shoot: 1.1, hit: 1.35, pen: 1.3, risk: 1.05 },
+  "Free Spirit": { risk: 1.3, deke: 1.15, jit: 1.7 },
+  "Analyst":     { risk: 0.8, pass: 1.05, jit: 0.6, picky: 1 },
+  "Timid":       { carry: 0.85, pass: 1.1, hit: 0.6, pen: 0.55, deke: 0.8, shoot: 0.95 },
+  "Speed Demon": { pace: 1.3, carry: 1.08, risk: 1.05 },
+  "Hard Worker": { work: 1.2, hit: 1.1 }
+};
+const PERS_HELP = {
+  "Ace": "Carries it herself, drives the net and shoots a lot.",
+  "Showboat": "Loves the spotlight: dekes, toe drags and risky highlight plays.",
+  "Leader": "Composed and responsible: smart, safe plays and few penalties.",
+  "Team Player": "Unselfish: passes first and sets up her linemates.",
+  "Hothead": "Fiery and competitive: shoots first, hits hard, takes penalties.",
+  "Free Spirit": "Unpredictable: creative passes, sudden rushes, hard to read.",
+  "Analyst": "Methodical: patient, only shoots from good looks, rarely gambles.",
+  "Timid": "Reserved: moves the puck on quickly, avoids contact, almost never in the box.",
+  "Speed Demon": "Always pushing the pace: carries it through the neutral zone instead of dumping it.",
+  "Hard Worker": "Never quits: wins puck battles and grinds on the forecheck."
+};
+const PRI_HELP = { Winning: "Gives a discount to contenders and wants more from losing teams.", Friends: "Cheaper to sign where her friends play.", "Ice time": "Wants a role that matches her talent; unhappy as a healthy scratch.", Loyalty: "Gives a hometown discount to re-sign and rarely leaves.", Money: "Wants top dollar." };
+const PERS_KEYS = ["carry", "pass", "shoot", "deke", "pace", "risk", "hit", "pen", "work", "jit", "picky"];
+const persCache = new WeakMap();
+function persTraits(p) {
+  const pe = p && p.pers, key = pe ? pe.a + "|" + (pe.b || "") : "";
+  const c = p && persCache.get(p); if (c && c.key === key) return c;
+  const A = pe && PERS_ARCH[pe.a] || {}, B = pe && PERS_ARCH[pe.b] || {}, t = { key };
+  for (const k of PERS_KEYS) { const base = k === "picky" ? 0 : 1; t[k] = base + ((A[k] ?? base) - base) + 0.5 * ((B[k] ?? base) - base); }
+  if (p) persCache.set(p, t);
+  return t;
+}
+function persScale(v, m) { return m === 1 ? v : v >= 0 ? v * m : v / m; }
 function periodName(p) { return p === 1 ? "1st" : p === 2 ? "2nd" : p === 3 ? "3rd" : p === 4 ? "OT" : "SO"; }
 function weighted(opts) {
   let tot = 0; for (const o of opts) tot += Math.max(0, o[1]);
@@ -1947,6 +2077,11 @@ class Game {
     this.playoff = !!(opts && opts.playoff); this.otN = 1; this.league = league; this.fam = league.fam || null; // franchise familiarity between teammates
     // coaching from the bench: hold at intermissions, manual goalie pulls and changes
     this.intHold = false; this.holdInt = false;
+    // moods: a franchise brings each player's own; Quick Play can roll them fresh for the night
+    this.sk = {}; this.skAct = {}; this.teamUntil = [0, 0]; this.skillPop = null; this.skT = 0; // unique skills
+    this.moods = {};
+    for (const p of league.players) if (p.md != null) this.moods[p.id] = moodLevel(p.md);
+    if (opts && opts.randomMoods) for (const p of league.players) if (this.moods[p.id] == null) { const r = rnd(); this.moods[p.id] = r < 0.1 ? 2 : r < 0.35 ? 1 : r < 0.7 ? 0 : r < 0.9 ? -1 : -2; }
     // Be A Player: one skater the viewer makes the big decisions for
     this.bap = opts && opts.bap ? { me: opts.bap.me, moments: opts.bap.moments !== false, auto: false, last: -99, n: 0, log: [], cap: 16 } : null; this.moment = null;
     this.teams = [homeId, awayId].map((id, i) => {
@@ -2001,7 +2136,7 @@ class Game {
     if (m > 0.62 && this.time - (this.momLog[ti] || -999) > 150 && this.phase !== "final") { this.momLog[ti] = this.time; this.log("momentum", ti, this.teams[ti].team.name + " have all the momentum right now."); }
   }
   canPinch(s) {
-    const a = this.aggr(s.team), st = s.p.style;
+    const a = this.aggr(s.team) * persTraits(s.p).risk, st = s.p.style;
     return (st === "Offensive" && a >= 0.2) || (st === "Two-Way" && a >= 0.6) || a >= 0.85;
   }
   dir(ti) { const base = (this.period % 2 === 1) ? 1 : -1; return ti === 0 ? base : -base; }
@@ -2065,8 +2200,58 @@ class Game {
   clutchOn() { return this.period >= 4 || (this.period === 3 && this.clock < 480 && Math.abs(this.teams[0].score - this.teams[1].score) <= 1); }
   clutch(p) { return this.clutchOn() ? 1 + (this.r(p, "clu") - 60) / 300 : 1; }
   addFx(s, text) { this.fx.push({ s, x: s.x, y: s.y, text, t: 0, team: s.team }); if (this.fx.length > 8) this.fx.shift(); }
-  spdMul(p) { return 0.68 + 0.32 * Math.pow(this.energy[p.id] / 100, 0.8); }
-  skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)); }
+  spdMul(p) { const a = this.skAct[p.id]; return (0.68 + 0.32 * Math.pow(this.energy[p.id] / 100, 0.8)) * (a && a.e === "speed" && a.until > this.time ? 1.08 : 1); }
+  // ---------- unique skills: each player's signature moment, once a game ----------
+  skillMul(p, ti) {
+    const a = this.skAct[p.id];
+    let m = a && a.until > this.time && (a.e === "pass" || a.e === "hands" || a.e === "defense" || a.e === "physical") ? 1.07 : 1;
+    if (ti != null && this.teamUntil[ti] > this.time) m *= 1.05;
+    return m;
+  }
+  skillOn(p, e) { const a = this.skAct[p.id]; return !!(a && a.e === e && a.until > this.time); }
+  skillCond(s, t) {
+    const ti = s.team, d = this.dir(ti), P = this.puck, T = this.teams[ti], O = this.teams[1 - ti], diff = T.score - O.score;
+    const near = dist(s.x, s.y, P.x, P.y) < 30;
+    switch (t) {
+      case "start": return this.period === 1 && this.clock > PERIOD_LEN - 300 && near;
+      case "late": return (this.period === 3 && this.clock < 360 && Math.abs(diff) <= 1) || this.period === 4;
+      case "lead": return diff > 0 && near;
+      case "behind": return diff < 0 && near;
+      case "rush": return P.carrier === s && d * s.x > -RINK.blueX && d * s.x < RINK.blueX + 6 && Math.hypot(s.vx, s.vy) > 14;
+      case "slot": return P.carrier === s && this.xgAt(s.x, s.y, ti) > 0.08;
+      case "traffic": { const n = this.nearestOpp(s); return !!n && n.d < 4.5 && dist(s.x, s.y, P.x, P.y) < 8; }
+      case "pp": return this.strength(ti) > this.strength(1 - ti) && near;
+      case "pk": return this.strength(ti) < this.strength(1 - ti) && near;
+      case "tired": return this.energy[s.p.id] < 45;
+      case "defend": return d * P.x < -RINK.blueX && P.carrier && P.carrier.team !== ti && near;
+      case "goalie": return (this.gRecent[ti] || []).filter(x => this.time - x < 10).length >= 2;
+    }
+    return false;
+  }
+  skillTick(dt) {
+    this.skT += dt; if (this.skT < 0.5) return; this.skT = 0;
+    const who = this.skaters.filter(x => x.state === "on").concat(this.goalies.filter(Boolean));
+    for (const s of who) {
+      const p = s.p, sk = skillOf(p); if (!sk) continue;
+      const st = this.sk[p.id] || (this.sk[p.id] = { used: 0, until: 0 });
+      if (st.used >= 1 || !this.skillCond(s, sk.t)) continue;
+      const ch = 0.18 * (1 + 0.15 * this.moodOf(p)) * (0.85 + this.r(p, "clu") / 400);
+      if (rnd() < ch) this.fireSkill(s, sk, st);
+    }
+  }
+  fireSkill(s, sk, st) {
+    st.used++; st.until = this.time + 12;
+    this.skAct[s.p.id] = { e: sk.e, until: st.until, n: sk.n };
+    const S = this.stats[s.p.id]; if (S) S.sk = (S.sk || 0) + 1;
+    if (sk.e === "stamina") this.energy[s.p.id] = Math.min(100 - (this.fatigue[s.p.id] || 0), this.energy[s.p.id] + 30);
+    if (sk.e === "team") this.teamUntil[s.team] = st.until;
+    if (sk.e === "slow") for (const o of this.skaters) if (o.team !== s.team && o.state === "on" && dist(o.x, o.y, s.x, s.y) < 22) o.slowUntil = this.time + 8;
+    if (s.g !== "G") this.addFx(s, "✦ " + sk.n);
+    this.log("uskill", s.team, s.p.name + " · " + sk.n + "! " + SKILL_FX[sk.e].replace(/^./, c => c.toUpperCase()) + ".", { pid: s.p.id, skill: sk.n });
+    this.skillPop = { name: s.p.name, n: sk.n, team: s.team, t: this.time, id: (this.skillPop ? this.skillPop.id : 0) + 1 };
+  }
+  moodOf(p) { return (this.moods && this.moods[p.id]) || 0; }
+  skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)) * (1 + 0.02 * this.moodOf(p)) * this.skillMul(p, ti); }
   chemKey(ti) { const ps = this.onIce(ti).map(s => s.p); const g = this.goalies[ti]; if (g) ps.push(g.p); return { ps, key: ps.map(p => p.id).sort().join("|") }; }
   chemValue(ti) { const { ps, key } = this.chemKey(ti); if (!(key in this.chemCache)) this.chemCache[key] = unitChemistry(ps, this.fam).value; return this.chemCache[key]; }
   chemMult(ti) { return 1 + (this.chemValue(ti) - 60) / 200; }
@@ -2481,7 +2666,7 @@ class Game {
     const empty = this.netEmpty(1 - ti), goalie = this.goalies[1 - ti];
     const st = s.p.style, dd = dist(s.x, s.y, gx, 0);
     const xg = opt.wrap ? opt.wrap / Math.max(0.2, TUNE.goal) : this.xgAt(s.x, s.y, ti);
-    let mods = (0.55 + this.r(s.p, "sht") / 133) * this.skill(s.p) * this.clutch(s.p), tag = "";
+    let mods = (0.55 + this.r(s.p, "sht") / 133) * this.skill(s.p) * this.clutch(s.p) * (this.skillOn(s.p, "shot") ? 1.18 : 1), tag = "";
     if (st === "Sniper") mods *= 1.12; else if (st === "Playmaker") mods *= 0.92; else if (st === "Power Forward" && dd < 16) mods *= 1.12;
     const oneTimer = this.time - s.gotT < 0.7 && s.gotFrom && s.otOK;
     if (oneTimer) { mods *= dd < 13 ? 1.15 : 1.35; tag = "one-timer"; if (areFriends(s.p, s.gotFrom.p)) { mods *= 1.15; tag = "chemistry one-timer"; } }
@@ -2503,7 +2688,7 @@ class Game {
       if (gs === "Butterfly" && dd < 20) gm *= 0.88;
       if (gs === "Reflex" && (oneTimer || rebound)) gm *= 0.85;
       if (gs === "Hybrid" && dd > 35) gm *= 0.94;
-      gm *= this.gForm[gp.id] || 1;
+      gm *= (this.gForm[gp.id] || 1) * (1 - 0.015 * this.moodOf(gp)) * (this.skillOn(gp, "save") ? 0.75 : 1); // a goalie in a good mood (or on a hot streak) lets in less
       gm /= this.clutch(gp);
       // a scramble in front wears a goalie down: several shots in a few seconds
       const recent = (this.gRecent[1 - ti] || []).filter(t => this.time - t < 5).length;
@@ -2634,7 +2819,8 @@ class Game {
       const aTxt = (assists.length ? " Assists: " + assists.map(nameOf).join(", ") + "." : " Unassisted.") + (sh.saucer ? " Set up by " + sh.saucer.p.name + "'s saucer pass." : "");
       const tags = [sh.tag, pp ? "PP" : shg ? "SH" : "", sh.empty ? "empty net" : ""].filter(Boolean);
       const how = " (" + (tags.length ? tags.join(", ") + ", " : "") + sh.dist + " ft" + (sh.mph && sh.dist >= 20 && !sh.tipper ? ", " + sh.mph + " mph" : "") + ")";
-      this.log("goal", ti, "GOAL " + T.team.abbr + ": " + scorerSk.p.name + how + "." + aTxt, { scorer: scorerSk.p.id, assists, pp, sh: shg, en: !!sh.empty });
+      const us = this.skAct[scorerSk.p.id] && this.skAct[scorerSk.p.id].until > this.time ? this.skAct[scorerSk.p.id].n : null;
+      this.log("goal", ti, "GOAL " + T.team.abbr + ": " + scorerSk.p.name + how + "." + aTxt + (us ? " ✦ " + us + "." : ""), { scorer: scorerSk.p.id, assists, pp, sh: shg, en: !!sh.empty, uskill: us });
       this.lastGA = this.lastGA || [null, null];
       { const L = this.lastGA[1 - ti]; this.lastGA[1 - ti] = { t: this.time, n: L && this.time - L.t < 40 ? L.n + 1 : 1 }; }
       this.pendingReplay = { ev: this.events[this.events.length - 1], goalT: this.time, team: ti, gx: d * RINK.goalX, scorer: scorerSk.p };
@@ -2643,7 +2829,7 @@ class Game {
       this.bump(ti, 0.5); this.mom[1 - ti] *= 0.4;
       this.sampleWP(true); this.wp[this.wp.length - 1].goal = ti;
       const fancy = sh.deke || sh.tag === "toe-drag snipe" ? sh.tag.replace(/^./, ch => ch.toUpperCase()) + "!" : "";
-      this.banner = { kind: "goal", team: ti, title: pp ? "Power-play goal" : sh.empty ? "Empty-net goal" : shg ? "Shorthanded goal" : "GOAL", sub: scorerSk.p.name + (fancy ? " · " + fancy : ""), t: 0 };
+      this.banner = { kind: "goal", team: ti, title: pp ? "Power-play goal" : sh.empty ? "Empty-net goal" : shg ? "Shorthanded goal" : "GOAL", sub: scorerSk.p.name + (fancy ? " · " + fancy : "") + (us ? " · ✦ " + us : ""), t: 0 };
       if (pp) { const b = O.box.filter(x => x.active && !x.coin).sort((a, c) => a.left - c.left)[0]; if (b) { if (b.left > MINOR + 0.5) { b.left = MINOR; this.log("ppend", 1 - ti, b.p.name + " stays in the box: the second half of the double minor starts."); } else this.releaseFromBox(1 - ti, b, true); } }
       if (O.pend.length) { this.log("ppend", 1 - ti, "Delayed penalty to " + O.pend[0].p.name + " is wiped out by the goal."); O.pend.shift(); }
       const gStats = goalie ? this.stats[goalie.p.id] : null;
@@ -2886,7 +3072,8 @@ class Game {
     const ti = s.team, d = this.dir(ti), zx = d * s.x, st = s.p.style, isD = s.g === "D";
     const shorth = this.shorthanded(ti), side = s.y >= 0 ? 1 : -1;
     const opts = [];
-    const jit = () => 1 + (rnd() - 0.5) * 0.14;
+    const pt = persTraits(s.p);
+    const jit = () => 1 + (rnd() - 0.5) * 0.14 * pt.jit;
     const setPlay = s.setPlay && s.setPlay.until > this.time ? s.setPlay : null;
     s.setPlay = setPlay;
     const alone = this.breakaway(s);
@@ -2931,7 +3118,7 @@ class Game {
     for (const r of this.skaters) {
       if (r.team !== ti || r === s || r.state !== "on" || r.stun > 0) continue;
       const pe = this.passEV(s, r, { wall, press }); if (!pe) continue;
-      const k = (st === "Playmaker" ? 1.15 : st === "Stay-at-Home" ? 1.08 : 1) * jit();
+      const k = (st === "Playmaker" ? 1.15 : st === "Stay-at-Home" ? 1.08 : 1) * jit() * (pe.saucer || dist(s.x, s.y, r.x, r.y) > 55 ? pt.risk : 1); // saucers and stretch passes are the risky ones
       let ev = pe.ev * k * (zx > RINK.blueX ? 1 - 0.035 * stale : 1);
       if (r === s.gotFrom && this.time - s.gotT < 2.5) ev = ev > 0 ? ev * 0.5 : ev * 1.5;
       // the cycle: low on the wall with a checker on you, leave it for the teammate coming down behind you
@@ -3050,6 +3237,14 @@ class Game {
     if (this.bap && s.p.id === this.bap.me && this.wantMoment(s, zx, press, opts, shorth)) {
       this.openMoment(s, zx > RINK.blueX - 2 ? "attack" : zx > -14 ? "entry" : "breakout", { opts, passCands, wrapInfo, rimInfo, dekeInfo, gdekeInfo, shorth, zx, press });
       return;
+    }
+    // her personality tilts the choice
+    for (const o of opts) {
+      const k = o[0];
+      let m = k === "shoot" ? pt.shoot * (pt.picky ? (clearLook ? 1 + 0.12 * pt.picky : 1 - 0.1 * pt.picky) : 1)
+        : k === "pass" ? pt.pass : k === "rim" ? Math.sqrt(pt.pass) : k === "carry" ? pt.carry * (zx < RINK.blueX ? pt.pace : 1)
+        : k === "dump" ? 1 / pt.pace : k === "deke" || k === "gdeke" || k === "toedrag" || k === "michigan" || k === "wrap" ? pt.deke : 1;
+      o[1] = persScale(o[1], m);
     }
     let choice = opts[0];
 
@@ -3715,7 +3910,7 @@ class Game {
   moveSkaters(dt) {
     const P = this.puck;
     for (const s of this.skaters) {
-      let vmax = s.maxSpd * this.spdMul(s.p) * (s === P.carrier ? 0.92 : 1);
+      let vmax = s.maxSpd * this.spdMul(s.p) * (s === P.carrier ? 0.92 : 1) * (s.slowUntil > this.time ? 0.9 : 1);
       if (s.stun > 0) { vmax *= 0.35; s.stun -= dt; }
       if (this.phase !== "play" && this.phase !== "shootout" && s.state === "on") vmax *= 0.7;
       // skate around the net, not into it, when the target is on the other side of the goal line
@@ -4002,17 +4197,18 @@ class Game {
       if (!bd && rnd() > TUNE.check * dt * (this.shorthanded(o.team) ? 0.55 : 1)) continue;
       if (bd) o.bapDef = null;
       o.checkCool = 0.45;
-      const so = o.p.def * this.skill(o.p), sc = (this.hands(c.p) * 0.6 + this.r(c.p, "skt") * 0.4);
+      const so = o.p.def * this.skill(o.p) * persTraits(o.p).work, sc = (this.hands(c.p) * 0.6 + this.r(c.p, "skt") * 0.4) * Math.sqrt(persTraits(c.p).work);
       const soH = this.r(o.p, "chk") * this.skill(o.p), scH = (this.r(c.p, "skt") * 0.5 + this.r(c.p, "chk") * 0.5) * this.skill(c.p);
       const st = o.p.style;
       const nearBoards = Math.abs(c.y) > 32 || Math.abs(c.x) > 84;
       const hitBase = (this.r(o.p, "chk") - 72) / 200 + (st === "Enforcer" ? 0.8 : st === "Grinder" ? 0.7 : st === "Power Forward" || st === "Stay-at-Home" ? 0.6 : st === "Two-Way" ? 0.4 : 0.28);
       const ag = this.aggr(o.team);
-      const isHit = bd ? bd.kind === "hit" : rnd() < hitBase * (nearBoards ? 1.4 : 0.7) * (0.8 + 0.4 * ag);
+      const opt = persTraits(o.p);
+      const isHit = bd ? bd.kind === "hit" : rnd() < hitBase * (nearBoards ? 1.4 : 0.7) * (0.8 + 0.4 * ag) * opt.hit;
       const d = this.dir(c.team);
       const beaten = d * (c.x - o.x) > 0.5 && Math.hypot(c.vx, c.vy) > Math.hypot(o.vx, o.vy);
       const penP = (isHit ? 0.012 : 0.009) * TUNE.pen * (1.75 - o.p.dis / 100 * 1.25) * (this.e(o.p) < 40 ? 1.35 : 1) *
-        (st === "Enforcer" ? 1.4 : st === "Grinder" ? 1.3 : st === "Power Forward" ? 1.15 : st === "Stay-at-Home" ? 1.1 : 1) * (beaten ? 1.6 : 1) * (0.85 + 0.3 * ag);
+        (st === "Enforcer" ? 1.4 : st === "Grinder" ? 1.3 : st === "Power Forward" ? 1.15 : st === "Stay-at-Home" ? 1.1 : 1) * (beaten ? 1.6 : 1) * (0.85 + 0.3 * ag) * opt.pen;
       if (rnd() < penP) {
         this.callPenalty(o, c, isHit ? PEN_BODY : beaten ? ["hooking", "tripping", "holding"] : PEN_STICK);
         if (rnd() < 0.5) { const P = this.puck; P.carrier = null; c.stun = 0.5; c.cool = 0.6; const a = rnd() * Math.PI * 2; P.vx = Math.cos(a) * 10 + c.vx * 0.4; P.vy = Math.sin(a) * 10 + c.vy * 0.4; }
@@ -4148,7 +4344,7 @@ class Game {
   // ---------- physical play ----------
   fightiness(s) {
     const st = s.p.style;
-    return (st === "Enforcer" ? 3.2 : st === "Grinder" ? 1.4 : st === "Power Forward" ? 1.2 : st === "Stay-at-Home" ? 0.9 : 0.45) * (1.65 - s.p.dis / 100);
+    return (st === "Enforcer" ? 3.2 : st === "Grinder" ? 1.4 : st === "Power Forward" ? 1.2 : st === "Stay-at-Home" ? 0.9 : 0.45) * (1.65 - s.p.dis / 100) * persTraits(s.p).pen;
   }
   afterHit(hitter, victim, boards) {
     const ti = victim.team, P = this.puck;
@@ -4374,6 +4570,7 @@ class Game {
     this.tickEnergy(gdt);
     this.tickPenalties(gdt);
     this.coach(gdt);
+    this.skillTick(dt);
     for (let ti = 0; ti < 2; ti++) this.processBench(ti, false);
     this.assignTargets(dt);
     this.moveSkaters(dt);
@@ -4853,11 +5050,11 @@ function frTeamsFrom(league) {
 function frNew(league, opts) {
   const F = { v: FR_VERSION, id: frId(), name: opts.name || "My franchise", created: Date.now(), season: 1, phase: "draft",
     user: opts.user, settings: Object.assign({ games: 28, series: 7, trades: "normal", autoLines: true, injuries: true }, opts.settings || {}),
-    teams: frTeamsFrom(league), players: [], news: [], offers: [], history: [], day: 0, off: null, fam: {}, chemV: 1 };
+    teams: frTeamsFrom(league), players: [], news: [], offers: [], history: [], day: 0, off: null, fam: {}, chemV: 1, persV: 1, moodV: 1 };
   if (opts.teamEdit) Object.assign(F.teams.find(t => t.id === opts.user), opts.teamEdit);
   F.players = JSON.parse(JSON.stringify(league.players)).map(p => {
     p.team = "POOL"; p.line = 0; p.inj = null; p.dev = Math.round((nameHash(p.name, 91) * 2.4 - 1) * 10) / 10;
-    p.con = { sal: askSalary(p, 1), yrs: askYears(p, 1) }; return p;
+    p.con = { sal: askSalary(p, 1), yrs: askYears(p, 1) }; p.md = frMoodClamp(0.3 + frGauss() * 0.5); p.mdw = []; return p;
   });
   F.cap = frCapFor(F);
   const r1 = frShuffle(F.teams.map(t => t.id));
@@ -5002,7 +5199,9 @@ function frSide(F, tid, starter) {
   L.fLines.forEach((u, i) => u.forEach(p => share[p.id] = { s: fs[i], u: i, g: "F" }));
   L.dPairs.forEach((u, i) => u.forEach(p => share[p.id] = { s: ds[i], u: i, g: "D" }));
   const agg = (t.tactics && t.tactics.agg != null ? t.tactics.agg : 50) / 100;
-  return { tid, L, O: O + (chem - FR_CHEM_MID) / 14, D, G: g ? frRt(g, "goal") * 0.9 + frRt(g, "clu") * 0.1 : 50, g, share, agg,
+  const sk = [...L.fLines.flat(), ...L.dPairs.flat()], mood = sk.length ? sk.reduce((a, p) => a + moodLevel(p.md), 0) / sk.length : 0;
+  O += mood * 1.2; D += mood * 1.2;
+  return { tid, L, O: O + (chem - FR_CHEM_MID) / 14, D, G: g ? frRt(g, "goal") * 0.9 + frRt(g, "clu") * 0.1 + moodLevel(g.md) * 1.2 : 50, g, share, agg,
     dis: avg([...L.fLines.flat(), ...L.dPairs.flat()].map(p => frRt(p, "dis"))), chk: avg([...L.fLines.flat(), ...L.dPairs.flat()].map(p => frRt(p, "chk"))) };
 }
 function frBlank() { return { gp: 0, g: 0, a: 0, pm: 0, pim: 0, sog: 0, ppg: 0, ppa: 0, shg: 0, sha: 0, gwg: 0, hit: 0, blk: 0, toi: 0, gs: 0, w: 0, l: 0, otl: 0, sa: 0, sv: 0, ga: 0, so: 0 }; }
@@ -5141,7 +5340,7 @@ function frApply(F, game, res) {
   }
   for (const it of res.inj || []) {
     const p = F.players.find(x => x.id === it.pid); if (!p || p.inj) continue;
-    p.inj = { g: it.g, what: it.what };
+    p.inj = { g: it.g, what: it.what }; frMoodAdd(p, -0.5, "Injured");
     if (p.team === F.user || it.g >= 10) frNews(F, p.name + " (" + p.team + ") is out " + it.g + " game" + (it.g > 1 ? "s" : "") + " with a " + it.what + ".", p.team);
   }
   // milestones worth a line in the news
@@ -5149,6 +5348,7 @@ function frApply(F, game, res) {
   for (const [pid, s] of hat) { const p = F.players.find(x => x.id === pid); if (p && (p.team === F.user || s.g >= 4)) frNews(F, (s.g >= 4 ? s.g + " goals! " : "Hat trick! ") + p.name + " scores " + (s.g >= 4 ? s.g : "three") + " for " + p.team + ".", p.team); }
   if (F.mode === "bap" && (game.h === F.user || game.a === F.user)) bapAfterGame(F, game, res);
   for (const tid of [game.h, game.a]) frFamUnits(F, tid, FAM_GAME, 0.5); // playing together builds chemistry
+  frMoodGame(F, game, res);
   for (let ti = 0; ti < 2; ti++) { const gid = res.gids[ti]; const s = gid && res.ps[gid]; if (s && s.so && s.sa >= 15) { const p = F.players.find(x => x.id === gid); if (p) frNews(F, "Shutout for " + p.name + ": " + s.sv + " saves.", p.team); } }
 }
 
@@ -5169,6 +5369,8 @@ function frEndDay(F) {
   for (const t of F.teams) if (t.id !== F.user || F.mode === "bap") { frAiFixRoster(F, t.id); frAutoLines(F, t.id); }
   if (F.settings.autoLines && F.mode !== "bap") frAutoLines(F, F.user);
   if (F.mode === "bap") bapDay(F);
+  if (F.phase === "season" || F.phase === "playoffs") frMoodDay(F);
+  frIceTimeDay(F);
   if (F.phase === "season") {
     F.offers = F.offers.filter(o => o.exp >= F.day);
     if (F.day <= F.deadline) { frMaybeOffer(F); frMaybeAiTrade(F); }
@@ -5183,18 +5385,60 @@ function frAiFixRoster(F, tid) {
     let have = frHealthy(F, tid).filter(p => posGroup(p) === g).length;
     while (have < need[g] && F.players.filter(p => p.team === tid).length < FR_RULES.maxRoster) {
       const space = frCapSpace(F, tid);
-      const fa = F.players.filter(p => p.team === "FA" && !p.inj && posGroup(p) === g && frAsk(F, p).sal <= space).sort((a, b) => overall(b) - overall(a))[0];
+      const fa = F.players.filter(p => p.team === "FA" && !p.inj && posGroup(p) === g && frAsk(F, p, tid).sal <= space).sort((a, b) => overall(b) - overall(a))[0];
       if (!fa) break;
-      const ask = frAsk(F, fa); fa.team = tid; fa.con = { sal: ask.sal, yrs: 1 }; have++;
+      const ask = frAsk(F, fa, tid); fa.team = tid; fa.con = { sal: ask.sal, yrs: 1 }; have++;
       frNews(F, F.teams.find(t => t.id === tid).name + " sign " + fa.name + " (" + fa.pos + ") for " + money(ask.sal) + ".", tid);
     }
   }
 }
 // free agents in season take less money the longer they wait
-function frAsk(F, p) {
+function frAsk(F, p, tid) {
   const base = askSalary(p, F.season);
   const late = F.phase === "season" || F.phase === "playoffs" ? 0.85 : 1;
-  return { sal: Math.max(FR_RULES.minSal, Math.round(base * late * 20) / 20), yrs: F.phase === "offseason" ? askYears(p, F.season) : 1 };
+  const deal = frPersDeal(F, p, tid || F.user, "fa");
+  return { sal: Math.max(FR_RULES.minSal, Math.round(base * late * deal.m * 20) / 20), yrs: F.phase === "offseason" ? askYears(p, F.season) : 1, deal };
+}
+// ---------- personalities at the bargaining table ----------
+// what she cares about changes her price with a given club: [label, share of her price]
+function frPersDeal(F, p, tid, kind) {
+  const pe = persInfo(p), why = [], w = k => (pe.p1 === k ? 1 : pe.p2 === k ? 0.5 : 0);
+  const add = (k, v, t) => { const x = v * w(k); if (Math.abs(x) >= 0.005) why.push({ k, v: x, t }); };
+  if (!F.teams.some(t => t.id === tid)) return { m: 1, why };
+  add("Money", 0.12, "Wants top dollar");
+  const st = F.S && F.S.games && F.S.games.some(g => g.st === "final") ? frStandings(F) : null;
+  if (st) { const i = st.findIndex(r => r.id === tid), n = st.length; if (i >= 0 && i < n / 3) add("Winning", -0.08, "Likes your chances"); else if (i >= n - Math.ceil(n / 3)) add("Winning", 0.1, "Wants a winner"); }
+  if (kind === "resign") add("Loyalty", -0.12, "Hometown discount");
+  const mates = F.players.filter(q => q.team === tid && q.id !== p.id), fr = mates.filter(q => areFriends(p, q)).length;
+  if (fr >= 2) add("Friends", -0.08, fr + " friends on the team"); else if (fr === 0) add("Friends", 0.04, "No friends on the team");
+  const g = posGroup(p), rank = mates.filter(q => posGroup(q) === g && overall(q) > overall(p)).length;
+  const good = g === "F" ? rank < 6 : g === "D" ? rank < 2 : rank < 1, bad = g === "F" ? rank >= 9 : g === "D" ? rank >= 4 : rank >= 1;
+  if (good) add("Ice time", -0.05, "Big role here"); else if (bad) add("Ice time", 0.1, "Worried about ice time");
+  if (kind === "resign" && p.treq) why.push({ k: "Ice time", v: 0.15, t: "Asked for a trade" });
+  const m = Math.max(0.8, Math.min(1.3, 1 + why.reduce((a, x) => a + x.v, 0)));
+  return { m, why };
+}
+function frDealText(deal) { return deal.why.map(x => x.t + " (" + (x.v > 0 ? "+" : "−") + Math.round(Math.abs(x.v) * 100) + "%)").join(", "); }
+function frResignAsk(F, p, yrs) {
+  const deal = frPersDeal(F, p, p.team, "resign");
+  return { sal: Math.round(askSalary(p, F.season) * (yrs >= 4 ? 1.06 : yrs <= 1 ? 0.97 : 1) * deal.m * 20) / 20, deal };
+}
+// players who care about ice time notice when they don't get it (your club only; Be A Player has its own story)
+function frIceTimeDay(F) {
+  for (const p of F.players) if (p.team !== F.user && (p.unh || p.treq)) { p.unh = 0; p.unhW = 0; p.treq = 0; } // a fresh start somewhere new
+  if (F.mode === "bap" || F.phase !== "season") return;
+  const ps = F.players.filter(p => p.team === F.user && !p.inj);
+  for (const p of ps) {
+    const pe = persInfo(p), w = pe.p1 === "Ice time" ? 1 : pe.p2 === "Ice time" ? 0.5 : 0, g = posGroup(p), awful = moodLevel(p.md) <= -2 ? 0.5 : 0;
+    if ((!w && !awful) || pe.p1 === "Loyalty" || (g === "G" && !awful)) continue;
+    const rank = ps.filter(q => posGroup(q) === g && overall(q) > overall(p)).length;
+    const deserve = g === "F" ? (rank < 3 ? 1 : rank < 6 ? 2 : rank < 9 ? 3 : 0) : (rank < 2 ? 1 : rank < 4 ? 2 : 0);
+    const line = p.line || 0, short = deserve > 0 && (line === 0 || (g === "F" && line > deserve + 1)); // a scratch, or a top-line talent stuck on the third line
+    p.unh = Math.max(0, (p.unh || 0) + (short ? w : 0) + awful - (short || awful ? 0 : 0.5));
+    if (p.unh >= 6 && !p.unhW) { p.unhW = 1; frNews(F, p.name + " wants a bigger role. She thinks she should be " + (line === 0 ? "in the lineup every night" : "in the top six") + ".", F.user, "league"); }
+    if (p.unh >= 12 && !p.treq) { p.treq = F.season; frNews(F, p.name + " has asked for a trade. She won't re-sign unless things change.", F.user, "trade"); }
+    if (p.unh === 0) { p.unhW = 0; if (p.treq) { p.treq = 0; frNews(F, p.name + " is happy with her role again and withdraws her trade request.", F.user, "league"); } }
+  }
 }
 
 // ---------- roster moves ----------
@@ -5211,7 +5455,7 @@ function frRosterCheck(F, tid, extra) {
 }
 function frSign(F, tid, pid, sal, yrs) {
   const p = F.players.find(x => x.id === pid); if (!p || p.team !== "FA") return "She's not a free agent.";
-  const ask = frAsk(F, p);
+  const ask = frAsk(F, p, tid);
   if (sal + 1e-6 < ask.sal) return p.name + " wants at least " + money(ask.sal) + ".";
   if (F.players.filter(x => x.team === tid).length >= FR_RULES.maxRoster) return "Your roster is full (" + FR_RULES.maxRoster + ").";
   if (frPayroll(F, tid) + sal > F.cap + 1e-6) return "Not enough cap space.";
@@ -5254,8 +5498,8 @@ function frTradeLegal(F, A, B, aGive, bGive) {
   return F.phase === "offseason" ? issues.filter(x => !/ needs \d+ /.test(x)) : issues;
 }
 function frTradeExec(F, A, B, aGive, bGive, note) {
-  for (const p of aGive) { p.team = B; p.line = 0; }
-  for (const p of bGive) { p.team = A; p.line = 0; }
+  for (const p of aGive) { p.team = B; p.line = 0; frMoodAdd(p, p.treq ? 0.8 : -0.3, p.treq ? "Got her trade" : "Traded"); }
+  for (const p of bGive) { p.team = A; p.line = 0; frMoodAdd(p, p.treq ? 0.8 : -0.3, p.treq ? "Got her trade" : "Traded"); }
   frScrubUnits(F, A); frScrubUnits(F, B);
   if (A !== F.user || F.settings.autoLines) frAutoLines(F, A);
   if (B !== F.user || F.settings.autoLines) frAutoLines(F, B);
@@ -5434,8 +5678,9 @@ function frStartOffseason(F) {
   // AI teams decide on their own expiring deals now
   for (const p of expiring) {
     if (F.mode === "bap" ? p.id === F.me : p.team === F.user) continue;
-    const ask = { sal: askSalary(p, F.season), yrs: askYears(p, F.season) };
-    const keep = overall(p) >= 72 && ask.sal <= fairSalary(overall(p)) * 1.08 && frPayroll(F, p.team) - (p.con.sal) + ask.sal <= F.cap - 2 && frRand() < 0.75;
+    const ask = { sal: Math.round(askSalary(p, F.season) * frPersDeal(F, p, p.team, "resign").m * 20) / 20, yrs: askYears(p, F.season) };
+    const pe = persInfo(p), stay = pe.p1 === "Loyalty" ? 0.92 : pe.p2 === "Loyalty" ? 0.84 : 0.75;
+    const keep = overall(p) >= 72 && ask.sal <= fairSalary(overall(p)) * 1.12 && frPayroll(F, p.team) - (p.con.sal) + ask.sal <= F.cap - 2 && frRand() < stay;
     if (keep) { p.con = { sal: ask.sal, yrs: ask.yrs }; }
     else { frNews(F, p.name + " leaves " + F.teams.find(t => t.id === p.team).name + " and becomes a free agent.", p.team); p.team = "FA"; p.line = 0; }
   }
@@ -5448,8 +5693,8 @@ function frStartOffseason(F) {
 function frExpiring(F) { return F.players.filter(p => p.team === F.user && p.con && p.con.yrs <= 0); }
 function frResign(F, pid, yrs) {
   const p = F.players.find(x => x.id === pid); if (!p) return "Not found.";
-  const ask = askSalary(p, F.season) * (yrs >= 4 ? 1.06 : yrs <= 1 ? 0.97 : 1);
-  const sal = Math.round(ask * 20) / 20;
+  if (p.treq) return p.name + " asked for a trade this season and won't re-sign with you.";
+  const sal = frResignAsk(F, p, yrs).sal;
   if (frPayroll(F, F.user) - p.con.sal + sal > F.cap + 1e-6) return "Not enough cap space to re-sign " + p.name + " at " + money(sal) + ".";
   p.con = { sal, yrs };
   frNews(F, "You re-signed " + p.name + ": " + money(sal) + " × " + yrs + ".", F.user);
@@ -5469,8 +5714,9 @@ function frFADay(F) {
     const c = { F: 0, D: 0, G: 0 }; for (const p of ps) c[posGroup(p)]++;
     const want = c.G < 2 ? "G" : c.D < 5 && c.D <= c.F / 2 ? "D" : c.F < 10 ? "F" : null;
     const space = frCapSpace(F, tid) - Math.max(0, 15 - ps.length - 1) * FR_RULES.minSal;
-    const fa = F.players.filter(p => p.team === "FA" && (!want || posGroup(p) === want) && p.con.sal <= space).sort((a, b) => (overall(b) - b.con.sal * 0.4) - (overall(a) - a.con.sal * 0.4))[0];
-    if (fa && (want || overall(fa) >= 74)) { fa.team = tid; fa.line = 0; frNews(F, F.teams.find(t => t.id === tid).name + " sign " + fa.name + ": " + money(fa.con.sal) + " × " + fa.con.yrs + ".", tid); }
+    const cost = p => Math.round(p.con.sal * frPersDeal(F, p, tid, "fa").m * 20) / 20;
+    const fa = F.players.filter(p => p.team === "FA" && (!want || posGroup(p) === want) && cost(p) <= space).sort((a, b) => (overall(b) - cost(b) * 0.4) - (overall(a) - cost(a) * 0.4))[0];
+    if (fa && (want || overall(fa) >= 74)) { fa.con = { sal: cost(fa), yrs: fa.con.yrs }; fa.team = tid; fa.line = 0; frNews(F, F.teams.find(t => t.id === tid).name + " sign " + fa.name + ": " + money(fa.con.sal) + " × " + fa.con.yrs + ".", tid); }
   }
   F.off.faDay++;
 }
@@ -5482,18 +5728,86 @@ function frFillMinimum(F, tid) {
     while (F.players.filter(p => p.team === tid && posGroup(p) === g).length < need) {
       const fa = F.players.filter(p => p.team === "FA" && posGroup(p) === g).sort((a, b) => a.con.sal - b.con.sal || overall(b) - overall(a))[0];
       if (!fa) break;
-      fa.team = tid; fa.line = 0; fa.con = { sal: Math.max(FR_RULES.minSal, Math.min(fa.con.sal, frAsk(F, fa).sal)), yrs: 1 }; signed.push(fa);
+      fa.team = tid; fa.line = 0; fa.con = { sal: Math.max(FR_RULES.minSal, Math.min(fa.con.sal, frAsk(F, fa, tid).sal)), yrs: 1 }; signed.push(fa);
     }
   }
   if (signed.length) frNews(F, F.teams.find(t => t.id === tid).name + " fill out the roster: " + signed.map(p => p.name + " (" + money(p.con.sal) + ")").join(", ") + ".", tid);
   return signed;
 }
 function frNextSeason(F) {
+  for (const p of F.players) { p.unh = 0; p.unhW = 0; p.treq = 0; }
   // AI teams fill any holes; then everyone starts fresh
   for (let i = 0; i < 4; i++) frFADay(F);
   for (const t of F.teams) { frFillMinimum(F, t.id); if (t.id !== F.user) frAutoLines(F, t.id); }
   if (F.settings.autoLines) frAutoLines(F, F.user);
   frStartSeason(F);
+}
+
+// ---------- moods: results, ice time, friends and practice move them; personality decides how much ----------
+function frMoodClamp(v) { return Math.max(-2.5, Math.min(2.5, Math.round(v * 100) / 100)); }
+function frMoodAdd(p, v, why) {
+  if (p.md == null) p.md = 0.3;
+  const a = persInfo(p).a;
+  const k = v < 0 ? (a === "Hothead" ? 1.4 : a === "Timid" ? 1.3 : a === "Leader" ? 0.7 : a === "Analyst" ? 0.8 : 1)
+    : (a === "Hothead" || a === "Showboat" ? 1.2 : a === "Leader" ? 0.8 : 1);
+  p.md = frMoodClamp(p.md + v * k);
+  if (why && Math.abs(v) >= 0.15) p.mdw = [{ t: why, s: v > 0 ? 1 : -1 }, ...(p.mdw || []).filter(x => x.t !== why)].slice(0, 3);
+}
+// after a game: the result, her own night, and whether she even played
+function frMoodGame(F, game, res) {
+  const ids = [game.h, game.a];
+  ids.forEach((tid, i) => {
+    if (!F.teams.some(t => t.id === tid)) return;
+    const mine = i === 0 ? res.hs : res.as, theirs = i === 0 ? res.as : res.hs, won = mine > theirs, ot = !won && res.dec !== "REG";
+    for (const p of F.players) {
+      if (p.team !== tid || p.inj) continue;
+      const s = res.ps[p.id];
+      if (!s || !(s.gp || s.toi)) { const pe = persInfo(p); frMoodAdd(p, pe.p1 === "Ice time" ? -0.18 : pe.p2 === "Ice time" ? -0.1 : -0.04, "Healthy scratch"); continue; }
+      frMoodAdd(p, won ? 0.15 : ot ? -0.05 : -0.15, won ? (game.po ? "Playoff win" : "Team win") : game.po ? "Playoff loss" : "Team loss");
+      const pts = (s.g || 0) + (s.a || 0);
+      if (pts) frMoodAdd(p, Math.min(0.25, 0.08 * pts), s.g >= 2 ? "Multi-goal game" : s.g ? "Scored" : "Set one up");
+      if (posGroup(p) === "G" && res.gids && res.gids[i] === p.id && s.sa >= 12) {
+        const sv = s.sv / s.sa;
+        if (theirs === 0) frMoodAdd(p, 0.3, "Shutout");
+        else if (sv >= 0.93) frMoodAdd(p, 0.15, "Big night in net");
+        else if (sv <= 0.875) frMoodAdd(p, -0.25, "Rough night in net");
+      }
+    }
+  });
+}
+// every day: moods drift toward how things are going for her, with a little day-to-day noise
+function frMoodDay(F) {
+  const st = F.S ? frStandings(F) : [];
+  const form = {}; for (const r of st) { const l = r.l10.slice(-5); form[r.id] = l.length ? l.reduce((a, x) => a + (x === "W" ? 1 : x === "O" ? -0.3 : -1), 0) / 5 : 0; }
+  for (const t of F.teams) {
+    const ps = F.players.filter(p => p.team === t.id);
+    const leaders = ps.filter(p => persInfo(p).a === "Leader" && !p.inj);
+    for (const p of ps) {
+      if (p.md == null) p.md = 0.3;
+      const pe = persInfo(p), g = posGroup(p);
+      const fr = ps.filter(q => q !== p && areFriends(p, q)).length;
+      let base = -0.35 + 0.08 * Math.min(3, fr) + 0.8 * (form[t.id] || 0) + 0.06 * Math.min(2, leaders.filter(q => q !== p).length);
+      if (p.inj) base -= 0.3;
+      else if (g === "G" ? p.line === 1 : p.line === 1) base += 0.12;
+      else if (!p.line) base -= pe.p1 === "Ice time" ? 0.7 : 0.35;
+      if (p.treq) base -= 0.8;
+      if (pe.a === "Free Spirit") base += 0.1;
+      const noise = (frRand() - 0.5) * 0.3 * (pe.a === "Free Spirit" ? 2 : pe.a === "Analyst" || pe.a === "Leader" ? 0.6 : 1);
+      p.md = frMoodClamp(p.md + (base - p.md) * 0.12 + noise);
+    }
+  }
+  // a star in an awful mood makes the news
+  if (F.mode !== "bap") for (const p of F.players.filter(x => x.team === F.user)) {
+    const lv = moodLevel(p.md);
+    if (lv <= -2 && !p.mdN) { p.mdN = 1; frNews(F, p.name + " is in an awful mood" + (p.mdw && p.mdw[0] && p.mdw[0].s < 0 ? " (" + p.mdw[0].t.toLowerCase() + ")" : "") + ". It's showing on the ice.", F.user, "league"); }
+    if (lv >= 0) p.mdN = 0;
+  }
+}
+function frMoodSummary(F, tid) {
+  const ps = F.players.filter(p => p.team === tid), c = { 2: 0, 1: 0, 0: 0, "-1": 0, "-2": 0 };
+  for (const p of ps) c[moodLevel(p.md)]++;
+  const avg = ps.length ? ps.reduce((a, p) => a + (p.md || 0), 0) / ps.length : 0;
+  return { c, avg, ps };
 }
 
 // ---------- team chemistry: friends, plus familiarity built in games and at practice ----------
@@ -5507,8 +5821,10 @@ const PRACTICE_HELP = {
 };
 // older saves: the new friends list, circles gone, familiarity starts empty
 function frMigrateChem(F) {
-  if (!F || F.chemV) return;
-  applyFriendsV11(F.players); F.fam = F.fam || {}; F.chemV = 1;
+  if (!F) return;
+  if (!F.chemV) { applyFriendsV11(F.players); F.fam = F.fam || {}; F.chemV = 1; }
+  if (!F.moodV) { for (const p of F.players) if (p.md == null) p.md = frMoodClamp(0.3 + frGauss() * 0.5); F.moodV = 1; }
+  if (!F.persV) { const me = F.me && F.players.find(p => p.id === F.me), keep = me && me.pers; applyPersonalities(F.players); if (me && keep) me.pers = keep; F.persV = 1; }
 }
 function frFamAdd(F, a, b, v) {
   if (!a || !b || a.id === b.id) return;
@@ -5540,6 +5856,11 @@ function frPractice(F, t) {
   const mine = t.id === F.user && F.mode !== "bap";
   const before = mine ? frTeamChem(F, t.id).units.map(u => u.value) : null;
   if (kind === "lines") frFamUnits(F, t.id, FAM_LINES, 0.4);
+  const inten = t.train || "normal";
+  for (const p of F.players) if (p.team === t.id && !p.inj) {
+    if (kind === "bonding") frMoodAdd(p, 0.2, "Team bonding");
+    if (inten === "hard") frMoodAdd(p, -0.15, "Hard practices"); else if (inten === "light") frMoodAdd(p, 0.1, "An easy week");
+  }
   const made = [];
   if (kind === "bonding") {
     const ps = F.players.filter(p => p.team === t.id && !p.inj);
@@ -5670,7 +5991,9 @@ const BAP_SP_XP = 250;
 function bapMakePlayer(c) {
   const pos = c.pos, g = pos === "D" ? "D" : "F";
   const p = { id: "me-" + frId(), name: c.name, tag: (c.tag || c.name.split(" ").slice(-1)[0]).slice(0, 9), no: c.no, team: "POOL", pos, line: 0, style: c.style,
-    side: g === "D" ? (c.shoots || "L") : "", shoots: c.shoots || "L", goal: 10, friends: [], groups: [], dev: 0.9, look: c.look || { hair: "#8A5A3C", eye: "#3A7BD5" }, custom: true };
+    side: g === "D" ? (c.shoots || "L") : "", shoots: c.shoots || "L", goal: 10, friends: [], groups: [], dev: 0.9, look: c.look || { hair: "#8A5A3C", eye: "#3A7BD5" }, custom: true,
+    pers: { a: PERS_ARCH[c.pers] ? c.pers : "Hard Worker", b: "", p1: c.pri || "Winning", p2: (c.pri || "Winning") === "Ice time" ? "Winning" : "Ice time" },
+    skill: c.skill && SKILL_TRIG[c.skill.t] && SKILL_FX[c.skill.e] ? { n: String(c.skill.n || (c.name || "My").split(" ")[0] + "'s Spark").slice(0, 40), t: c.skill.t, e: c.skill.e } : null };
   for (const k of BAP_KEYS) p[k] = 65;
   p.sta = 72; p.dis = 72; p.clu = 62; p.fo = pos === "C" ? 66 : 48;
   for (const [k, v] of Object.entries(BAP_STYLE[c.style] || {})) p[k] = Math.max(30, Math.min(99, p[k] + v));
@@ -5741,6 +6064,7 @@ function bapAfterGame(F, game, res) {
     B.log.unshift(entry); if (B.log.length > 120) B.log.length = 120; return;
   }
   const gr = bapGrade(s, moments), fx = BAP_GRADE_FX[gr.g];
+  if (gr.g === "A+" || gr.g === "A") frMoodAdd(me, 0.25, "Great game"); else if (gr.g === "D" || gr.g === "F") frMoodAdd(me, -0.25, "Rough game");
   const great = moments.filter(m => m.q === "great").length, risky = moments.filter(m => m.q === "risky").length;
   B.trust = Math.max(0, Math.min(100, B.trust + fx[0] + great * 0.4 - risky * 0.6 - (s.pim >= 4 ? 1.5 : 0) + (won ? 0.3 : 0) - (B.trust > 80 ? 0.6 : 0)));
   B.hype = Math.max(0, Math.min(100, B.hype + fx[2] + s.g * 1 - 0.8));
@@ -5987,6 +6311,7 @@ function normalizePlayer(p, used, teamIds) {
   out.style = validStyle(out, String(p.style || "").trim());
   for (const k of NEW_STATS) if (p[k] != null && p[k] !== "" && !isNaN(Number(p[k]))) out[k] = clampStat(p[k]);
   fillRatings(out);
+  out.pers = normPers(p.pers && typeof p.pers === "object" ? p.pers : p.personality ? { a: p.personality, b: p.personality2, p1: p.cares1, p2: p.cares2 } : null, out);
   return out;
 }
 function normalizeLeague(L) {
@@ -6039,7 +6364,7 @@ let downloadsApi = null;
 async function initStore() {
   const cl = window.claude;
   if (!cl || !cl.use) { setPill("saved", "Saved in this browser"); return; }
-  cl.use("downloads").then(d => { if (d) { downloadsApi = d; $("#saveFileBtn").hidden = false; } }).catch(() => {});
+  cl.use("downloads").then(d => { if (d) downloadsApi = d; }).catch(() => {});
   let db = null;
   try { db = await cl.use("db"); } catch (e) {}
   if (!db) { setPill("saved", "Saved in this browser"); return; }
@@ -6115,7 +6440,7 @@ const SIM_NOTE = "1× runs the clock at 3 game seconds per real second.";
 function newGame() {
   if (!checkMatchup()) return;
   if (typeof frLive !== "undefined" && frLive) { frLive = null; frLiveBar(); }
-  beginGame(new Game(JSON.parse(JSON.stringify(league)), $("#homeSel").value, $("#awaySel").value));
+  beginGame(new Game(JSON.parse(JSON.stringify(league)), $("#homeSel").value, $("#awaySel").value, { randomMoods: settings.qpMoods !== false }));
 }
 function beginGame(g) {
   game = g;
@@ -6189,11 +6514,25 @@ function frame(ts) {
       const ev = game.replayReady; game.replayReady = null;
       if ($("#autoReplay").checked && !skipping && !replay && currentView() === "game") startReplay(ev);
     }
-    if (currentView() === "game") { if (typeof frCoachFrame === "function") frCoachFrame(); drawRink(); setBoard(); pumpFeed(); if (ts - lastBox > 600) { lastBox = ts; renderBox(); renderSummary(); } }
+    if (currentView() === "game") { showSkillPop(); if (typeof frCoachFrame === "function") frCoachFrame(); drawRink(); setBoard(); pumpFeed(); if (ts - lastBox > 600) { lastBox = ts; renderBox(); renderSummary(); } }
   }
   requestAnimationFrame(frame);
 }
 
+// ---------- unique skills: a cut-in on the rink when one fires ----------
+let skillPopId = 0, skillPopT = 0;
+function showSkillPop() {
+  const el = $("#skillPop"); if (!el || !game) return;
+  const sp = game.skillPop;
+  if (sp && sp.id !== skillPopId && !skipping && !replay && game.time - sp.t < 2) {
+    skillPopId = sp.id; skillPopT = performance.now();
+    const t = game.teams[sp.team].team;
+    el.style.setProperty("--tc", t.color);
+    el.innerHTML = `${chibiHead(sp.name, 40, t)}<span><i>✦ Unique skill</i><b>${esc(sp.n)}</b><small>${esc(sp.name)}</small></span>`;
+    el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in");
+  }
+  if (!el.hidden && performance.now() - skillPopT > 2600) el.hidden = true;
+}
 // ---------- player card: click any portrait (or name button) for a quick look ----------
 function pcardPlayers() { if (currentView() === "game" && game && game.league) return game.league.players; return (currentView() === "franchise" || currentView() === "bap") && typeof FR !== "undefined" && FR ? FR.players : league.players; }
 function pcardTeam(id) { if (currentView() === "game" && game && game.league) return game.league.teams.find(t => t.id === id) || null; const F = (currentView() === "franchise" || currentView() === "bap") && typeof FR !== "undefined" && FR ? FR : null; return (F ? F.teams : league.teams).find(t => t.id === id) || null; }
@@ -6230,6 +6569,10 @@ function playerCardHtml(p) {
       <span class="pc-team">${t ? teamLogoSvg(t, 22) + " " + esc(t.name) : p.team === "FA" ? "Free agent" : p.team === "POOL" ? "In the draft pool" : esc(p.team)}</span>
       <span class="pc-ovr">${o} <span class="gr" data-g="${grade(o)}">${grade(o)}</span> OVR</span>${extra.length ? `<span class="note">${extra.join(" · ")}</span>` : ""}</div></div>
     <p class="note pc-style">${esc(STYLE_NOTES[p.style] || "")}</p>
+    ${(() => { const pe = persInfo(p), bl = persBlurb(p); return `<div class="pc-pers"><span class="pc-arch" title="${esc(PERS_HELP[pe.a] || "")}">${esc(pe.a)}</span>${pe.b ? `<span class="pc-arch sub" title="${esc(PERS_HELP[pe.b] || "")}">${esc(pe.b)}</span>` : ""}<span class="note">Cares about <b title="${esc(PRI_HELP[pe.p1] || "")}">${esc(pe.p1.toLowerCase())}</b> and <b title="${esc(PRI_HELP[pe.p2] || "")}">${esc(pe.p2.toLowerCase())}</b></span>${p.treq ? `<em class="fr-tagv">Asked for a trade</em>` : p.unhW ? `<em class="fr-tagv">Wants a bigger role</em>` : ""}
+      <p class="note pc-blurb">${esc(bl || PERS_HELP[pe.a] || "")}</p></div>`; })()}
+    ${(() => { const sk = skillOf(p); if (!sk) return ""; return `<div class="pc-skill"><span class="pc-sk-n">✦ ${esc(sk.n)}</span><span class="note">${esc(SKILL_TRIG[sk.t] || "")}: ${esc(SKILL_FX[sk.e] || "")}. Once a game${posGroup(p) === "G" ? "" : ""}; mood and clutch make it come out sooner.</span>${sk.g ? `<span class="note pc-sk-g">In the Uma game: ${esc(sk.g)}</span>` : ""}</div>`; })()}
+    ${p.md != null ? (() => { const lv = moodLevel(p.md), m = MOODS[String(lv)]; return `<div class="pc-mood">${moodBadge(lv)}<b>${m.name} mood</b><span class="note">${m.fx} to her play${(p.mdw || []).length ? " · lately: " + p.mdw.map(x => `<span class="${x.s > 0 ? "good" : "bad"}">${esc(x.t.toLowerCase())}</span>`).join(", ") : ""}</span></div>`; })() : ""}
     ${F && typeof frPcardDraft === "function" ? frPcardDraft(p) : ""}
     <div class="pc-rs">${bars}</div>${stats}
     ${fr ? `<div class="pc-fr"><b>Friends</b>${fr}</div>` : ""}`;
@@ -6326,7 +6669,7 @@ $("#menuCrowd").addEventListener("click", e => {
 $("#menuSettings").addEventListener("click", () => $("#settingsBtn").click());
 
 // ---------- settings ----------
-const SET_DEFAULTS = { net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
+const SET_DEFAULTS = { qpMoods: true, net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
 let settings = Object.assign({}, SET_DEFAULTS);
 try {
   const raw = JSON.parse(localStorage.getItem("tracen-settings") || "null");
@@ -6545,7 +6888,7 @@ function setBoard() {
 const TAGS = { goal: ["GOAL", ""], save: ["SAVE", "var(--g-d)"], miss: ["MISS", "var(--g-f)"], block: ["BLK", "var(--g-e)"],
   takeaway: ["TK", "var(--g-c)"], hit: ["HIT", "var(--g-b)"], change: ["CHG", "var(--g-f)"], dump: ["DUMP", "var(--g-f)"],
   stop: ["STOP", "var(--g-f)"], offside: ["OFF", "var(--g-f)"], icing: ["ICE", "var(--g-e)"], penalty: ["PEN", "var(--bad)"],
-  delayed: ["DLY", "var(--warn)"], play: ["PLAY", "var(--g-c)"], skill: ["SKILL", "var(--accent)"], "skill-fail": ["SKILL", "var(--g-f)"], ppend: ["PP", "var(--g-d)"], goalie: ["G", "var(--g-s)"], fight: ["FIGHT", "var(--bad)"], momentum: ["MOM", "var(--accent)"], injury: ["INJ", "var(--warn)"], shootout: ["SO", "var(--g-s)"], final: ["FINAL", "var(--ink)"], coach: ["BENCH", "var(--accent)"], period: ["", ""] };
+  delayed: ["DLY", "var(--warn)"], play: ["PLAY", "var(--g-c)"], skill: ["SKILL", "var(--accent)"], "skill-fail": ["SKILL", "var(--g-f)"], ppend: ["PP", "var(--g-d)"], goalie: ["G", "var(--g-s)"], fight: ["FIGHT", "var(--bad)"], momentum: ["MOM", "var(--accent)"], injury: ["INJ", "var(--warn)"], shootout: ["SO", "var(--g-s)"], final: ["FINAL", "var(--ink)"], coach: ["BENCH", "var(--accent)"], uskill: ["✦ SKILL", "#C9961A"], period: ["", ""] };
 const MINOR_TYPES = new Set(["change", "takeaway", "hit", "dump", "stop", "miss", "block", "delayed", "skill-fail", "play"]);
 function pumpFeed() {
   if (!game || shownEvents >= game.events.length) return;
@@ -6583,7 +6926,8 @@ function renderBox() {
   const T = game.teams[boxTeam], L = T.lineup;
   const nrg = id => { const v = Math.round(game.energy[id]); const c = v >= 65 ? "var(--ok)" : v >= 40 ? "var(--warn)" : "var(--bad)"; return `<span class="nrg"><i style="width:${v}%;background:${c}"></i></span>${v}`; };
   const pm = v => v > 0 ? "+" + v : String(v);
-  const row = p => { const s = game.stats[p.id]; return `<tr><td>${esc(p.name)}</td><td>${p.pos}</td><td>${s.g}</td><td>${s.a}</td><td>${s.g + s.a}</td><td>${pm(s.pm)}</td><td>${s.sog}</td><td>${s.dk}</td><td>${s.hit}</td><td>${s.blk}</td><td>${s.tk}</td><td>${s.pim}</td><td>${s.fow + s.fol ? s.fow + "–" + s.fol : "–"}</td><td>${fmtClock(s.toi)}</td><td>${s.top ? s.top.toFixed(1) : "–"}</td><td>${s.dist ? (s.dist / 5280).toFixed(2) : "–"}</td><td>${s.hard || "–"}</td><td class="nrgc">${nrg(p.id)}</td></tr>`; };
+  const mb = p => (game.moods && game.moods[p.id] != null ? moodBadge(game.moods[p.id]) + " " : "") + (game.stats[p.id] && game.stats[p.id].sk ? `<span class="skstar" title="Used her unique skill: ${esc((skillOf(p) || {}).n || "")}">✦</span> ` : "");
+  const row = p => { const s = game.stats[p.id]; return `<tr><td>${mb(p)}${esc(p.name)}</td><td>${p.pos}</td><td>${s.g}</td><td>${s.a}</td><td>${s.g + s.a}</td><td>${pm(s.pm)}</td><td>${s.sog}</td><td>${s.dk}</td><td>${s.hit}</td><td>${s.blk}</td><td>${s.tk}</td><td>${s.pim}</td><td>${s.fow + s.fol ? s.fow + "–" + s.fol : "–"}</td><td>${fmtClock(s.toi)}</td><td>${s.top ? s.top.toFixed(1) : "–"}</td><td>${s.dist ? (s.dist / 5280).toFixed(2) : "–"}</td><td>${s.hard || "–"}</td><td class="nrgc">${nrg(p.id)}</td></tr>`; };
   const COLS = 18;
   let html = `<thead><tr><th>Skater</th><th>Pos</th><th>G</th><th>A</th><th>P</th><th>+/-</th><th>SOG</th><th title="Successful dekes and dangles">DK</th><th>HIT</th><th>BLK</th><th>TK</th><th>PIM</th><th>FO</th><th>TOI</th><th title="Top skating speed, mph">Top</th><th title="Distance skated, miles">Dist</th><th title="Hardest shot, mph">Shot</th><th>Energy</th></tr></thead><tbody>`;
   L.fLines.forEach((u, i) => { html += `<tr class="sub"><td colspan="${COLS}">Forward line ${i + 1}</td></tr>` + u.map(row).join(""); });
@@ -6591,7 +6935,7 @@ function renderBox() {
   html += `<tr class="sub"><td colspan="${COLS}">Goalies</td></tr>`;
   for (const g of L.goalies.filter(Boolean)) {
     const gs = game.stats[g.id];
-    html += `<tr><td>${esc(g.name)}${g === game.goalieOf(boxTeam) && !game.final ? " ●" : ""}</td><td>G</td><td colspan="3">SA ${gs.sa}</td><td colspan="2">SV ${gs.sv}</td><td colspan="3">SV% ${gs.sa ? (gs.sv / gs.sa).toFixed(3).replace(/^0/, "") : "–"}</td><td colspan="3">GA ${gs.ga}</td><td>${fmtClock(gs.toi)}</td><td></td><td></td><td></td><td></td></tr>`;
+    html += `<tr><td>${mb(g)}${esc(g.name)}${g === game.goalieOf(boxTeam) && !game.final ? " ●" : ""}</td><td>G</td><td colspan="3">SA ${gs.sa}</td><td colspan="2">SV ${gs.sv}</td><td colspan="3">SV% ${gs.sa ? (gs.sv / gs.sa).toFixed(3).replace(/^0/, "") : "–"}</td><td colspan="3">GA ${gs.ga}</td><td>${fmtClock(gs.toi)}</td><td></td><td></td><td></td><td></td></tr>`;
   }
   const fo = T.fow + game.teams[1 - boxTeam].fow;
   html += `<tr class="sub"><td colspan="${COLS}">Team: ${T.sog} shots · PP ${T.ppG}/${T.ppOpp} · ${T.pim} PIM · ${T.hits} hits · FO ${fo ? Math.round(T.fow / fo * 100) : 0}% · ${T.icings || 0} icings · ${T.offsides || 0} offsides</td></tr></tbody>`;
@@ -7148,7 +7492,7 @@ function renderLines(ctx) {
     const id = "sl-" + Object.values(ds).join("-");
     return `<label class="slot pic${opts.isAuto ? " auto" : ""}" for="${id}"><span class="slot-pic">${cur ? chibiHead(cur.name, 38, t) : `<span class="chibi-head none empty" style="width:38px;height:38px"></span>`}</span><span class="slot-body"><span class="pos">${label}${sty}</span>
       <select class="slotsel" id="${id}" ${Object.entries(ds).map(([k, v]) => `data-${k}="${esc(v)}"`).join(" ")}>${auto}${!cur && !opts.auto ? '<option value="" selected>Empty</option>' : ""}${o}</select>
-      ${cur ? `<span class="rt">OVR ${overall(cur)} <span class="gr" data-g="${grade(overall(cur))}">${grade(overall(cur))}</span></span>` : ""}</span></label>`;
+      ${cur ? `<span class="rt">OVR ${overall(cur)} <span class="gr" data-g="${grade(overall(cur))}">${grade(overall(cur))}</span>${cur.md != null ? " " + moodBadge(moodLevel(cur.md)) : ""}</span>` : ""}</span></label>`;
   };
   grid.innerHTML = ctx.teams.map(t => {
     const L = buildLineup(ctx.L, t.id);
@@ -7295,7 +7639,7 @@ function renderRoster() {
   const order = id => { const i = league.teams.findIndex(t => t.id === id); return i < 0 ? 99 : i; };
   const grp = p => p.pos === "G" ? 2 : p.pos === "D" ? 1 : 0;
   rows.sort((a, b) => order(a.team) - order(b.team) || grp(a) - grp(b) || (a.line || 9) - (b.line || 9) || POSITIONS.indexOf(a.pos) - POSITIONS.indexOf(b.pos));
-  const head = `<thead><tr><th>No</th><th>Name</th><th>Short</th><th>Team</th><th>Pos</th><th>Line</th><th>Playstyle</th>${STAT_FIELDS.map(f => `<th title="${STAT_TIP[f]}">${STAT_ABBR[f]}</th>`).join("")}<th>OVR</th><th>Friends</th><th><span hidden>Remove</span></th></tr></thead>`;
+  const head = `<thead><tr><th>No</th><th>Name</th><th>Short</th><th>Team</th><th>Pos</th><th>Line</th><th>Playstyle</th>${STAT_FIELDS.map(f => `<th title="${STAT_TIP[f]}">${STAT_ABBR[f]}</th>`).join("")}<th>OVR</th><th>Personality</th><th>Friends</th><th><span hidden>Remove</span></th></tr></thead>`;
   const body = rows.map(p => {
     const id = p.id;
     const stat = f => `<span class="stat"><input class="cell num" type="number" min="1" max="99" id="r-${id}-${f}" data-id="${id}" data-f="${f}" value="${p[f]}" aria-label="${STAT_LABEL[f]} for ${esc(p.name)}"><span class="gr" data-g="${grade(p[f])}">${grade(p[f])}</span></span>`;
@@ -7312,10 +7656,11 @@ function renderRoster() {
       <td><select class="cell" id="r-${id}-style" data-id="${id}" data-f="style" aria-label="Playstyle" title="${esc(STYLE_NOTES[p.style] || "")}">${styleOpts}</select></td>
       ${STAT_FIELDS.map(f => `<td>${stat(f)}</td>`).join("")}
       <td><span class="ovr" id="ovr-${id}">${overall(p)} <span class="gr" data-g="${grade(overall(p))}">${grade(overall(p))}</span></span></td>
+      <td><select class="cell" id="r-${id}-pers" data-id="${id}" data-f="pers" aria-label="Personality">${PERS_TYPES.map(x => `<option${persInfo(p).a === x ? " selected" : ""}>${x}</option>`).join("")}</select></td>
       <td><input class="cell list" id="r-${id}-friends" data-id="${id}" data-f="friends" value="${esc(p.friends.join(", "))}" aria-label="Friends" placeholder="Names, comma separated"></td>
       <td><button class="del" data-del="${id}" aria-label="Remove ${esc(p.name)}" title="Remove">×</button></td></tr>`;
   }).join("");
-  $("#sheet").innerHTML = head + `<tbody>${body || `<tr><td colspan="23" class="note" style="padding:14px">No players match. Clear the search or add a player.</td></tr>`}</tbody>`;
+  $("#sheet").innerHTML = head + `<tbody>${body || `<tr><td colspan="24" class="note" style="padding:14px">No players match. Clear the search or add a player.</td></tr>`}</tbody>`;
   const fa = league.players.filter(p => p.team === "FA").length;
   $("#rosterCount").textContent = `${league.players.length} players · ${league.teams.length} teams · ${fa} free agents`;
 }
@@ -7369,6 +7714,7 @@ function onSheetInput(e) {
   else if (f === "line") p.line = parseInt(el.value, 10) || 0;
   else if (f === "style") { p.style = validStyle(p, el.value); el.title = STYLE_NOTES[p.style] || ""; }
   else if (f === "friends" || f === "groups") p[f] = splitList(el.value);
+  else if (f === "pers") p.pers = normPers(Object.assign({}, persInfo(p), { a: el.value }), p);
   scheduleSave();
   if (f === "team" || f === "line" || f === "pos") checkMatchup();
 }
@@ -7415,11 +7761,11 @@ $("#resetWrap").addEventListener("click", e => {
 
 // ---------- import / export ----------
 let ioFmt = "csv";
-const CSV_COLS = ["name", "short", "no", "team", "pos", "line", "style", "sht", "pas", "hnd", "skt", "spd", "def", "chk", "fo", "sta", "dis", "clu", "goal", "friends"];
+const CSV_COLS = ["name", "short", "no", "team", "pos", "line", "style", "sht", "pas", "hnd", "skt", "spd", "def", "chk", "fo", "sta", "dis", "clu", "goal", "friends", "personality", "personality2", "cares1", "cares2"];
 const CSV_IN = CSV_COLS.concat(["off"]); // older exports have one Offense column
 function toCSV() {
   const q = v => { v = String(v ?? ""); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-  return [CSV_COLS.join(",")].concat(league.players.map(p => [p.name, p.tag, p.no, p.team, p.pos, p.line, p.style, ...STAT_FIELDS.map(f => p[f]), p.friends.join("; ")].map(q).join(","))).join("\n");
+  return [CSV_COLS.join(",")].concat(league.players.map(p => [p.name, p.tag, p.no, p.team, p.pos, p.line, p.style, ...STAT_FIELDS.map(f => p[f]), p.friends.join("; "), persInfo(p).a, persInfo(p).b, persInfo(p).p1, persInfo(p).p2].map(q).join(","))).join("\n");
 }
 function parseCSV(text) {
   const rows = []; let row = [], f = "", inq = false;
@@ -7443,9 +7789,16 @@ $("#copyBtn").addEventListener("click", () => {
   try { navigator.clipboard.writeText(ta.value).then(() => ioMsg("Copied to the clipboard.", "ok"), () => { ta.select(); ioMsg("Text selected. Press Ctrl+C or Cmd+C to copy."); }); }
   catch (e) { ta.select(); ioMsg("Text selected. Press Ctrl+C or Cmd+C to copy."); }
 });
+// save text as a file: through claude.ai's download prompt when the page runs there, otherwise a normal browser download
+async function saveTextFile(filename, text, mime) {
+  if (downloadsApi) { await downloadsApi.save({ filename, data: text }); return; }
+  const url = URL.createObjectURL(new Blob([text], { type: mime || "application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function fileStamp() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 $("#saveFileBtn").addEventListener("click", async () => {
-  if (!downloadsApi) return;
-  try { await downloadsApi.save({ filename: "tracen-ice-league-roster." + ioFmt, data: $("#ioText").value }); ioMsg("File saved.", "ok"); }
+  try { await saveTextFile("tracen-ice-league-roster-" + fileStamp() + "." + ioFmt, $("#ioText").value, ioFmt === "csv" ? "text/csv" : "application/json"); ioMsg("File saved.", "ok"); }
   catch (e) { ioMsg(e && e.code === "declined" ? "Save cancelled." : "Couldn't save the file here. Use Copy instead.", e && e.code === "declined" ? "note" : "err"); }
 });
 function importText(text) {
@@ -7565,6 +7918,61 @@ function frPill() {
   const map = { saving: ["saving", "Saving…"], retry: ["saving", "Saved in this browser · retrying the shared save"], saved: ["saved", "Saved" + at], local: ["saved", frStore.readOnly ? "View only: saved in this browser" : "Saved in this browser"], full: ["error", "Storage is full: delete an old franchise"], idle: ["idle", ""] };
   const [s, t] = map[frStore.state] || map.idle; el.dataset.s = s; el.textContent = t; el.title = frStore.err ? "Last shared-save problem: " + frStore.err : "";
 }
+// read a whole save (core + current season), newest copy wins; doesn't open it
+async function frFetch(id) {
+  let F = null;
+  if (frStore.db) {
+    try {
+      const c = await frStore.db.doc("franchises/" + id).get();
+      if (c.exists) { F = JSON.parse(JSON.stringify(c.data())); const s = await frStore.db.doc("franchises/" + id + "/seasons/s" + (F.sN || F.season)).get(); F.S = s.exists ? JSON.parse(JSON.stringify(s.data())) : null; }
+    } catch (e) {}
+  }
+  const local = frLocalGet("tracen-fr-" + id);
+  if (local && (!F || (local.updated || 0) > (F.updated || 0))) F = local;
+  return F;
+}
+// ---------- save files: download a franchise or career, load one back ----------
+const SAVE_KIND = "tracen-ice-league-save";
+async function frExport(id) {
+  const F = FR && FR.id === id ? FR : await frFetch(id);
+  if (!F) { frMsg = "Couldn't read that save."; frRender(); return; }
+  const full = Object.assign({}, F); delete full.sN;
+  const slug = String(F.name || "save").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "save";
+  const text = JSON.stringify({ kind: SAVE_KIND, mode: F.mode || "franchise", app: "Tracen Ice League", league: LEAGUE_VERSION, exported: new Date().toISOString(), save: full });
+  try { await saveTextFile(slug + "-season-" + F.season + "-" + fileStamp() + ".json", text); frMsg = "Saved “" + F.name + "” to a file. Load it from the saves screen with Import save file."; }
+  catch (e) { frMsg = e && e.code === "declined" ? "Download cancelled." : "Couldn't save the file here."; }
+  frRender();
+}
+let frImportMode = "franchise";
+function frImportPick(mode) { frImportMode = mode; const inp = $("#saveFileIn"); inp.value = ""; inp.click(); }
+async function frImportText(text) {
+  let obj; try { obj = JSON.parse(text); } catch (e) { return "That file isn't a save file (it couldn't be read as JSON)."; }
+  const F = obj && obj.kind === SAVE_KIND ? obj.save : obj && obj.players && obj.teams && obj.phase ? obj : null;
+  if (!F || !Array.isArray(F.players) || !Array.isArray(F.teams) || !F.id) return "That file isn't a Tracen Ice League save. Roster files go in Roster sheet → Import / export.";
+  const mode = F.mode === "bap" ? "bap" : "franchise";
+  if (["season", "playoffs", "done"].includes(F.phase) && !F.S) return "That save is missing its season data, so it can't be loaded.";
+  const exists = frSaves.find(s => s.id === F.id);
+  if (exists) {
+    const replace = await uiConfirm("You already have “" + exists.name + "”. Replace it with the copy from the file? Choose Cancel to keep both.", "Replace");
+    if (!replace) { F.id = frId(); F.name = (F.name || "Imported save") + " (copy)"; }
+  }
+  if (FR && frStore.state === "saving") await frFlush();
+  frMigrateChem(F);
+  FR = F; frSetup = null; frTab = "home"; FR.updated = Date.now();
+  frUi.rosterTeam = F.user; frUi.trade = { team: null, mine: new Set(), theirs: new Set(), msg: "", ok: false };
+  try { localStorage.setItem(mode === "bap" ? "tracen-bap-last" : FR_LAST, F.id); } catch (e) {}
+  frSave(); await frFlush(); await frLoadIndex();
+  if (mode !== frImportMode) { location.hash = mode === "bap" ? "#bap" : "#franchise"; }
+  return "";
+}
+$("#saveFileIn").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const set = m => { if (frImportMode === "bap" && typeof bapMsg !== "undefined") bapMsg = m; else frMsg = m; };
+  if (f.size > 8 * 1024 * 1024) { set("That file is too big to be a save."); frRender(); return; }
+  const err = await frImportText(await f.text());
+  set(err || "Loaded “" + (FR ? FR.name : "the save") + "” from the file.");
+  frRender();
+});
 async function frOpen(id, quiet) {
   let F = null;
   if (frStore.db) {
@@ -7616,16 +8024,16 @@ function renderFranchise() {
 function frSavesHtml() {
   const cards = frSaves.filter(s => s.mode !== "bap").map(s => `<div class="fr-save" style="--tc:${esc(s.color || "#555")}">
       <div class="fr-save-h"><b>${esc(s.name)}</b><span class="note">${esc(s.teamName || s.team)} · Season ${s.season} · ${esc(({ draft: "Draft", season: "Regular season", playoffs: "Playoffs", done: "Season complete", offseason: "Offseason" })[s.phase] || s.phase)}${s.local ? " · this browser only" : ""}</span></div>
-      <div class="fr-save-a"><button class="btn primary" data-fr="open" data-id="${esc(s.id)}">Continue</button><button class="btn danger" data-fr="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
+      <div class="fr-save-a"><button class="btn primary" data-fr="open" data-id="${esc(s.id)}">Continue</button><button class="btn" data-fr="export" data-id="${esc(s.id)}" title="Download this franchise as a file">Download</button><button class="btn danger" data-fr="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
   return `<div class="section-h"><h2>Franchise</h2></div>
     <div class="panel fr-intro">
       <div><h3>Run a club, season after season</h3>
       <p>Pick one of the league's ten clubs and rebuild it from a fantasy draft. Every player in the league goes back into the pool. The first-round order is random and the draft snakes from there. Then manage contracts under the salary cap, field trade offers from the other general managers, get through injuries, and chase the Tracen Cup in the playoffs. You can watch any game in the league, not just your own.</p></div>
-      <button class="btn primary big" data-fr="new">New franchise</button>
+      <div class="fr-intro-btns"><button class="btn primary big" data-fr="new">New franchise</button><button class="btn big" data-fr="import">Import save file</button></div>
     </div>
     ${frMsg ? `<p class="fr-msg">${esc(frMsg)}</p>` : ""}
     ${cards ? `<div class="sec-h" style="padding-left:0">Saved franchises</div><div class="fr-saves">${cards}</div>` : `<p class="note">No franchises yet.</p>`}
-    <p class="note">${frStore.db ? "Franchises are saved to the shared league, so anyone with the link sees the same saves." : "Franchises are saved in this browser."}</p>`;
+    <p class="note">${frStore.db ? "Franchises are saved to the shared league, so anyone with the link sees the same saves." : "Franchises are saved in this browser only. Download a save to back it up or move it to another device."}</p>`;
 }
 
 // ---------- new franchise ----------
@@ -7786,8 +8194,8 @@ function frHubHtml() {
   const tabs = FR_TABS.filter(([k]) => k !== "draft" || (F.draft && F.draft.picks.length)).map(([k, l]) => `<button data-fr="tab" data-v="${k}" aria-current="${frTab === k ? "page" : "false"}">${l}${k === "trades" && F.offers.length ? ` <i class="dot">${F.offers.length}</i>` : ""}</button>`).join("");
   const body = { home: frHomeHtml, media: frMediaHtml, training: frTrainingHtml, schedule: frScheduleHtml, standings: frStandingsHtml, stats: frStatsHtml, roster: frRosterHtml, lines: frLinesHtml, trades: frTradesHtml, fa: frFaHtml, draft: () => F.draft ? frRecapHtml() : "", history: frHistoryHtml }[frTab] || frHomeHtml;
   return `<div class="fr-head" style="--tc:${esc(frTeam(F.user).color)}">${tLogo(F.user, 44)}<div><h2>${tName(F.user)}</h2><span class="note">${esc(F.name)} · Season ${F.season} · ${frPhaseName()}${dayTxt ? " · " + dayTxt : ""}</span></div>
-      <div class="fr-kpis"><span><b>${r ? r.w + "–" + r.l + "–" + r.otl : "0–0–0"}</b><i>Record</i></span><span><b>${me + 1}<sup>${["st", "nd", "rd"][me] || "th"}</sup></b><i>Standing</i></span><span><b class="${pay > F.cap ? "bad" : ""}">${money(F.cap - pay)}</b><i>Cap space</i></span></div>
-      <span class="save-pill" id="frPill"></span><button class="btn" data-fr="saves">All franchises</button></div>
+      <div class="fr-kpis"><span><b>${r ? r.w + "–" + r.l + "–" + r.otl : "0–0–0"}</b><i>Record</i></span><span><b>${me + 1}<sup>${["st", "nd", "rd"][me] || "th"}</sup></b><i>Standing</i></span><span><b class="${pay > F.cap ? "bad" : ""}">${money(F.cap - pay)}</b><i>Cap space</i></span>${(() => { const ms = frMoodSummary(F, F.user); return `<span><b>${moodBadge(moodLevel(ms.avg))}</b><i>Locker room</i></span>`; })()}</div>
+      <span class="save-pill" id="frPill"></span><button class="btn" data-fr="export" data-id="${esc(F.id)}" title="Download this franchise as a file">Download save</button><button class="btn" data-fr="saves">All franchises</button></div>
     <nav class="fr-tabs" aria-label="Franchise sections">${tabs}</nav>
     ${frMsg ? `<p class="fr-msg">${esc(frMsg)}</p>` : ""}
     ${body()}`;
@@ -7850,13 +8258,13 @@ function frOffseasonHtml() {
     const ex = frExpiring(F);
     const rows = ex.map(p => {
       const y = frUi.signYrs[p.id] || askYears(p, F.season);
-      const ask = Math.round(askSalary(p, F.season) * (y >= 4 ? 1.06 : y <= 1 ? 0.97 : 1) * 20) / 20;
-      return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span><b>${esc(p.name)}</b><small>${p.pos} · ${esc(p.style)}</small></span></div></td><td>${frOvr(p)}</td><td class="num">${money(p.con.sal)}</td>
+      const ra = frResignAsk(F, p, y), ask = ra.sal;
+      return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${esc(p.name)}</b><small>${p.pos} · ${esc(p.style)}</small></span></div></td><td>${frOvr(p)}</td><td>${frWantsHtml(p, ra.deal)}</td><td class="num">${money(p.con.sal)}</td>
         <td><select data-fr-yrs="${esc(p.id)}" aria-label="Years">${[1, 2, 3, 4, 5].map(n => `<option value="${n}"${n === y ? " selected" : ""}>${yrs(n)}</option>`).join("")}</select></td><td class="num"><b>${money(ask)}</b>/yr</td>
-        <td><button class="btn sm primary" data-fr="resign" data-id="${esc(p.id)}">Re-sign</button><button class="btn sm" data-fr="letgo" data-id="${esc(p.id)}">Let go</button></td></tr>`;
+        <td>${p.treq ? `<span class="note">Won't re-sign: she asked for a trade</span> ` : `<button class="btn sm primary" data-fr="resign" data-id="${esc(p.id)}">Re-sign</button>`}<button class="btn sm" data-fr="letgo" data-id="${esc(p.id)}">Let go</button></td></tr>`;
     }).join("");
     return `<div class="panel"><div class="panel-h"><b>Offseason · Re-sign your players</b>${frCapBar(frPayroll(F, F.user) - ex.reduce((s, p) => s + p.con.sal, 0), F.cap)}</div>
-      ${ex.length ? `<div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th class="num">Last deal</th><th>Length</th><th class="num">Asking</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note" style="padding:10px 14px">No contracts to decide on. Anyone you didn't re-sign becomes a free agent.</p>`}
+      ${ex.length ? `<div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th>Wants</th><th class="num">Last deal</th><th>Length</th><th class="num">Asking</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note" style="padding:10px 14px">No contracts to decide on. Anyone you didn't re-sign becomes a free agent.</p>`}
       <div class="fr-simbar"><button class="btn primary" data-fr="openfa">${ex.length ? "Let the rest go and open free agency" : "Open free agency"}</button></div></div>
       <div class="panel"><div class="panel-h"><b>How your players developed</b></div><ul class="fr-dev">${dev || `<li class="note">No changes on your roster.</li>`}</ul></div>`;
   }
@@ -7926,7 +8334,7 @@ function frRosterHtml() {
   const S = F.S.stats;
   const role = p => p.inj ? `<em class="bad">Out ${p.inj.g} game${p.inj.g > 1 ? "s" : ""} · ${esc(p.inj.what)}</em>` : posGroup(p) === "G" ? (p.line === 1 ? "Starter" : p.line === 2 ? "Backup" : "Extra") : p.line ? (posGroup(p) === "D" ? "Pair " : "Line ") + p.line : "Extra";
   const rows = ps.map(p => { const s = S[p.id] || frBlank(); const g = posGroup(p) === "G";
-    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30, t)}<span><b>${esc(p.name)}</b><small>${esc(p.style)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td>${role(p)}</td><td class="num">${money(p.con.sal)}</td><td class="num">${yrs(p.con.yrs)}</td>
+    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30, t)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${p.md != null ? moodBadge(moodLevel(p.md)) + " " : ""}${esc(p.name)}</b><small>${esc(p.style)} · ${esc(persInfo(p).a)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td>${role(p)}${p.treq ? ` <em class="fr-tagv">Trade request</em>` : p.unhW ? ` <em class="fr-tagv" title="She wants a bigger role">Unhappy</em>` : ""}</td><td class="num">${money(p.con.sal)}</td><td class="num">${yrs(p.con.yrs)}</td>
       <td class="num">${s.gp}</td><td class="num">${g ? s.w + "-" + s.l + "-" + s.otl : s.g}</td><td class="num">${g ? frStatFmt(s, "svp") : s.a}</td><td class="num">${g ? frStatFmt(s, "gaa") : s.g + s.a}</td>
       ${mine ? `<td><button class="btn sm danger" data-fr="release" data-id="${esc(p.id)}">Release</button></td>` : ""}</tr>`; }).join("");
   const opts = F.teams.map(x => `<option value="${esc(x.id)}"${x.id === tid ? " selected" : ""}>${esc(x.name)}${x.id === F.user ? " (you)" : ""}</option>`).join("");
@@ -7978,12 +8386,12 @@ function frFaHtml() {
   const rows = fa.map(p => {
     const ask = frAsk(F, p), y = off ? (frUi.signYrs[p.id] || ask.yrs) : 1;
     const sel = off ? `<select data-fr-yrs="${esc(p.id)}" aria-label="Years">${[1, 2, 3, 4, 5].map(n => `<option value="${n}"${n === y ? " selected" : ""}>${yrs(n)}</option>`).join("")}</select>` : "1 yr";
-    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${esc(p.name)}</b><small>${esc(p.style)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td class="rts">${frRatingsCell(p)}</td><td>${p.inj ? `<em class="bad">inj ${p.inj.g}g</em>` : ""}</td><td class="num"><b>${money(ask.sal)}</b></td><td>${sel}</td>
+    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${esc(p.name)}</b><small>${esc(p.style)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td class="rts">${frRatingsCell(p)}</td><td>${p.inj ? `<em class="bad">inj ${p.inj.g}g</em>` : ""}</td><td>${frWantsHtml(p, ask.deal)}</td><td class="num"><b>${money(ask.sal)}</b></td><td>${sel}</td>
       <td><button class="btn sm primary" data-fr="sign" data-id="${esc(p.id)}"${F.phase === "playoffs" || F.phase === "done" ? " disabled" : ""}>Sign</button></td></tr>`;
   }).join("");
   return `<div class="panel"><div class="panel-h"><b>Free agents · ${fa.length}</b>${frCapBar(frPayroll(F, F.user), F.cap)}<span class="note">${F.players.filter(p => p.team === F.user).length}/${FR_RULES.maxRoster} on your roster</span></div>
     <p class="note" style="padding:0 14px">${off ? "Offseason deals can run up to five years." : "During the season, free agents sign one-year deals at a discount."}</p>
-    <div class="tscroll lim"><table class="fr-tbl"><thead><tr><th>Player</th><th>Pos</th><th>OVR</th><th class="rcol">Ratings</th><th></th><th class="num">Asking</th><th>Term</th><th></th></tr></thead><tbody>${rows || `<tr><td colspan="8" class="note">No free agents right now.</td></tr>`}</tbody></table></div></div>`;
+    <div class="tscroll lim"><table class="fr-tbl"><thead><tr><th>Player</th><th>Pos</th><th>OVR</th><th class="rcol">Ratings</th><th></th><th>Wants</th><th class="num">Asking</th><th>Term</th><th></th></tr></thead><tbody>${rows || `<tr><td colspan="9" class="note">No free agents right now.</td></tr>`}</tbody></table></div></div>`;
 }
 function frHistoryHtml() {
   const F = FR;
@@ -8063,9 +8471,27 @@ function frTrainingHtml() {
       <td class="num"><b>${v}</b></td><td><div class="fr-prog" title="${Math.round(prog * 100)}% to the next point"><i style="width:${(prog * 100).toFixed(0)}%"></i></div></td><td class="num note">${p.inj ? "injured" : "~" + Math.max(1, Math.ceil((1 - prog) / Math.max(0.05, gain))) + " wk"}</td></tr>`;
   }).join("");
   const seg = [["light", "Light"], ["normal", "Normal"], ["hard", "Hard"]].map(([k, l]) => `<button data-fr="tint" data-v="${k}" aria-pressed="${inten === k}">${l}</button>`).join("");
-  return `${frChemPanelHtml()}<div class="panel"><div class="panel-h"><b>Training</b><div class="seg">${seg}</div><span class="note">${inten === "hard" ? "Faster progress, but players can get hurt in practice." : inten === "light" ? "Slower progress, no practice injuries." : "Steady progress."} Ratings tick up once a week during the season.</span></div>
+  return `${frMoodPanelHtml()}${frChemPanelHtml()}<div class="panel"><div class="panel-h"><b>Training</b><div class="seg">${seg}</div><span class="note">${inten === "hard" ? "Faster progress, but players can get hurt in practice." : inten === "light" ? "Slower progress, no practice injuries." : "Steady progress."} Ratings tick up once a week during the season.</span></div>
     <p class="note" style="padding:0 14px">Each player works on one skill. Auto picks the weakest skill that matters for her style. Higher potential and lower ratings improve faster. The other clubs train too.</p>
     <div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th>Potential</th><th>Focus</th><th class="num">Now</th><th>Next point</th><th class="num">ETA</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+// what a player cares about, and how that moves her price with you
+function frWantsHtml(p, deal) {
+  const pe = persInfo(p), net = deal ? Math.round((deal.m - 1) * 100) : 0;
+  const tip = (deal && deal.why.length ? frDealText(deal) + ". " : "") + (PRI_HELP[pe.p1] || "");
+  return `<span class="fr-wants" title="${esc(tip)}"><span class="pc-tag">${esc(pe.p1)}</span><span class="pc-tag sub">${esc(pe.p2)}</span>${net ? `<small class="${net < 0 ? "good" : "bad"}">${net > 0 ? "+" : "−"}${Math.abs(net)}%</small>` : ""}</span>`;
+}
+
+// ---------- the locker room: everyone's mood and why ----------
+function frMoodPanelHtml() {
+  const F = FR, ms = frMoodSummary(F, F.user), t = frTeam(F.user), n = ms.ps.length || 1;
+  const bars = [2, 1, 0, -1, -2].map(l => { const m = MOODS[String(l)], k = ms.c[l]; return `<div class="fr-moodbar m-${m.k}" style="flex:${Math.max(k, 0.0001)}" title="${m.name}: ${k}">${k ? moodBadge(l) + " " + k : ""}</div>`; }).join("");
+  const low = ms.ps.filter(p => moodLevel(p.md) < 0).sort((a, b) => a.md - b.md).slice(0, 4).map(p => `<li>${chibiHead(p.name, 24, t)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0">${moodBadge(moodLevel(p.md))} ${esc(p.name)}</span><small>${esc(((p.mdw || []).find(x => x.s < 0) || {}).t || "")}${p.treq ? " · wants a trade" : p.unhW ? " · wants a bigger role" : ""}</small></li>`).join("");
+  return `<div class="panel"><div class="panel-h"><b>Locker room</b><span class="note">Team mood ${MOODS[String(moodLevel(ms.avg))].name.toLowerCase()}</span></div>
+    <p class="note" style="padding:0 14px">Mood changes how well each player plays, from +4% when Great to −4% when Awful. Winning, scoring, friends on the team, a Leader in the room and team bonding lift it; losing, healthy scratches, injuries and hard practices drag it down. Hotheads and Timid players take bad news hardest, and Leaders stay steady.</p>
+    <div class="fr-moodbars">${bars}</div>
+    ${low ? `<div class="sec-h" style="padding:6px 14px 0">Could use some attention</div><ul class="fr-recent">${low}</ul>` : `<p class="note" style="padding:4px 14px 12px">Nobody is in a bad mood right now.</p>`}</div>`;
 }
 
 // ---------- team chemistry and practice ----------
@@ -8172,6 +8598,8 @@ async function frAction(b) {
     case "create": frCreate(); break;
     case "open": await frOpen(id); break;
     case "del": { const s = frSaves.find(x => x.id === id); if (!(await uiConfirm("Delete “" + (s ? s.name : "this franchise") + "” for everyone? This can't be undone.", "Delete", true))) return; await frDelete(id); } break;
+    case "export": await frExport(id); return;
+    case "import": frImportPick("franchise"); return;
     case "saves": if (FR && frStore.state === "saving") await frFlush(); FR = null; frSetup = null; try { localStorage.removeItem(FR_LAST); } catch (e) {} await frLoadIndex(); break;
     case "pick": if (draftTeamAt(FR, FR.draft.idx) === FR.user && !draftLegal(FR, FR.user, frP(id))) { draftMake(FR, id); draftAdvance(FR, false); frSave(); } break;
     case "autopick": { const p = draftBest(FR, FR.user); if (p) draftMake(FR, p.id); draftAdvance(FR, false); frSave(); } break;
@@ -8425,22 +8853,22 @@ function renderBap() {
 function bapSavesHtml() {
   const list = frSaves.filter(s => s.mode === "bap");
   const cards = list.map(s => `<div class="fr-save" style="--tc:${esc(s.color || "#555")}"><div class="fr-save-h"><b>${esc(s.name)}</b><span class="note">${esc(s.teamName || s.team)} · Season ${s.season}${s.local ? " · this browser only" : ""}</span></div>
-    <div class="fr-save-a"><button class="btn primary" data-bap="open" data-id="${esc(s.id)}">Continue</button><button class="btn danger" data-bap="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
+    <div class="fr-save-a"><button class="btn primary" data-bap="open" data-id="${esc(s.id)}">Continue</button><button class="btn" data-bap="export" data-id="${esc(s.id)}" title="Download this career as a file">Download</button><button class="btn danger" data-bap="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
   return `<div class="section-h"><h2>Be A Player</h2></div>
     <div class="panel fr-intro bap-intro">
       <div><h3>Create a player and live her career</h3>
       <p>Build your own Uma from scratch, get drafted, and fight your way up the lineup. In games the camera follows you, and when the puck finds you in a big spot the action pauses so you make the call: shoot, pass, deke, or throw the body. Earn coach trust and skill points, talk to the media, build friendships, negotiate contracts, or ask for a trade.</p></div>
-      <button class="btn primary big" data-bap="new">Create a player</button></div>
+      <div class="fr-intro-btns"><button class="btn primary big" data-bap="new">Create a player</button><button class="btn big" data-bap="import">Import save file</button></div></div>
     ${bapMsg ? `<p class="fr-msg">${esc(bapMsg)}</p>` : ""}
     ${cards ? `<div class="sec-h" style="padding-left:0">Your careers</div><div class="fr-saves">${cards}</div>` : `<p class="note">No careers yet.</p>`}`;
 }
 
 // ---------- create ----------
 function bapStartSetup() {
-  bapSetup = { step: 1, name: "", tag: "", no: 17, pos: "C", style: "Sniper", shoots: "L", look: { hair: "#7A4A2E", eye: "#2F7FC8", blaze: true }, alloc: {}, sp: 12, games: 28, series: 7, injuries: true, moments: true };
+  bapSetup = { step: 1, name: "", tag: "", no: 17, pos: "C", style: "Sniper", shoots: "L", pers: "Hard Worker", pri: "Winning", skn: "", skt: "late", ske: "speed", look: { hair: "#7A4A2E", eye: "#2F7FC8", blaze: true }, alloc: {}, sp: 12, games: 28, series: 7, injuries: true, moments: true };
 }
 function bapPreview() {
-  const s = bapSetup, p = bapMakePlayer({ name: s.name || "New Player", pos: s.pos, style: s.style, shoots: s.shoots, no: s.no, look: s.look });
+  const s = bapSetup, p = bapMakePlayer({ name: s.name || "New Player", pos: s.pos, style: s.style, shoots: s.shoots, no: s.no, look: s.look, pers: s.pers, pri: s.pri, skill: { n: s.skn, t: s.skt, e: s.ske } });
   for (const [k, n] of Object.entries(s.alloc)) p[k] += n;
   p.off = Math.round((p.sht + p.pas) / 2);
   return p;
@@ -8458,6 +8886,11 @@ function bapSetupHtml() {
       <div class="fr-row"><span>Position</span>${seg("pos", [["C", "Center"], ["LW", "Left wing"], ["RW", "Right wing"], ["D", "Defense"]], s.pos)}</div>
       <div class="fr-row"><span>Style</span>${seg("style", styles.map(x => [x, x]), s.style)}<span class="note">${esc(STYLE_NOTES[s.style] || "")}</span></div>
       <div class="fr-row"><span>Shoots</span>${seg("shoots", [["L", "Left"], ["R", "Right"]], s.shoots)}</div>
+      <div class="fr-row"><span>Personality</span>${seg("pers", Object.keys(PERS_ARCH).map(x => [x, x]), s.pers)}<span class="note">${esc(PERS_HELP[s.pers] || "")} When the game plays for her, this is how she plays.</span></div>
+      <div class="fr-row"><span>Cares most about</span>${seg("pri", PERS_PRIORITIES.map(x => [x, x]), s.pri)}</div>
+      <div class="fr-row"><span>Unique skill</span><input id="bapSkill" value="${esc(s.skn)}" maxlength="40" placeholder="Name your signature move, e.g. Starlight Finale"></div>
+      <div class="fr-row"><span>It fires</span>${seg("skt", ["late", "rush", "slot", "traffic", "behind", "lead", "start"].map(x => [x, SKILL_TRIG[x]]), s.skt)}</div>
+      <div class="fr-row"><span>And gives her</span>${seg("ske", ["speed", "shot", "pass", "hands", "defense", "physical"].map(x => [x, SKILL_FX[x]]), s.ske)}</div>
     </div></div><div class="fr-nav"><button class="btn primary" data-bap="step" data-v="2"${s.name.trim() ? "" : " disabled"}>Next: skill points</button></div>`;
   if (s.step === 2) {
     const keys = BAP_KEYS.filter(k => k !== "fo" || s.pos === "C");
@@ -8480,11 +8913,12 @@ function bapReadForm() {
   const s = bapSetup; if (!s || s.step !== 1) return;
   const v = id => document.getElementById(id);
   if (v("bapName")) { s.name = v("bapName").value.trim().slice(0, 32); s.tag = v("bapTag").value.trim().slice(0, 9); s.no = Math.max(1, Math.min(99, parseInt(v("bapNo").value, 10) || 17)); }
+  if (v("bapSkill")) s.skn = v("bapSkill").value.trim().slice(0, 40);
 }
 function bapCreate() {
   const s = bapSetup;
   if (league.players.some(p => p.name.toLowerCase() === s.name.toLowerCase())) { bapMsg = "There's already a player named " + s.name + ". Pick another name."; s.step = 1; return; }
-  const F = bapNew(league, { name: s.name, tag: s.tag || s.name.split(" ").slice(-1)[0], no: s.no, pos: s.pos, style: s.style, shoots: s.shoots, look: s.look, sp: s.sp }, { games: s.games, series: s.series, injuries: s.injuries, moments: s.moments });
+  const F = bapNew(league, { name: s.name, tag: s.tag || s.name.split(" ").slice(-1)[0], no: s.no, pos: s.pos, style: s.style, shoots: s.shoots, look: s.look, sp: s.sp, pers: s.pers, pri: s.pri, skill: { n: s.skn || (s.name.split(" ")[0] || "My") + "'s Spark", t: s.skt, e: s.ske } }, { games: s.games, series: s.series, injuries: s.injuries, moments: s.moments });
   const me = bapMe(F); for (const [k, n] of Object.entries(s.alloc)) me[k] += n; me.off = Math.round((me.sht + me.pas) / 2);
   FR = F; bapSetup = null; bapTab = "home"; bapMsg = "";
   try { localStorage.setItem(BAP_LAST, F.id); } catch (e) {}
@@ -8547,8 +8981,8 @@ function bapHubHtml() {
   const tabs = BAP_TABS.map(([k, l]) => `<button data-bap="tab" data-v="${k}" aria-current="${bapTab === k ? "page" : "false"}">${l}${k === "home" && B.interview ? ` <i class="dot">1</i>` : ""}${k === "player" && B.sp ? ` <i class="dot">${B.sp}</i>` : ""}</button>`).join("");
   const body = { home: bapHomeHtml, player: bapPlayerHtml, career: bapCareerHtml, team: bapTeamHtml, media: frMediaHtml, league: bapLeagueHtml }[bapTab] || bapHomeHtml;
   return `<div class="fr-head bap-head" style="--tc:${esc(t ? t.color : "#555")}">${chibiHead(me.name, 58, t)}<div><h2>${esc(me.name)} <span class="no">#${me.no}</span></h2><span class="note">${me.pos} · ${esc(me.style)} · ${tLogo(me.team, 16)}${t ? esc(t.name) : "Free agent"} · Season ${F.season} · ${phase}</span><span class="bap-role">${esc(bapRoleText(role))}</span></div>
-      <div class="fr-kpis"><span><b>${overall(me)}</b><i>Overall</i></span><span><b>${s.gp}–${s.g}–${s.a}–${s.g + s.a}</b><i>GP-G-A-P</i></span><span><b>${Math.round(B.trust)}</b><i>Coach trust</i>${bapMeter(B.trust, "trust")}</span><span><b>${Math.round(B.hype)}</b><i>Hype</i>${bapMeter(B.hype, "hype")}</span></div>
-      <span class="save-pill" id="frPill"></span><button class="btn" data-bap="saves">All careers</button></div>
+      <div class="fr-kpis"><span><b>${overall(me)}</b><i>Overall</i></span><span><b>${s.gp}–${s.g}–${s.a}–${s.g + s.a}</b><i>GP-G-A-P</i></span><span><b>${Math.round(B.trust)}</b><i>Coach trust</i>${bapMeter(B.trust, "trust")}</span><span><b>${Math.round(B.hype)}</b><i>Hype</i>${bapMeter(B.hype, "hype")}</span><span><b>${moodBadge(moodLevel(me.md))}</b><i>${MOODS[String(moodLevel(me.md))].name} mood</i></span></div>
+      <span class="save-pill" id="frPill"></span><button class="btn" data-bap="export" data-id="${esc(F.id)}" title="Download this career as a file">Download save</button><button class="btn" data-bap="saves">All careers</button></div>
     <nav class="fr-tabs" aria-label="Career sections">${tabs}</nav>
     ${frMsg || bapMsg ? `<p class="fr-msg">${esc(frMsg || bapMsg)}</p>` : ""}
     ${body()}`;
@@ -8649,6 +9083,8 @@ async function bapAction(b) {
     case "alloc": { const s = bapSetup, p = bapPreview(), k = b.dataset.k, n = +v; if (n > 0) { const c = bapCost(p[k]); if (s.sp >= c) { s.sp -= c; s.alloc[k] = (s.alloc[k] || 0) + 1; } } else if (s.alloc[k]) { s.alloc[k]--; s.sp += bapCost(p[k] - 1); } } break;
     case "create": bapCreate(); break;
     case "open": await frOpen(id); if (FR && FR.mode !== "bap") FR = null; bapTab = "home"; break;
+    case "export": await frExport(id); return;
+    case "import": frImportPick("bap"); return;
     case "del": { const s = frSaves.find(x => x.id === id); if (!(await uiConfirm("Delete “" + (s ? s.name : "this career") + "” for everyone? This can't be undone.", "Delete", true))) return; await frDelete(id); } break;
     case "saves": if (FR && frStore.state === "saving") await frFlush(); FR = null; bapSetup = null; try { localStorage.removeItem(BAP_LAST); } catch (e) {} await frLoadIndex(); break;
     case "draft": bapDraft(FR); frSave(); break;

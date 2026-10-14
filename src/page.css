@@ -996,3 +996,44 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
 .link.fam { background: color-mix(in srgb, var(--ok) 16%, transparent); }
 .pc-tag[data-pname] { cursor: pointer; }
 .pc-tag[data-pname]:hover { border-color: var(--accent); }
+.fr-intro-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fr-intro .fr-intro-btns .btn:not(.primary) { background: rgba(255,255,255,.1); color: var(--board-ink); border-color: rgba(255,255,255,.25); }
+
+/* ---------- personalities ---------- */
+.pc-pers { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0 10px; }
+.pc-arch { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .8rem; padding: 2px 10px; border-radius: 99px; background: var(--accent); color: #fff; }
+.pc-arch.sub { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.pc-blurb { flex-basis: 100%; margin: 0; font-style: italic; }
+.fr-wants { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 3px; font-size: .78rem; }
+.fr-wants .pc-tag { padding: 0 7px; }
+.fr-wants .pc-tag.sub { opacity: .7; }
+.fr-wants small { font-weight: 700; }
+.fr-wants small.good { color: var(--ok); } .fr-wants small.bad { color: var(--bad); }
+
+/* ---------- moods ---------- */
+.mood { display: inline-flex; align-items: center; justify-content: center; vertical-align: -2px; min-width: 18px; height: 16px; padding: 0 3px; border-radius: 5px; color: #fff; line-height: 1; }
+.mood svg { display: block; }
+.mood.m-great { background: #E2457F; } .mood.m-good { background: #EE8323; } .mood.m-normal { background: #C9A300; }
+.mood.m-bad { background: #3D77D6; } .mood.m-awful { background: #7E4FC2; }
+.fr-kpis .mood { height: 22px; min-width: 30px; } .fr-kpis .mood svg { width: 15px; height: 15px; }
+.pc-mood { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -2px 0 10px; font-size: .9rem; }
+.pc-mood .good { color: var(--ok); } .pc-mood .bad { color: var(--bad); }
+.fr-moodbars { display: flex; gap: 3px; margin: 4px 14px 10px; height: 28px; }
+.fr-moodbar { display: flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 700; font-size: .82rem; color: #fff; overflow: hidden; white-space: nowrap; min-width: 0; }
+.fr-moodbar.m-great { background: #E2457F; } .fr-moodbar.m-good { background: #EE8323; } .fr-moodbar.m-normal { background: #C9A300; } .fr-moodbar.m-bad { background: #3D77D6; } .fr-moodbar.m-awful { background: #7E4FC2; }
+.fr-moodbar .mood { background: transparent; padding: 0; min-width: 0; }
+
+/* ---------- unique skills ---------- */
+.skillpop { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 16px 6px 8px; border-radius: 99px; color: #fff; z-index: 4; pointer-events: none;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--tc, #C9961A) 85%, #000) 0%, #1A1404 70%); border: 2px solid #F2C14E; box-shadow: 0 0 0 3px rgba(242,193,78,.25), 0 8px 24px rgba(0,0,0,.35); }
+.skillpop span { display: grid; line-height: 1.1; }
+.skillpop i { font-style: normal; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: #F2C14E; font-weight: 700; }
+.skillpop b { font-family: var(--f-display); font-size: 1.15rem; text-transform: uppercase; letter-spacing: .02em; }
+.skillpop small { font-size: .78rem; opacity: .85; }
+.skillpop.in { animation: skin 2.6s ease both; }
+@keyframes skin { 0% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(.9); } 10% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.04); } 16% { transform: translateX(-50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .skillpop.in { animation: none; } }
+.skstar { color: #C9961A; font-weight: 700; }
+.pc-skill { display: grid; gap: 2px; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid #E5C25A; background: color-mix(in srgb, #F2C14E 12%, var(--surface)); }
+.pc-sk-n { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #A97A0C; }
+.pc-sk-g { font-style: italic; }

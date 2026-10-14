@@ -158,11 +158,11 @@ function frTeamsFrom(league) {
 function frNew(league, opts) {
   const F = { v: FR_VERSION, id: frId(), name: opts.name || "My franchise", created: Date.now(), season: 1, phase: "draft",
     user: opts.user, settings: Object.assign({ games: 28, series: 7, trades: "normal", autoLines: true, injuries: true }, opts.settings || {}),
-    teams: frTeamsFrom(league), players: [], news: [], offers: [], history: [], day: 0, off: null, fam: {}, chemV: 1 };
+    teams: frTeamsFrom(league), players: [], news: [], offers: [], history: [], day: 0, off: null, fam: {}, chemV: 1, persV: 1, moodV: 1 };
   if (opts.teamEdit) Object.assign(F.teams.find(t => t.id === opts.user), opts.teamEdit);
   F.players = JSON.parse(JSON.stringify(league.players)).map(p => {
     p.team = "POOL"; p.line = 0; p.inj = null; p.dev = Math.round((nameHash(p.name, 91) * 2.4 - 1) * 10) / 10;
-    p.con = { sal: askSalary(p, 1), yrs: askYears(p, 1) }; return p;
+    p.con = { sal: askSalary(p, 1), yrs: askYears(p, 1) }; p.md = frMoodClamp(0.3 + frGauss() * 0.5); p.mdw = []; return p;
   });
   F.cap = frCapFor(F);
   const r1 = frShuffle(F.teams.map(t => t.id));
@@ -307,7 +307,9 @@ function frSide(F, tid, starter) {
   L.fLines.forEach((u, i) => u.forEach(p => share[p.id] = { s: fs[i], u: i, g: "F" }));
   L.dPairs.forEach((u, i) => u.forEach(p => share[p.id] = { s: ds[i], u: i, g: "D" }));
   const agg = (t.tactics && t.tactics.agg != null ? t.tactics.agg : 50) / 100;
-  return { tid, L, O: O + (chem - FR_CHEM_MID) / 14, D, G: g ? frRt(g, "goal") * 0.9 + frRt(g, "clu") * 0.1 : 50, g, share, agg,
+  const sk = [...L.fLines.flat(), ...L.dPairs.flat()], mood = sk.length ? sk.reduce((a, p) => a + moodLevel(p.md), 0) / sk.length : 0;
+  O += mood * 1.2; D += mood * 1.2;
+  return { tid, L, O: O + (chem - FR_CHEM_MID) / 14, D, G: g ? frRt(g, "goal") * 0.9 + frRt(g, "clu") * 0.1 + moodLevel(g.md) * 1.2 : 50, g, share, agg,
     dis: avg([...L.fLines.flat(), ...L.dPairs.flat()].map(p => frRt(p, "dis"))), chk: avg([...L.fLines.flat(), ...L.dPairs.flat()].map(p => frRt(p, "chk"))) };
 }
 function frBlank() { return { gp: 0, g: 0, a: 0, pm: 0, pim: 0, sog: 0, ppg: 0, ppa: 0, shg: 0, sha: 0, gwg: 0, hit: 0, blk: 0, toi: 0, gs: 0, w: 0, l: 0, otl: 0, sa: 0, sv: 0, ga: 0, so: 0 }; }
@@ -446,7 +448,7 @@ function frApply(F, game, res) {
   }
   for (const it of res.inj || []) {
     const p = F.players.find(x => x.id === it.pid); if (!p || p.inj) continue;
-    p.inj = { g: it.g, what: it.what };
+    p.inj = { g: it.g, what: it.what }; frMoodAdd(p, -0.5, "Injured");
     if (p.team === F.user || it.g >= 10) frNews(F, p.name + " (" + p.team + ") is out " + it.g + " game" + (it.g > 1 ? "s" : "") + " with a " + it.what + ".", p.team);
   }
   // milestones worth a line in the news
@@ -454,6 +456,7 @@ function frApply(F, game, res) {
   for (const [pid, s] of hat) { const p = F.players.find(x => x.id === pid); if (p && (p.team === F.user || s.g >= 4)) frNews(F, (s.g >= 4 ? s.g + " goals! " : "Hat trick! ") + p.name + " scores " + (s.g >= 4 ? s.g : "three") + " for " + p.team + ".", p.team); }
   if (F.mode === "bap" && (game.h === F.user || game.a === F.user)) bapAfterGame(F, game, res);
   for (const tid of [game.h, game.a]) frFamUnits(F, tid, FAM_GAME, 0.5); // playing together builds chemistry
+  frMoodGame(F, game, res);
   for (let ti = 0; ti < 2; ti++) { const gid = res.gids[ti]; const s = gid && res.ps[gid]; if (s && s.so && s.sa >= 15) { const p = F.players.find(x => x.id === gid); if (p) frNews(F, "Shutout for " + p.name + ": " + s.sv + " saves.", p.team); } }
 }
 
@@ -474,6 +477,8 @@ function frEndDay(F) {
   for (const t of F.teams) if (t.id !== F.user || F.mode === "bap") { frAiFixRoster(F, t.id); frAutoLines(F, t.id); }
   if (F.settings.autoLines && F.mode !== "bap") frAutoLines(F, F.user);
   if (F.mode === "bap") bapDay(F);
+  if (F.phase === "season" || F.phase === "playoffs") frMoodDay(F);
+  frIceTimeDay(F);
   if (F.phase === "season") {
     F.offers = F.offers.filter(o => o.exp >= F.day);
     if (F.day <= F.deadline) { frMaybeOffer(F); frMaybeAiTrade(F); }
@@ -488,18 +493,60 @@ function frAiFixRoster(F, tid) {
     let have = frHealthy(F, tid).filter(p => posGroup(p) === g).length;
     while (have < need[g] && F.players.filter(p => p.team === tid).length < FR_RULES.maxRoster) {
       const space = frCapSpace(F, tid);
-      const fa = F.players.filter(p => p.team === "FA" && !p.inj && posGroup(p) === g && frAsk(F, p).sal <= space).sort((a, b) => overall(b) - overall(a))[0];
+      const fa = F.players.filter(p => p.team === "FA" && !p.inj && posGroup(p) === g && frAsk(F, p, tid).sal <= space).sort((a, b) => overall(b) - overall(a))[0];
       if (!fa) break;
-      const ask = frAsk(F, fa); fa.team = tid; fa.con = { sal: ask.sal, yrs: 1 }; have++;
+      const ask = frAsk(F, fa, tid); fa.team = tid; fa.con = { sal: ask.sal, yrs: 1 }; have++;
       frNews(F, F.teams.find(t => t.id === tid).name + " sign " + fa.name + " (" + fa.pos + ") for " + money(ask.sal) + ".", tid);
     }
   }
 }
 // free agents in season take less money the longer they wait
-function frAsk(F, p) {
+function frAsk(F, p, tid) {
   const base = askSalary(p, F.season);
   const late = F.phase === "season" || F.phase === "playoffs" ? 0.85 : 1;
-  return { sal: Math.max(FR_RULES.minSal, Math.round(base * late * 20) / 20), yrs: F.phase === "offseason" ? askYears(p, F.season) : 1 };
+  const deal = frPersDeal(F, p, tid || F.user, "fa");
+  return { sal: Math.max(FR_RULES.minSal, Math.round(base * late * deal.m * 20) / 20), yrs: F.phase === "offseason" ? askYears(p, F.season) : 1, deal };
+}
+// ---------- personalities at the bargaining table ----------
+// what she cares about changes her price with a given club: [label, share of her price]
+function frPersDeal(F, p, tid, kind) {
+  const pe = persInfo(p), why = [], w = k => (pe.p1 === k ? 1 : pe.p2 === k ? 0.5 : 0);
+  const add = (k, v, t) => { const x = v * w(k); if (Math.abs(x) >= 0.005) why.push({ k, v: x, t }); };
+  if (!F.teams.some(t => t.id === tid)) return { m: 1, why };
+  add("Money", 0.12, "Wants top dollar");
+  const st = F.S && F.S.games && F.S.games.some(g => g.st === "final") ? frStandings(F) : null;
+  if (st) { const i = st.findIndex(r => r.id === tid), n = st.length; if (i >= 0 && i < n / 3) add("Winning", -0.08, "Likes your chances"); else if (i >= n - Math.ceil(n / 3)) add("Winning", 0.1, "Wants a winner"); }
+  if (kind === "resign") add("Loyalty", -0.12, "Hometown discount");
+  const mates = F.players.filter(q => q.team === tid && q.id !== p.id), fr = mates.filter(q => areFriends(p, q)).length;
+  if (fr >= 2) add("Friends", -0.08, fr + " friends on the team"); else if (fr === 0) add("Friends", 0.04, "No friends on the team");
+  const g = posGroup(p), rank = mates.filter(q => posGroup(q) === g && overall(q) > overall(p)).length;
+  const good = g === "F" ? rank < 6 : g === "D" ? rank < 2 : rank < 1, bad = g === "F" ? rank >= 9 : g === "D" ? rank >= 4 : rank >= 1;
+  if (good) add("Ice time", -0.05, "Big role here"); else if (bad) add("Ice time", 0.1, "Worried about ice time");
+  if (kind === "resign" && p.treq) why.push({ k: "Ice time", v: 0.15, t: "Asked for a trade" });
+  const m = Math.max(0.8, Math.min(1.3, 1 + why.reduce((a, x) => a + x.v, 0)));
+  return { m, why };
+}
+function frDealText(deal) { return deal.why.map(x => x.t + " (" + (x.v > 0 ? "+" : "−") + Math.round(Math.abs(x.v) * 100) + "%)").join(", "); }
+function frResignAsk(F, p, yrs) {
+  const deal = frPersDeal(F, p, p.team, "resign");
+  return { sal: Math.round(askSalary(p, F.season) * (yrs >= 4 ? 1.06 : yrs <= 1 ? 0.97 : 1) * deal.m * 20) / 20, deal };
+}
+// players who care about ice time notice when they don't get it (your club only; Be A Player has its own story)
+function frIceTimeDay(F) {
+  for (const p of F.players) if (p.team !== F.user && (p.unh || p.treq)) { p.unh = 0; p.unhW = 0; p.treq = 0; } // a fresh start somewhere new
+  if (F.mode === "bap" || F.phase !== "season") return;
+  const ps = F.players.filter(p => p.team === F.user && !p.inj);
+  for (const p of ps) {
+    const pe = persInfo(p), w = pe.p1 === "Ice time" ? 1 : pe.p2 === "Ice time" ? 0.5 : 0, g = posGroup(p), awful = moodLevel(p.md) <= -2 ? 0.5 : 0;
+    if ((!w && !awful) || pe.p1 === "Loyalty" || (g === "G" && !awful)) continue;
+    const rank = ps.filter(q => posGroup(q) === g && overall(q) > overall(p)).length;
+    const deserve = g === "F" ? (rank < 3 ? 1 : rank < 6 ? 2 : rank < 9 ? 3 : 0) : (rank < 2 ? 1 : rank < 4 ? 2 : 0);
+    const line = p.line || 0, short = deserve > 0 && (line === 0 || (g === "F" && line > deserve + 1)); // a scratch, or a top-line talent stuck on the third line
+    p.unh = Math.max(0, (p.unh || 0) + (short ? w : 0) + awful - (short || awful ? 0 : 0.5));
+    if (p.unh >= 6 && !p.unhW) { p.unhW = 1; frNews(F, p.name + " wants a bigger role. She thinks she should be " + (line === 0 ? "in the lineup every night" : "in the top six") + ".", F.user, "league"); }
+    if (p.unh >= 12 && !p.treq) { p.treq = F.season; frNews(F, p.name + " has asked for a trade. She won't re-sign unless things change.", F.user, "trade"); }
+    if (p.unh === 0) { p.unhW = 0; if (p.treq) { p.treq = 0; frNews(F, p.name + " is happy with her role again and withdraws her trade request.", F.user, "league"); } }
+  }
 }
 
 // ---------- roster moves ----------
@@ -516,7 +563,7 @@ function frRosterCheck(F, tid, extra) {
 }
 function frSign(F, tid, pid, sal, yrs) {
   const p = F.players.find(x => x.id === pid); if (!p || p.team !== "FA") return "She's not a free agent.";
-  const ask = frAsk(F, p);
+  const ask = frAsk(F, p, tid);
   if (sal + 1e-6 < ask.sal) return p.name + " wants at least " + money(ask.sal) + ".";
   if (F.players.filter(x => x.team === tid).length >= FR_RULES.maxRoster) return "Your roster is full (" + FR_RULES.maxRoster + ").";
   if (frPayroll(F, tid) + sal > F.cap + 1e-6) return "Not enough cap space.";
@@ -559,8 +606,8 @@ function frTradeLegal(F, A, B, aGive, bGive) {
   return F.phase === "offseason" ? issues.filter(x => !/ needs \d+ /.test(x)) : issues;
 }
 function frTradeExec(F, A, B, aGive, bGive, note) {
-  for (const p of aGive) { p.team = B; p.line = 0; }
-  for (const p of bGive) { p.team = A; p.line = 0; }
+  for (const p of aGive) { p.team = B; p.line = 0; frMoodAdd(p, p.treq ? 0.8 : -0.3, p.treq ? "Got her trade" : "Traded"); }
+  for (const p of bGive) { p.team = A; p.line = 0; frMoodAdd(p, p.treq ? 0.8 : -0.3, p.treq ? "Got her trade" : "Traded"); }
   frScrubUnits(F, A); frScrubUnits(F, B);
   if (A !== F.user || F.settings.autoLines) frAutoLines(F, A);
   if (B !== F.user || F.settings.autoLines) frAutoLines(F, B);
@@ -739,8 +786,9 @@ function frStartOffseason(F) {
   // AI teams decide on their own expiring deals now
   for (const p of expiring) {
     if (F.mode === "bap" ? p.id === F.me : p.team === F.user) continue;
-    const ask = { sal: askSalary(p, F.season), yrs: askYears(p, F.season) };
-    const keep = overall(p) >= 72 && ask.sal <= fairSalary(overall(p)) * 1.08 && frPayroll(F, p.team) - (p.con.sal) + ask.sal <= F.cap - 2 && frRand() < 0.75;
+    const ask = { sal: Math.round(askSalary(p, F.season) * frPersDeal(F, p, p.team, "resign").m * 20) / 20, yrs: askYears(p, F.season) };
+    const pe = persInfo(p), stay = pe.p1 === "Loyalty" ? 0.92 : pe.p2 === "Loyalty" ? 0.84 : 0.75;
+    const keep = overall(p) >= 72 && ask.sal <= fairSalary(overall(p)) * 1.12 && frPayroll(F, p.team) - (p.con.sal) + ask.sal <= F.cap - 2 && frRand() < stay;
     if (keep) { p.con = { sal: ask.sal, yrs: ask.yrs }; }
     else { frNews(F, p.name + " leaves " + F.teams.find(t => t.id === p.team).name + " and becomes a free agent.", p.team); p.team = "FA"; p.line = 0; }
   }
@@ -753,8 +801,8 @@ function frStartOffseason(F) {
 function frExpiring(F) { return F.players.filter(p => p.team === F.user && p.con && p.con.yrs <= 0); }
 function frResign(F, pid, yrs) {
   const p = F.players.find(x => x.id === pid); if (!p) return "Not found.";
-  const ask = askSalary(p, F.season) * (yrs >= 4 ? 1.06 : yrs <= 1 ? 0.97 : 1);
-  const sal = Math.round(ask * 20) / 20;
+  if (p.treq) return p.name + " asked for a trade this season and won't re-sign with you.";
+  const sal = frResignAsk(F, p, yrs).sal;
   if (frPayroll(F, F.user) - p.con.sal + sal > F.cap + 1e-6) return "Not enough cap space to re-sign " + p.name + " at " + money(sal) + ".";
   p.con = { sal, yrs };
   frNews(F, "You re-signed " + p.name + ": " + money(sal) + " × " + yrs + ".", F.user);
@@ -774,8 +822,9 @@ function frFADay(F) {
     const c = { F: 0, D: 0, G: 0 }; for (const p of ps) c[posGroup(p)]++;
     const want = c.G < 2 ? "G" : c.D < 5 && c.D <= c.F / 2 ? "D" : c.F < 10 ? "F" : null;
     const space = frCapSpace(F, tid) - Math.max(0, 15 - ps.length - 1) * FR_RULES.minSal;
-    const fa = F.players.filter(p => p.team === "FA" && (!want || posGroup(p) === want) && p.con.sal <= space).sort((a, b) => (overall(b) - b.con.sal * 0.4) - (overall(a) - a.con.sal * 0.4))[0];
-    if (fa && (want || overall(fa) >= 74)) { fa.team = tid; fa.line = 0; frNews(F, F.teams.find(t => t.id === tid).name + " sign " + fa.name + ": " + money(fa.con.sal) + " × " + fa.con.yrs + ".", tid); }
+    const cost = p => Math.round(p.con.sal * frPersDeal(F, p, tid, "fa").m * 20) / 20;
+    const fa = F.players.filter(p => p.team === "FA" && (!want || posGroup(p) === want) && cost(p) <= space).sort((a, b) => (overall(b) - cost(b) * 0.4) - (overall(a) - cost(a) * 0.4))[0];
+    if (fa && (want || overall(fa) >= 74)) { fa.con = { sal: cost(fa), yrs: fa.con.yrs }; fa.team = tid; fa.line = 0; frNews(F, F.teams.find(t => t.id === tid).name + " sign " + fa.name + ": " + money(fa.con.sal) + " × " + fa.con.yrs + ".", tid); }
   }
   F.off.faDay++;
 }
@@ -787,18 +836,86 @@ function frFillMinimum(F, tid) {
     while (F.players.filter(p => p.team === tid && posGroup(p) === g).length < need) {
       const fa = F.players.filter(p => p.team === "FA" && posGroup(p) === g).sort((a, b) => a.con.sal - b.con.sal || overall(b) - overall(a))[0];
       if (!fa) break;
-      fa.team = tid; fa.line = 0; fa.con = { sal: Math.max(FR_RULES.minSal, Math.min(fa.con.sal, frAsk(F, fa).sal)), yrs: 1 }; signed.push(fa);
+      fa.team = tid; fa.line = 0; fa.con = { sal: Math.max(FR_RULES.minSal, Math.min(fa.con.sal, frAsk(F, fa, tid).sal)), yrs: 1 }; signed.push(fa);
     }
   }
   if (signed.length) frNews(F, F.teams.find(t => t.id === tid).name + " fill out the roster: " + signed.map(p => p.name + " (" + money(p.con.sal) + ")").join(", ") + ".", tid);
   return signed;
 }
 function frNextSeason(F) {
+  for (const p of F.players) { p.unh = 0; p.unhW = 0; p.treq = 0; }
   // AI teams fill any holes; then everyone starts fresh
   for (let i = 0; i < 4; i++) frFADay(F);
   for (const t of F.teams) { frFillMinimum(F, t.id); if (t.id !== F.user) frAutoLines(F, t.id); }
   if (F.settings.autoLines) frAutoLines(F, F.user);
   frStartSeason(F);
+}
+
+// ---------- moods: results, ice time, friends and practice move them; personality decides how much ----------
+function frMoodClamp(v) { return Math.max(-2.5, Math.min(2.5, Math.round(v * 100) / 100)); }
+function frMoodAdd(p, v, why) {
+  if (p.md == null) p.md = 0.3;
+  const a = persInfo(p).a;
+  const k = v < 0 ? (a === "Hothead" ? 1.4 : a === "Timid" ? 1.3 : a === "Leader" ? 0.7 : a === "Analyst" ? 0.8 : 1)
+    : (a === "Hothead" || a === "Showboat" ? 1.2 : a === "Leader" ? 0.8 : 1);
+  p.md = frMoodClamp(p.md + v * k);
+  if (why && Math.abs(v) >= 0.15) p.mdw = [{ t: why, s: v > 0 ? 1 : -1 }, ...(p.mdw || []).filter(x => x.t !== why)].slice(0, 3);
+}
+// after a game: the result, her own night, and whether she even played
+function frMoodGame(F, game, res) {
+  const ids = [game.h, game.a];
+  ids.forEach((tid, i) => {
+    if (!F.teams.some(t => t.id === tid)) return;
+    const mine = i === 0 ? res.hs : res.as, theirs = i === 0 ? res.as : res.hs, won = mine > theirs, ot = !won && res.dec !== "REG";
+    for (const p of F.players) {
+      if (p.team !== tid || p.inj) continue;
+      const s = res.ps[p.id];
+      if (!s || !(s.gp || s.toi)) { const pe = persInfo(p); frMoodAdd(p, pe.p1 === "Ice time" ? -0.18 : pe.p2 === "Ice time" ? -0.1 : -0.04, "Healthy scratch"); continue; }
+      frMoodAdd(p, won ? 0.15 : ot ? -0.05 : -0.15, won ? (game.po ? "Playoff win" : "Team win") : game.po ? "Playoff loss" : "Team loss");
+      const pts = (s.g || 0) + (s.a || 0);
+      if (pts) frMoodAdd(p, Math.min(0.25, 0.08 * pts), s.g >= 2 ? "Multi-goal game" : s.g ? "Scored" : "Set one up");
+      if (posGroup(p) === "G" && res.gids && res.gids[i] === p.id && s.sa >= 12) {
+        const sv = s.sv / s.sa;
+        if (theirs === 0) frMoodAdd(p, 0.3, "Shutout");
+        else if (sv >= 0.93) frMoodAdd(p, 0.15, "Big night in net");
+        else if (sv <= 0.875) frMoodAdd(p, -0.25, "Rough night in net");
+      }
+    }
+  });
+}
+// every day: moods drift toward how things are going for her, with a little day-to-day noise
+function frMoodDay(F) {
+  const st = F.S ? frStandings(F) : [];
+  const form = {}; for (const r of st) { const l = r.l10.slice(-5); form[r.id] = l.length ? l.reduce((a, x) => a + (x === "W" ? 1 : x === "O" ? -0.3 : -1), 0) / 5 : 0; }
+  for (const t of F.teams) {
+    const ps = F.players.filter(p => p.team === t.id);
+    const leaders = ps.filter(p => persInfo(p).a === "Leader" && !p.inj);
+    for (const p of ps) {
+      if (p.md == null) p.md = 0.3;
+      const pe = persInfo(p), g = posGroup(p);
+      const fr = ps.filter(q => q !== p && areFriends(p, q)).length;
+      let base = -0.35 + 0.08 * Math.min(3, fr) + 0.8 * (form[t.id] || 0) + 0.06 * Math.min(2, leaders.filter(q => q !== p).length);
+      if (p.inj) base -= 0.3;
+      else if (g === "G" ? p.line === 1 : p.line === 1) base += 0.12;
+      else if (!p.line) base -= pe.p1 === "Ice time" ? 0.7 : 0.35;
+      if (p.treq) base -= 0.8;
+      if (pe.a === "Free Spirit") base += 0.1;
+      const noise = (frRand() - 0.5) * 0.3 * (pe.a === "Free Spirit" ? 2 : pe.a === "Analyst" || pe.a === "Leader" ? 0.6 : 1);
+      p.md = frMoodClamp(p.md + (base - p.md) * 0.12 + noise);
+    }
+  }
+  // a star in an awful mood makes the news
+  if (F.mode !== "bap") for (const p of F.players.filter(x => x.team === F.user)) {
+    const lv = moodLevel(p.md);
+    if (lv <= -2 && !p.mdN) { p.mdN = 1; frNews(F, p.name + " is in an awful mood" + (p.mdw && p.mdw[0] && p.mdw[0].s < 0 ? " (" + p.mdw[0].t.toLowerCase() + ")" : "") + ". It's showing on the ice.", F.user, "league"); }
+    if (lv >= 0) p.mdN = 0;
+  }
+}
+function frMoodSummary(F, tid) {
+  const ps = F.players.filter(p => p.team === tid), c = { 2: 0, 1: 0, 0: 0, "-1": 0, "-2": 0 };
+  for (const p of ps) c[moodLevel(p.md)]++;
+  const avg = ps.length ? ps.reduce((a, p) => a + (p.md || 0), 0) / ps.length : 0;
+  return { c, avg, ps };
 }
 
 // ---------- team chemistry: friends, plus familiarity built in games and at practice ----------
@@ -812,8 +929,10 @@ const PRACTICE_HELP = {
 };
 // older saves: the new friends list, circles gone, familiarity starts empty
 function frMigrateChem(F) {
-  if (!F || F.chemV) return;
-  applyFriendsV11(F.players); F.fam = F.fam || {}; F.chemV = 1;
+  if (!F) return;
+  if (!F.chemV) { applyFriendsV11(F.players); F.fam = F.fam || {}; F.chemV = 1; }
+  if (!F.moodV) { for (const p of F.players) if (p.md == null) p.md = frMoodClamp(0.3 + frGauss() * 0.5); F.moodV = 1; }
+  if (!F.persV) { const me = F.me && F.players.find(p => p.id === F.me), keep = me && me.pers; applyPersonalities(F.players); if (me && keep) me.pers = keep; F.persV = 1; }
 }
 function frFamAdd(F, a, b, v) {
   if (!a || !b || a.id === b.id) return;
@@ -845,6 +964,11 @@ function frPractice(F, t) {
   const mine = t.id === F.user && F.mode !== "bap";
   const before = mine ? frTeamChem(F, t.id).units.map(u => u.value) : null;
   if (kind === "lines") frFamUnits(F, t.id, FAM_LINES, 0.4);
+  const inten = t.train || "normal";
+  for (const p of F.players) if (p.team === t.id && !p.inj) {
+    if (kind === "bonding") frMoodAdd(p, 0.2, "Team bonding");
+    if (inten === "hard") frMoodAdd(p, -0.15, "Hard practices"); else if (inten === "light") frMoodAdd(p, 0.1, "An easy week");
+  }
   const made = [];
   if (kind === "bonding") {
     const ps = F.players.filter(p => p.team === t.id && !p.inj);
@@ -975,7 +1099,9 @@ const BAP_SP_XP = 250;
 function bapMakePlayer(c) {
   const pos = c.pos, g = pos === "D" ? "D" : "F";
   const p = { id: "me-" + frId(), name: c.name, tag: (c.tag || c.name.split(" ").slice(-1)[0]).slice(0, 9), no: c.no, team: "POOL", pos, line: 0, style: c.style,
-    side: g === "D" ? (c.shoots || "L") : "", shoots: c.shoots || "L", goal: 10, friends: [], groups: [], dev: 0.9, look: c.look || { hair: "#8A5A3C", eye: "#3A7BD5" }, custom: true };
+    side: g === "D" ? (c.shoots || "L") : "", shoots: c.shoots || "L", goal: 10, friends: [], groups: [], dev: 0.9, look: c.look || { hair: "#8A5A3C", eye: "#3A7BD5" }, custom: true,
+    pers: { a: PERS_ARCH[c.pers] ? c.pers : "Hard Worker", b: "", p1: c.pri || "Winning", p2: (c.pri || "Winning") === "Ice time" ? "Winning" : "Ice time" },
+    skill: c.skill && SKILL_TRIG[c.skill.t] && SKILL_FX[c.skill.e] ? { n: String(c.skill.n || (c.name || "My").split(" ")[0] + "'s Spark").slice(0, 40), t: c.skill.t, e: c.skill.e } : null };
   for (const k of BAP_KEYS) p[k] = 65;
   p.sta = 72; p.dis = 72; p.clu = 62; p.fo = pos === "C" ? 66 : 48;
   for (const [k, v] of Object.entries(BAP_STYLE[c.style] || {})) p[k] = Math.max(30, Math.min(99, p[k] + v));
@@ -1046,6 +1172,7 @@ function bapAfterGame(F, game, res) {
     B.log.unshift(entry); if (B.log.length > 120) B.log.length = 120; return;
   }
   const gr = bapGrade(s, moments), fx = BAP_GRADE_FX[gr.g];
+  if (gr.g === "A+" || gr.g === "A") frMoodAdd(me, 0.25, "Great game"); else if (gr.g === "D" || gr.g === "F") frMoodAdd(me, -0.25, "Rough game");
   const great = moments.filter(m => m.q === "great").length, risky = moments.filter(m => m.q === "risky").length;
   B.trust = Math.max(0, Math.min(100, B.trust + fx[0] + great * 0.4 - risky * 0.6 - (s.pim >= 4 ? 1.5 : 0) + (won ? 0.3 : 0) - (B.trust > 80 ? 0.6 : 0)));
   B.hype = Math.max(0, Math.min(100, B.hype + fx[2] + s.g * 1 - 0.8));

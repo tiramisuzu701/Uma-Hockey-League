@@ -81,6 +81,61 @@ function frPill() {
   const map = { saving: ["saving", "Saving…"], retry: ["saving", "Saved in this browser · retrying the shared save"], saved: ["saved", "Saved" + at], local: ["saved", frStore.readOnly ? "View only: saved in this browser" : "Saved in this browser"], full: ["error", "Storage is full: delete an old franchise"], idle: ["idle", ""] };
   const [s, t] = map[frStore.state] || map.idle; el.dataset.s = s; el.textContent = t; el.title = frStore.err ? "Last shared-save problem: " + frStore.err : "";
 }
+// read a whole save (core + current season), newest copy wins; doesn't open it
+async function frFetch(id) {
+  let F = null;
+  if (frStore.db) {
+    try {
+      const c = await frStore.db.doc("franchises/" + id).get();
+      if (c.exists) { F = JSON.parse(JSON.stringify(c.data())); const s = await frStore.db.doc("franchises/" + id + "/seasons/s" + (F.sN || F.season)).get(); F.S = s.exists ? JSON.parse(JSON.stringify(s.data())) : null; }
+    } catch (e) {}
+  }
+  const local = frLocalGet("tracen-fr-" + id);
+  if (local && (!F || (local.updated || 0) > (F.updated || 0))) F = local;
+  return F;
+}
+// ---------- save files: download a franchise or career, load one back ----------
+const SAVE_KIND = "tracen-ice-league-save";
+async function frExport(id) {
+  const F = FR && FR.id === id ? FR : await frFetch(id);
+  if (!F) { frMsg = "Couldn't read that save."; frRender(); return; }
+  const full = Object.assign({}, F); delete full.sN;
+  const slug = String(F.name || "save").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "save";
+  const text = JSON.stringify({ kind: SAVE_KIND, mode: F.mode || "franchise", app: "Tracen Ice League", league: LEAGUE_VERSION, exported: new Date().toISOString(), save: full });
+  try { await saveTextFile(slug + "-season-" + F.season + "-" + fileStamp() + ".json", text); frMsg = "Saved “" + F.name + "” to a file. Load it from the saves screen with Import save file."; }
+  catch (e) { frMsg = e && e.code === "declined" ? "Download cancelled." : "Couldn't save the file here."; }
+  frRender();
+}
+let frImportMode = "franchise";
+function frImportPick(mode) { frImportMode = mode; const inp = $("#saveFileIn"); inp.value = ""; inp.click(); }
+async function frImportText(text) {
+  let obj; try { obj = JSON.parse(text); } catch (e) { return "That file isn't a save file (it couldn't be read as JSON)."; }
+  const F = obj && obj.kind === SAVE_KIND ? obj.save : obj && obj.players && obj.teams && obj.phase ? obj : null;
+  if (!F || !Array.isArray(F.players) || !Array.isArray(F.teams) || !F.id) return "That file isn't a Tracen Ice League save. Roster files go in Roster sheet → Import / export.";
+  const mode = F.mode === "bap" ? "bap" : "franchise";
+  if (["season", "playoffs", "done"].includes(F.phase) && !F.S) return "That save is missing its season data, so it can't be loaded.";
+  const exists = frSaves.find(s => s.id === F.id);
+  if (exists) {
+    const replace = await uiConfirm("You already have “" + exists.name + "”. Replace it with the copy from the file? Choose Cancel to keep both.", "Replace");
+    if (!replace) { F.id = frId(); F.name = (F.name || "Imported save") + " (copy)"; }
+  }
+  if (FR && frStore.state === "saving") await frFlush();
+  frMigrateChem(F);
+  FR = F; frSetup = null; frTab = "home"; FR.updated = Date.now();
+  frUi.rosterTeam = F.user; frUi.trade = { team: null, mine: new Set(), theirs: new Set(), msg: "", ok: false };
+  try { localStorage.setItem(mode === "bap" ? "tracen-bap-last" : FR_LAST, F.id); } catch (e) {}
+  frSave(); await frFlush(); await frLoadIndex();
+  if (mode !== frImportMode) { location.hash = mode === "bap" ? "#bap" : "#franchise"; }
+  return "";
+}
+$("#saveFileIn").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const set = m => { if (frImportMode === "bap" && typeof bapMsg !== "undefined") bapMsg = m; else frMsg = m; };
+  if (f.size > 8 * 1024 * 1024) { set("That file is too big to be a save."); frRender(); return; }
+  const err = await frImportText(await f.text());
+  set(err || "Loaded “" + (FR ? FR.name : "the save") + "” from the file.");
+  frRender();
+});
 async function frOpen(id, quiet) {
   let F = null;
   if (frStore.db) {
@@ -132,16 +187,16 @@ function renderFranchise() {
 function frSavesHtml() {
   const cards = frSaves.filter(s => s.mode !== "bap").map(s => `<div class="fr-save" style="--tc:${esc(s.color || "#555")}">
       <div class="fr-save-h"><b>${esc(s.name)}</b><span class="note">${esc(s.teamName || s.team)} · Season ${s.season} · ${esc(({ draft: "Draft", season: "Regular season", playoffs: "Playoffs", done: "Season complete", offseason: "Offseason" })[s.phase] || s.phase)}${s.local ? " · this browser only" : ""}</span></div>
-      <div class="fr-save-a"><button class="btn primary" data-fr="open" data-id="${esc(s.id)}">Continue</button><button class="btn danger" data-fr="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
+      <div class="fr-save-a"><button class="btn primary" data-fr="open" data-id="${esc(s.id)}">Continue</button><button class="btn" data-fr="export" data-id="${esc(s.id)}" title="Download this franchise as a file">Download</button><button class="btn danger" data-fr="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
   return `<div class="section-h"><h2>Franchise</h2></div>
     <div class="panel fr-intro">
       <div><h3>Run a club, season after season</h3>
       <p>Pick one of the league's ten clubs and rebuild it from a fantasy draft. Every player in the league goes back into the pool. The first-round order is random and the draft snakes from there. Then manage contracts under the salary cap, field trade offers from the other general managers, get through injuries, and chase the Tracen Cup in the playoffs. You can watch any game in the league, not just your own.</p></div>
-      <button class="btn primary big" data-fr="new">New franchise</button>
+      <div class="fr-intro-btns"><button class="btn primary big" data-fr="new">New franchise</button><button class="btn big" data-fr="import">Import save file</button></div>
     </div>
     ${frMsg ? `<p class="fr-msg">${esc(frMsg)}</p>` : ""}
     ${cards ? `<div class="sec-h" style="padding-left:0">Saved franchises</div><div class="fr-saves">${cards}</div>` : `<p class="note">No franchises yet.</p>`}
-    <p class="note">${frStore.db ? "Franchises are saved to the shared league, so anyone with the link sees the same saves." : "Franchises are saved in this browser."}</p>`;
+    <p class="note">${frStore.db ? "Franchises are saved to the shared league, so anyone with the link sees the same saves." : "Franchises are saved in this browser only. Download a save to back it up or move it to another device."}</p>`;
 }
 
 // ---------- new franchise ----------
@@ -302,8 +357,8 @@ function frHubHtml() {
   const tabs = FR_TABS.filter(([k]) => k !== "draft" || (F.draft && F.draft.picks.length)).map(([k, l]) => `<button data-fr="tab" data-v="${k}" aria-current="${frTab === k ? "page" : "false"}">${l}${k === "trades" && F.offers.length ? ` <i class="dot">${F.offers.length}</i>` : ""}</button>`).join("");
   const body = { home: frHomeHtml, media: frMediaHtml, training: frTrainingHtml, schedule: frScheduleHtml, standings: frStandingsHtml, stats: frStatsHtml, roster: frRosterHtml, lines: frLinesHtml, trades: frTradesHtml, fa: frFaHtml, draft: () => F.draft ? frRecapHtml() : "", history: frHistoryHtml }[frTab] || frHomeHtml;
   return `<div class="fr-head" style="--tc:${esc(frTeam(F.user).color)}">${tLogo(F.user, 44)}<div><h2>${tName(F.user)}</h2><span class="note">${esc(F.name)} · Season ${F.season} · ${frPhaseName()}${dayTxt ? " · " + dayTxt : ""}</span></div>
-      <div class="fr-kpis"><span><b>${r ? r.w + "–" + r.l + "–" + r.otl : "0–0–0"}</b><i>Record</i></span><span><b>${me + 1}<sup>${["st", "nd", "rd"][me] || "th"}</sup></b><i>Standing</i></span><span><b class="${pay > F.cap ? "bad" : ""}">${money(F.cap - pay)}</b><i>Cap space</i></span></div>
-      <span class="save-pill" id="frPill"></span><button class="btn" data-fr="saves">All franchises</button></div>
+      <div class="fr-kpis"><span><b>${r ? r.w + "–" + r.l + "–" + r.otl : "0–0–0"}</b><i>Record</i></span><span><b>${me + 1}<sup>${["st", "nd", "rd"][me] || "th"}</sup></b><i>Standing</i></span><span><b class="${pay > F.cap ? "bad" : ""}">${money(F.cap - pay)}</b><i>Cap space</i></span>${(() => { const ms = frMoodSummary(F, F.user); return `<span><b>${moodBadge(moodLevel(ms.avg))}</b><i>Locker room</i></span>`; })()}</div>
+      <span class="save-pill" id="frPill"></span><button class="btn" data-fr="export" data-id="${esc(F.id)}" title="Download this franchise as a file">Download save</button><button class="btn" data-fr="saves">All franchises</button></div>
     <nav class="fr-tabs" aria-label="Franchise sections">${tabs}</nav>
     ${frMsg ? `<p class="fr-msg">${esc(frMsg)}</p>` : ""}
     ${body()}`;
@@ -366,13 +421,13 @@ function frOffseasonHtml() {
     const ex = frExpiring(F);
     const rows = ex.map(p => {
       const y = frUi.signYrs[p.id] || askYears(p, F.season);
-      const ask = Math.round(askSalary(p, F.season) * (y >= 4 ? 1.06 : y <= 1 ? 0.97 : 1) * 20) / 20;
-      return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span><b>${esc(p.name)}</b><small>${p.pos} · ${esc(p.style)}</small></span></div></td><td>${frOvr(p)}</td><td class="num">${money(p.con.sal)}</td>
+      const ra = frResignAsk(F, p, y), ask = ra.sal;
+      return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${esc(p.name)}</b><small>${p.pos} · ${esc(p.style)}</small></span></div></td><td>${frOvr(p)}</td><td>${frWantsHtml(p, ra.deal)}</td><td class="num">${money(p.con.sal)}</td>
         <td><select data-fr-yrs="${esc(p.id)}" aria-label="Years">${[1, 2, 3, 4, 5].map(n => `<option value="${n}"${n === y ? " selected" : ""}>${yrs(n)}</option>`).join("")}</select></td><td class="num"><b>${money(ask)}</b>/yr</td>
-        <td><button class="btn sm primary" data-fr="resign" data-id="${esc(p.id)}">Re-sign</button><button class="btn sm" data-fr="letgo" data-id="${esc(p.id)}">Let go</button></td></tr>`;
+        <td>${p.treq ? `<span class="note">Won't re-sign: she asked for a trade</span> ` : `<button class="btn sm primary" data-fr="resign" data-id="${esc(p.id)}">Re-sign</button>`}<button class="btn sm" data-fr="letgo" data-id="${esc(p.id)}">Let go</button></td></tr>`;
     }).join("");
     return `<div class="panel"><div class="panel-h"><b>Offseason · Re-sign your players</b>${frCapBar(frPayroll(F, F.user) - ex.reduce((s, p) => s + p.con.sal, 0), F.cap)}</div>
-      ${ex.length ? `<div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th class="num">Last deal</th><th>Length</th><th class="num">Asking</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note" style="padding:10px 14px">No contracts to decide on. Anyone you didn't re-sign becomes a free agent.</p>`}
+      ${ex.length ? `<div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th>Wants</th><th class="num">Last deal</th><th>Length</th><th class="num">Asking</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note" style="padding:10px 14px">No contracts to decide on. Anyone you didn't re-sign becomes a free agent.</p>`}
       <div class="fr-simbar"><button class="btn primary" data-fr="openfa">${ex.length ? "Let the rest go and open free agency" : "Open free agency"}</button></div></div>
       <div class="panel"><div class="panel-h"><b>How your players developed</b></div><ul class="fr-dev">${dev || `<li class="note">No changes on your roster.</li>`}</ul></div>`;
   }
@@ -442,7 +497,7 @@ function frRosterHtml() {
   const S = F.S.stats;
   const role = p => p.inj ? `<em class="bad">Out ${p.inj.g} game${p.inj.g > 1 ? "s" : ""} · ${esc(p.inj.what)}</em>` : posGroup(p) === "G" ? (p.line === 1 ? "Starter" : p.line === 2 ? "Backup" : "Extra") : p.line ? (posGroup(p) === "D" ? "Pair " : "Line ") + p.line : "Extra";
   const rows = ps.map(p => { const s = S[p.id] || frBlank(); const g = posGroup(p) === "G";
-    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30, t)}<span><b>${esc(p.name)}</b><small>${esc(p.style)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td>${role(p)}</td><td class="num">${money(p.con.sal)}</td><td class="num">${yrs(p.con.yrs)}</td>
+    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30, t)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${p.md != null ? moodBadge(moodLevel(p.md)) + " " : ""}${esc(p.name)}</b><small>${esc(p.style)} · ${esc(persInfo(p).a)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td>${role(p)}${p.treq ? ` <em class="fr-tagv">Trade request</em>` : p.unhW ? ` <em class="fr-tagv" title="She wants a bigger role">Unhappy</em>` : ""}</td><td class="num">${money(p.con.sal)}</td><td class="num">${yrs(p.con.yrs)}</td>
       <td class="num">${s.gp}</td><td class="num">${g ? s.w + "-" + s.l + "-" + s.otl : s.g}</td><td class="num">${g ? frStatFmt(s, "svp") : s.a}</td><td class="num">${g ? frStatFmt(s, "gaa") : s.g + s.a}</td>
       ${mine ? `<td><button class="btn sm danger" data-fr="release" data-id="${esc(p.id)}">Release</button></td>` : ""}</tr>`; }).join("");
   const opts = F.teams.map(x => `<option value="${esc(x.id)}"${x.id === tid ? " selected" : ""}>${esc(x.name)}${x.id === F.user ? " (you)" : ""}</option>`).join("");
@@ -494,12 +549,12 @@ function frFaHtml() {
   const rows = fa.map(p => {
     const ask = frAsk(F, p), y = off ? (frUi.signYrs[p.id] || ask.yrs) : 1;
     const sel = off ? `<select data-fr-yrs="${esc(p.id)}" aria-label="Years">${[1, 2, 3, 4, 5].map(n => `<option value="${n}"${n === y ? " selected" : ""}>${yrs(n)}</option>`).join("")}</select>` : "1 yr";
-    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${esc(p.name)}</b><small>${esc(p.style)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td class="rts">${frRatingsCell(p)}</td><td>${p.inj ? `<em class="bad">inj ${p.inj.g}g</em>` : ""}</td><td class="num"><b>${money(ask.sal)}</b></td><td>${sel}</td>
+    return `<tr><td class="nm"><div class="pn">${chibiHead(p.name, 30)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0"><b>${esc(p.name)}</b><small>${esc(p.style)}</small></span></div></td><td>${p.pos}</td><td>${frOvr(p)}</td><td class="rts">${frRatingsCell(p)}</td><td>${p.inj ? `<em class="bad">inj ${p.inj.g}g</em>` : ""}</td><td>${frWantsHtml(p, ask.deal)}</td><td class="num"><b>${money(ask.sal)}</b></td><td>${sel}</td>
       <td><button class="btn sm primary" data-fr="sign" data-id="${esc(p.id)}"${F.phase === "playoffs" || F.phase === "done" ? " disabled" : ""}>Sign</button></td></tr>`;
   }).join("");
   return `<div class="panel"><div class="panel-h"><b>Free agents · ${fa.length}</b>${frCapBar(frPayroll(F, F.user), F.cap)}<span class="note">${F.players.filter(p => p.team === F.user).length}/${FR_RULES.maxRoster} on your roster</span></div>
     <p class="note" style="padding:0 14px">${off ? "Offseason deals can run up to five years." : "During the season, free agents sign one-year deals at a discount."}</p>
-    <div class="tscroll lim"><table class="fr-tbl"><thead><tr><th>Player</th><th>Pos</th><th>OVR</th><th class="rcol">Ratings</th><th></th><th class="num">Asking</th><th>Term</th><th></th></tr></thead><tbody>${rows || `<tr><td colspan="8" class="note">No free agents right now.</td></tr>`}</tbody></table></div></div>`;
+    <div class="tscroll lim"><table class="fr-tbl"><thead><tr><th>Player</th><th>Pos</th><th>OVR</th><th class="rcol">Ratings</th><th></th><th>Wants</th><th class="num">Asking</th><th>Term</th><th></th></tr></thead><tbody>${rows || `<tr><td colspan="9" class="note">No free agents right now.</td></tr>`}</tbody></table></div></div>`;
 }
 function frHistoryHtml() {
   const F = FR;
@@ -579,9 +634,27 @@ function frTrainingHtml() {
       <td class="num"><b>${v}</b></td><td><div class="fr-prog" title="${Math.round(prog * 100)}% to the next point"><i style="width:${(prog * 100).toFixed(0)}%"></i></div></td><td class="num note">${p.inj ? "injured" : "~" + Math.max(1, Math.ceil((1 - prog) / Math.max(0.05, gain))) + " wk"}</td></tr>`;
   }).join("");
   const seg = [["light", "Light"], ["normal", "Normal"], ["hard", "Hard"]].map(([k, l]) => `<button data-fr="tint" data-v="${k}" aria-pressed="${inten === k}">${l}</button>`).join("");
-  return `${frChemPanelHtml()}<div class="panel"><div class="panel-h"><b>Training</b><div class="seg">${seg}</div><span class="note">${inten === "hard" ? "Faster progress, but players can get hurt in practice." : inten === "light" ? "Slower progress, no practice injuries." : "Steady progress."} Ratings tick up once a week during the season.</span></div>
+  return `${frMoodPanelHtml()}${frChemPanelHtml()}<div class="panel"><div class="panel-h"><b>Training</b><div class="seg">${seg}</div><span class="note">${inten === "hard" ? "Faster progress, but players can get hurt in practice." : inten === "light" ? "Slower progress, no practice injuries." : "Steady progress."} Ratings tick up once a week during the season.</span></div>
     <p class="note" style="padding:0 14px">Each player works on one skill. Auto picks the weakest skill that matters for her style. Higher potential and lower ratings improve faster. The other clubs train too.</p>
     <div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th>Potential</th><th>Focus</th><th class="num">Now</th><th>Next point</th><th class="num">ETA</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+// what a player cares about, and how that moves her price with you
+function frWantsHtml(p, deal) {
+  const pe = persInfo(p), net = deal ? Math.round((deal.m - 1) * 100) : 0;
+  const tip = (deal && deal.why.length ? frDealText(deal) + ". " : "") + (PRI_HELP[pe.p1] || "");
+  return `<span class="fr-wants" title="${esc(tip)}"><span class="pc-tag">${esc(pe.p1)}</span><span class="pc-tag sub">${esc(pe.p2)}</span>${net ? `<small class="${net < 0 ? "good" : "bad"}">${net > 0 ? "+" : "−"}${Math.abs(net)}%</small>` : ""}</span>`;
+}
+
+// ---------- the locker room: everyone's mood and why ----------
+function frMoodPanelHtml() {
+  const F = FR, ms = frMoodSummary(F, F.user), t = frTeam(F.user), n = ms.ps.length || 1;
+  const bars = [2, 1, 0, -1, -2].map(l => { const m = MOODS[String(l)], k = ms.c[l]; return `<div class="fr-moodbar m-${m.k}" style="flex:${Math.max(k, 0.0001)}" title="${m.name}: ${k}">${k ? moodBadge(l) + " " + k : ""}</div>`; }).join("");
+  const low = ms.ps.filter(p => moodLevel(p.md) < 0).sort((a, b) => a.md - b.md).slice(0, 4).map(p => `<li>${chibiHead(p.name, 24, t)}<span class="pcl" data-pname="${esc(p.name)}" role="button" tabindex="0">${moodBadge(moodLevel(p.md))} ${esc(p.name)}</span><small>${esc(((p.mdw || []).find(x => x.s < 0) || {}).t || "")}${p.treq ? " · wants a trade" : p.unhW ? " · wants a bigger role" : ""}</small></li>`).join("");
+  return `<div class="panel"><div class="panel-h"><b>Locker room</b><span class="note">Team mood ${MOODS[String(moodLevel(ms.avg))].name.toLowerCase()}</span></div>
+    <p class="note" style="padding:0 14px">Mood changes how well each player plays, from +4% when Great to −4% when Awful. Winning, scoring, friends on the team, a Leader in the room and team bonding lift it; losing, healthy scratches, injuries and hard practices drag it down. Hotheads and Timid players take bad news hardest, and Leaders stay steady.</p>
+    <div class="fr-moodbars">${bars}</div>
+    ${low ? `<div class="sec-h" style="padding:6px 14px 0">Could use some attention</div><ul class="fr-recent">${low}</ul>` : `<p class="note" style="padding:4px 14px 12px">Nobody is in a bad mood right now.</p>`}</div>`;
 }
 
 // ---------- team chemistry and practice ----------
@@ -688,6 +761,8 @@ async function frAction(b) {
     case "create": frCreate(); break;
     case "open": await frOpen(id); break;
     case "del": { const s = frSaves.find(x => x.id === id); if (!(await uiConfirm("Delete “" + (s ? s.name : "this franchise") + "” for everyone? This can't be undone.", "Delete", true))) return; await frDelete(id); } break;
+    case "export": await frExport(id); return;
+    case "import": frImportPick("franchise"); return;
     case "saves": if (FR && frStore.state === "saving") await frFlush(); FR = null; frSetup = null; try { localStorage.removeItem(FR_LAST); } catch (e) {} await frLoadIndex(); break;
     case "pick": if (draftTeamAt(FR, FR.draft.idx) === FR.user && !draftLegal(FR, FR.user, frP(id))) { draftMake(FR, id); draftAdvance(FR, false); frSave(); } break;
     case "autopick": { const p = draftBest(FR, FR.user); if (p) draftMake(FR, p.id); draftAdvance(FR, false); frSave(); } break;

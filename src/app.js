@@ -43,6 +43,7 @@ function normalizePlayer(p, used, teamIds) {
   out.style = validStyle(out, String(p.style || "").trim());
   for (const k of NEW_STATS) if (p[k] != null && p[k] !== "" && !isNaN(Number(p[k]))) out[k] = clampStat(p[k]);
   fillRatings(out);
+  out.pers = normPers(p.pers && typeof p.pers === "object" ? p.pers : p.personality ? { a: p.personality, b: p.personality2, p1: p.cares1, p2: p.cares2 } : null, out);
   return out;
 }
 function normalizeLeague(L) {
@@ -95,7 +96,7 @@ let downloadsApi = null;
 async function initStore() {
   const cl = window.claude;
   if (!cl || !cl.use) { setPill("saved", "Saved in this browser"); return; }
-  cl.use("downloads").then(d => { if (d) { downloadsApi = d; $("#saveFileBtn").hidden = false; } }).catch(() => {});
+  cl.use("downloads").then(d => { if (d) downloadsApi = d; }).catch(() => {});
   let db = null;
   try { db = await cl.use("db"); } catch (e) {}
   if (!db) { setPill("saved", "Saved in this browser"); return; }
@@ -171,7 +172,7 @@ const SIM_NOTE = "1× runs the clock at 3 game seconds per real second.";
 function newGame() {
   if (!checkMatchup()) return;
   if (typeof frLive !== "undefined" && frLive) { frLive = null; frLiveBar(); }
-  beginGame(new Game(JSON.parse(JSON.stringify(league)), $("#homeSel").value, $("#awaySel").value));
+  beginGame(new Game(JSON.parse(JSON.stringify(league)), $("#homeSel").value, $("#awaySel").value, { randomMoods: settings.qpMoods !== false }));
 }
 function beginGame(g) {
   game = g;
@@ -245,11 +246,25 @@ function frame(ts) {
       const ev = game.replayReady; game.replayReady = null;
       if ($("#autoReplay").checked && !skipping && !replay && currentView() === "game") startReplay(ev);
     }
-    if (currentView() === "game") { if (typeof frCoachFrame === "function") frCoachFrame(); drawRink(); setBoard(); pumpFeed(); if (ts - lastBox > 600) { lastBox = ts; renderBox(); renderSummary(); } }
+    if (currentView() === "game") { showSkillPop(); if (typeof frCoachFrame === "function") frCoachFrame(); drawRink(); setBoard(); pumpFeed(); if (ts - lastBox > 600) { lastBox = ts; renderBox(); renderSummary(); } }
   }
   requestAnimationFrame(frame);
 }
 
+// ---------- unique skills: a cut-in on the rink when one fires ----------
+let skillPopId = 0, skillPopT = 0;
+function showSkillPop() {
+  const el = $("#skillPop"); if (!el || !game) return;
+  const sp = game.skillPop;
+  if (sp && sp.id !== skillPopId && !skipping && !replay && game.time - sp.t < 2) {
+    skillPopId = sp.id; skillPopT = performance.now();
+    const t = game.teams[sp.team].team;
+    el.style.setProperty("--tc", t.color);
+    el.innerHTML = `${chibiHead(sp.name, 40, t)}<span><i>✦ Unique skill</i><b>${esc(sp.n)}</b><small>${esc(sp.name)}</small></span>`;
+    el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in");
+  }
+  if (!el.hidden && performance.now() - skillPopT > 2600) el.hidden = true;
+}
 // ---------- player card: click any portrait (or name button) for a quick look ----------
 function pcardPlayers() { if (currentView() === "game" && game && game.league) return game.league.players; return (currentView() === "franchise" || currentView() === "bap") && typeof FR !== "undefined" && FR ? FR.players : league.players; }
 function pcardTeam(id) { if (currentView() === "game" && game && game.league) return game.league.teams.find(t => t.id === id) || null; const F = (currentView() === "franchise" || currentView() === "bap") && typeof FR !== "undefined" && FR ? FR : null; return (F ? F.teams : league.teams).find(t => t.id === id) || null; }
@@ -286,6 +301,10 @@ function playerCardHtml(p) {
       <span class="pc-team">${t ? teamLogoSvg(t, 22) + " " + esc(t.name) : p.team === "FA" ? "Free agent" : p.team === "POOL" ? "In the draft pool" : esc(p.team)}</span>
       <span class="pc-ovr">${o} <span class="gr" data-g="${grade(o)}">${grade(o)}</span> OVR</span>${extra.length ? `<span class="note">${extra.join(" · ")}</span>` : ""}</div></div>
     <p class="note pc-style">${esc(STYLE_NOTES[p.style] || "")}</p>
+    ${(() => { const pe = persInfo(p), bl = persBlurb(p); return `<div class="pc-pers"><span class="pc-arch" title="${esc(PERS_HELP[pe.a] || "")}">${esc(pe.a)}</span>${pe.b ? `<span class="pc-arch sub" title="${esc(PERS_HELP[pe.b] || "")}">${esc(pe.b)}</span>` : ""}<span class="note">Cares about <b title="${esc(PRI_HELP[pe.p1] || "")}">${esc(pe.p1.toLowerCase())}</b> and <b title="${esc(PRI_HELP[pe.p2] || "")}">${esc(pe.p2.toLowerCase())}</b></span>${p.treq ? `<em class="fr-tagv">Asked for a trade</em>` : p.unhW ? `<em class="fr-tagv">Wants a bigger role</em>` : ""}
+      <p class="note pc-blurb">${esc(bl || PERS_HELP[pe.a] || "")}</p></div>`; })()}
+    ${(() => { const sk = skillOf(p); if (!sk) return ""; return `<div class="pc-skill"><span class="pc-sk-n">✦ ${esc(sk.n)}</span><span class="note">${esc(SKILL_TRIG[sk.t] || "")}: ${esc(SKILL_FX[sk.e] || "")}. Once a game${posGroup(p) === "G" ? "" : ""}; mood and clutch make it come out sooner.</span>${sk.g ? `<span class="note pc-sk-g">In the Uma game: ${esc(sk.g)}</span>` : ""}</div>`; })()}
+    ${p.md != null ? (() => { const lv = moodLevel(p.md), m = MOODS[String(lv)]; return `<div class="pc-mood">${moodBadge(lv)}<b>${m.name} mood</b><span class="note">${m.fx} to her play${(p.mdw || []).length ? " · lately: " + p.mdw.map(x => `<span class="${x.s > 0 ? "good" : "bad"}">${esc(x.t.toLowerCase())}</span>`).join(", ") : ""}</span></div>`; })() : ""}
     ${F && typeof frPcardDraft === "function" ? frPcardDraft(p) : ""}
     <div class="pc-rs">${bars}</div>${stats}
     ${fr ? `<div class="pc-fr"><b>Friends</b>${fr}</div>` : ""}`;
@@ -382,7 +401,7 @@ $("#menuCrowd").addEventListener("click", e => {
 $("#menuSettings").addEventListener("click", () => $("#settingsBtn").click());
 
 // ---------- settings ----------
-const SET_DEFAULTS = { net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
+const SET_DEFAULTS = { qpMoods: true, net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
 let settings = Object.assign({}, SET_DEFAULTS);
 try {
   const raw = JSON.parse(localStorage.getItem("tracen-settings") || "null");
@@ -601,7 +620,7 @@ function setBoard() {
 const TAGS = { goal: ["GOAL", ""], save: ["SAVE", "var(--g-d)"], miss: ["MISS", "var(--g-f)"], block: ["BLK", "var(--g-e)"],
   takeaway: ["TK", "var(--g-c)"], hit: ["HIT", "var(--g-b)"], change: ["CHG", "var(--g-f)"], dump: ["DUMP", "var(--g-f)"],
   stop: ["STOP", "var(--g-f)"], offside: ["OFF", "var(--g-f)"], icing: ["ICE", "var(--g-e)"], penalty: ["PEN", "var(--bad)"],
-  delayed: ["DLY", "var(--warn)"], play: ["PLAY", "var(--g-c)"], skill: ["SKILL", "var(--accent)"], "skill-fail": ["SKILL", "var(--g-f)"], ppend: ["PP", "var(--g-d)"], goalie: ["G", "var(--g-s)"], fight: ["FIGHT", "var(--bad)"], momentum: ["MOM", "var(--accent)"], injury: ["INJ", "var(--warn)"], shootout: ["SO", "var(--g-s)"], final: ["FINAL", "var(--ink)"], coach: ["BENCH", "var(--accent)"], period: ["", ""] };
+  delayed: ["DLY", "var(--warn)"], play: ["PLAY", "var(--g-c)"], skill: ["SKILL", "var(--accent)"], "skill-fail": ["SKILL", "var(--g-f)"], ppend: ["PP", "var(--g-d)"], goalie: ["G", "var(--g-s)"], fight: ["FIGHT", "var(--bad)"], momentum: ["MOM", "var(--accent)"], injury: ["INJ", "var(--warn)"], shootout: ["SO", "var(--g-s)"], final: ["FINAL", "var(--ink)"], coach: ["BENCH", "var(--accent)"], uskill: ["✦ SKILL", "#C9961A"], period: ["", ""] };
 const MINOR_TYPES = new Set(["change", "takeaway", "hit", "dump", "stop", "miss", "block", "delayed", "skill-fail", "play"]);
 function pumpFeed() {
   if (!game || shownEvents >= game.events.length) return;
@@ -639,7 +658,8 @@ function renderBox() {
   const T = game.teams[boxTeam], L = T.lineup;
   const nrg = id => { const v = Math.round(game.energy[id]); const c = v >= 65 ? "var(--ok)" : v >= 40 ? "var(--warn)" : "var(--bad)"; return `<span class="nrg"><i style="width:${v}%;background:${c}"></i></span>${v}`; };
   const pm = v => v > 0 ? "+" + v : String(v);
-  const row = p => { const s = game.stats[p.id]; return `<tr><td>${esc(p.name)}</td><td>${p.pos}</td><td>${s.g}</td><td>${s.a}</td><td>${s.g + s.a}</td><td>${pm(s.pm)}</td><td>${s.sog}</td><td>${s.dk}</td><td>${s.hit}</td><td>${s.blk}</td><td>${s.tk}</td><td>${s.pim}</td><td>${s.fow + s.fol ? s.fow + "–" + s.fol : "–"}</td><td>${fmtClock(s.toi)}</td><td>${s.top ? s.top.toFixed(1) : "–"}</td><td>${s.dist ? (s.dist / 5280).toFixed(2) : "–"}</td><td>${s.hard || "–"}</td><td class="nrgc">${nrg(p.id)}</td></tr>`; };
+  const mb = p => (game.moods && game.moods[p.id] != null ? moodBadge(game.moods[p.id]) + " " : "") + (game.stats[p.id] && game.stats[p.id].sk ? `<span class="skstar" title="Used her unique skill: ${esc((skillOf(p) || {}).n || "")}">✦</span> ` : "");
+  const row = p => { const s = game.stats[p.id]; return `<tr><td>${mb(p)}${esc(p.name)}</td><td>${p.pos}</td><td>${s.g}</td><td>${s.a}</td><td>${s.g + s.a}</td><td>${pm(s.pm)}</td><td>${s.sog}</td><td>${s.dk}</td><td>${s.hit}</td><td>${s.blk}</td><td>${s.tk}</td><td>${s.pim}</td><td>${s.fow + s.fol ? s.fow + "–" + s.fol : "–"}</td><td>${fmtClock(s.toi)}</td><td>${s.top ? s.top.toFixed(1) : "–"}</td><td>${s.dist ? (s.dist / 5280).toFixed(2) : "–"}</td><td>${s.hard || "–"}</td><td class="nrgc">${nrg(p.id)}</td></tr>`; };
   const COLS = 18;
   let html = `<thead><tr><th>Skater</th><th>Pos</th><th>G</th><th>A</th><th>P</th><th>+/-</th><th>SOG</th><th title="Successful dekes and dangles">DK</th><th>HIT</th><th>BLK</th><th>TK</th><th>PIM</th><th>FO</th><th>TOI</th><th title="Top skating speed, mph">Top</th><th title="Distance skated, miles">Dist</th><th title="Hardest shot, mph">Shot</th><th>Energy</th></tr></thead><tbody>`;
   L.fLines.forEach((u, i) => { html += `<tr class="sub"><td colspan="${COLS}">Forward line ${i + 1}</td></tr>` + u.map(row).join(""); });
@@ -647,7 +667,7 @@ function renderBox() {
   html += `<tr class="sub"><td colspan="${COLS}">Goalies</td></tr>`;
   for (const g of L.goalies.filter(Boolean)) {
     const gs = game.stats[g.id];
-    html += `<tr><td>${esc(g.name)}${g === game.goalieOf(boxTeam) && !game.final ? " ●" : ""}</td><td>G</td><td colspan="3">SA ${gs.sa}</td><td colspan="2">SV ${gs.sv}</td><td colspan="3">SV% ${gs.sa ? (gs.sv / gs.sa).toFixed(3).replace(/^0/, "") : "–"}</td><td colspan="3">GA ${gs.ga}</td><td>${fmtClock(gs.toi)}</td><td></td><td></td><td></td><td></td></tr>`;
+    html += `<tr><td>${mb(g)}${esc(g.name)}${g === game.goalieOf(boxTeam) && !game.final ? " ●" : ""}</td><td>G</td><td colspan="3">SA ${gs.sa}</td><td colspan="2">SV ${gs.sv}</td><td colspan="3">SV% ${gs.sa ? (gs.sv / gs.sa).toFixed(3).replace(/^0/, "") : "–"}</td><td colspan="3">GA ${gs.ga}</td><td>${fmtClock(gs.toi)}</td><td></td><td></td><td></td><td></td></tr>`;
   }
   const fo = T.fow + game.teams[1 - boxTeam].fow;
   html += `<tr class="sub"><td colspan="${COLS}">Team: ${T.sog} shots · PP ${T.ppG}/${T.ppOpp} · ${T.pim} PIM · ${T.hits} hits · FO ${fo ? Math.round(T.fow / fo * 100) : 0}% · ${T.icings || 0} icings · ${T.offsides || 0} offsides</td></tr></tbody>`;
@@ -1204,7 +1224,7 @@ function renderLines(ctx) {
     const id = "sl-" + Object.values(ds).join("-");
     return `<label class="slot pic${opts.isAuto ? " auto" : ""}" for="${id}"><span class="slot-pic">${cur ? chibiHead(cur.name, 38, t) : `<span class="chibi-head none empty" style="width:38px;height:38px"></span>`}</span><span class="slot-body"><span class="pos">${label}${sty}</span>
       <select class="slotsel" id="${id}" ${Object.entries(ds).map(([k, v]) => `data-${k}="${esc(v)}"`).join(" ")}>${auto}${!cur && !opts.auto ? '<option value="" selected>Empty</option>' : ""}${o}</select>
-      ${cur ? `<span class="rt">OVR ${overall(cur)} <span class="gr" data-g="${grade(overall(cur))}">${grade(overall(cur))}</span></span>` : ""}</span></label>`;
+      ${cur ? `<span class="rt">OVR ${overall(cur)} <span class="gr" data-g="${grade(overall(cur))}">${grade(overall(cur))}</span>${cur.md != null ? " " + moodBadge(moodLevel(cur.md)) : ""}</span>` : ""}</span></label>`;
   };
   grid.innerHTML = ctx.teams.map(t => {
     const L = buildLineup(ctx.L, t.id);
@@ -1351,7 +1371,7 @@ function renderRoster() {
   const order = id => { const i = league.teams.findIndex(t => t.id === id); return i < 0 ? 99 : i; };
   const grp = p => p.pos === "G" ? 2 : p.pos === "D" ? 1 : 0;
   rows.sort((a, b) => order(a.team) - order(b.team) || grp(a) - grp(b) || (a.line || 9) - (b.line || 9) || POSITIONS.indexOf(a.pos) - POSITIONS.indexOf(b.pos));
-  const head = `<thead><tr><th>No</th><th>Name</th><th>Short</th><th>Team</th><th>Pos</th><th>Line</th><th>Playstyle</th>${STAT_FIELDS.map(f => `<th title="${STAT_TIP[f]}">${STAT_ABBR[f]}</th>`).join("")}<th>OVR</th><th>Friends</th><th><span hidden>Remove</span></th></tr></thead>`;
+  const head = `<thead><tr><th>No</th><th>Name</th><th>Short</th><th>Team</th><th>Pos</th><th>Line</th><th>Playstyle</th>${STAT_FIELDS.map(f => `<th title="${STAT_TIP[f]}">${STAT_ABBR[f]}</th>`).join("")}<th>OVR</th><th>Personality</th><th>Friends</th><th><span hidden>Remove</span></th></tr></thead>`;
   const body = rows.map(p => {
     const id = p.id;
     const stat = f => `<span class="stat"><input class="cell num" type="number" min="1" max="99" id="r-${id}-${f}" data-id="${id}" data-f="${f}" value="${p[f]}" aria-label="${STAT_LABEL[f]} for ${esc(p.name)}"><span class="gr" data-g="${grade(p[f])}">${grade(p[f])}</span></span>`;
@@ -1368,10 +1388,11 @@ function renderRoster() {
       <td><select class="cell" id="r-${id}-style" data-id="${id}" data-f="style" aria-label="Playstyle" title="${esc(STYLE_NOTES[p.style] || "")}">${styleOpts}</select></td>
       ${STAT_FIELDS.map(f => `<td>${stat(f)}</td>`).join("")}
       <td><span class="ovr" id="ovr-${id}">${overall(p)} <span class="gr" data-g="${grade(overall(p))}">${grade(overall(p))}</span></span></td>
+      <td><select class="cell" id="r-${id}-pers" data-id="${id}" data-f="pers" aria-label="Personality">${PERS_TYPES.map(x => `<option${persInfo(p).a === x ? " selected" : ""}>${x}</option>`).join("")}</select></td>
       <td><input class="cell list" id="r-${id}-friends" data-id="${id}" data-f="friends" value="${esc(p.friends.join(", "))}" aria-label="Friends" placeholder="Names, comma separated"></td>
       <td><button class="del" data-del="${id}" aria-label="Remove ${esc(p.name)}" title="Remove">×</button></td></tr>`;
   }).join("");
-  $("#sheet").innerHTML = head + `<tbody>${body || `<tr><td colspan="23" class="note" style="padding:14px">No players match. Clear the search or add a player.</td></tr>`}</tbody>`;
+  $("#sheet").innerHTML = head + `<tbody>${body || `<tr><td colspan="24" class="note" style="padding:14px">No players match. Clear the search or add a player.</td></tr>`}</tbody>`;
   const fa = league.players.filter(p => p.team === "FA").length;
   $("#rosterCount").textContent = `${league.players.length} players · ${league.teams.length} teams · ${fa} free agents`;
 }
@@ -1425,6 +1446,7 @@ function onSheetInput(e) {
   else if (f === "line") p.line = parseInt(el.value, 10) || 0;
   else if (f === "style") { p.style = validStyle(p, el.value); el.title = STYLE_NOTES[p.style] || ""; }
   else if (f === "friends" || f === "groups") p[f] = splitList(el.value);
+  else if (f === "pers") p.pers = normPers(Object.assign({}, persInfo(p), { a: el.value }), p);
   scheduleSave();
   if (f === "team" || f === "line" || f === "pos") checkMatchup();
 }
@@ -1471,11 +1493,11 @@ $("#resetWrap").addEventListener("click", e => {
 
 // ---------- import / export ----------
 let ioFmt = "csv";
-const CSV_COLS = ["name", "short", "no", "team", "pos", "line", "style", "sht", "pas", "hnd", "skt", "spd", "def", "chk", "fo", "sta", "dis", "clu", "goal", "friends"];
+const CSV_COLS = ["name", "short", "no", "team", "pos", "line", "style", "sht", "pas", "hnd", "skt", "spd", "def", "chk", "fo", "sta", "dis", "clu", "goal", "friends", "personality", "personality2", "cares1", "cares2"];
 const CSV_IN = CSV_COLS.concat(["off"]); // older exports have one Offense column
 function toCSV() {
   const q = v => { v = String(v ?? ""); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-  return [CSV_COLS.join(",")].concat(league.players.map(p => [p.name, p.tag, p.no, p.team, p.pos, p.line, p.style, ...STAT_FIELDS.map(f => p[f]), p.friends.join("; ")].map(q).join(","))).join("\n");
+  return [CSV_COLS.join(",")].concat(league.players.map(p => [p.name, p.tag, p.no, p.team, p.pos, p.line, p.style, ...STAT_FIELDS.map(f => p[f]), p.friends.join("; "), persInfo(p).a, persInfo(p).b, persInfo(p).p1, persInfo(p).p2].map(q).join(","))).join("\n");
 }
 function parseCSV(text) {
   const rows = []; let row = [], f = "", inq = false;
@@ -1499,9 +1521,16 @@ $("#copyBtn").addEventListener("click", () => {
   try { navigator.clipboard.writeText(ta.value).then(() => ioMsg("Copied to the clipboard.", "ok"), () => { ta.select(); ioMsg("Text selected. Press Ctrl+C or Cmd+C to copy."); }); }
   catch (e) { ta.select(); ioMsg("Text selected. Press Ctrl+C or Cmd+C to copy."); }
 });
+// save text as a file: through claude.ai's download prompt when the page runs there, otherwise a normal browser download
+async function saveTextFile(filename, text, mime) {
+  if (downloadsApi) { await downloadsApi.save({ filename, data: text }); return; }
+  const url = URL.createObjectURL(new Blob([text], { type: mime || "application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function fileStamp() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 $("#saveFileBtn").addEventListener("click", async () => {
-  if (!downloadsApi) return;
-  try { await downloadsApi.save({ filename: "tracen-ice-league-roster." + ioFmt, data: $("#ioText").value }); ioMsg("File saved.", "ok"); }
+  try { await saveTextFile("tracen-ice-league-roster-" + fileStamp() + "." + ioFmt, $("#ioText").value, ioFmt === "csv" ? "text/csv" : "application/json"); ioMsg("File saved.", "ok"); }
   catch (e) { ioMsg(e && e.code === "declined" ? "Save cancelled." : "Couldn't save the file here. Use Copy instead.", e && e.code === "declined" ? "note" : "err"); }
 });
 function importText(text) {

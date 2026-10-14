@@ -46,22 +46,22 @@ function renderBap() {
 function bapSavesHtml() {
   const list = frSaves.filter(s => s.mode === "bap");
   const cards = list.map(s => `<div class="fr-save" style="--tc:${esc(s.color || "#555")}"><div class="fr-save-h"><b>${esc(s.name)}</b><span class="note">${esc(s.teamName || s.team)} · Season ${s.season}${s.local ? " · this browser only" : ""}</span></div>
-    <div class="fr-save-a"><button class="btn primary" data-bap="open" data-id="${esc(s.id)}">Continue</button><button class="btn danger" data-bap="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
+    <div class="fr-save-a"><button class="btn primary" data-bap="open" data-id="${esc(s.id)}">Continue</button><button class="btn" data-bap="export" data-id="${esc(s.id)}" title="Download this career as a file">Download</button><button class="btn danger" data-bap="del" data-id="${esc(s.id)}">Delete</button></div></div>`).join("");
   return `<div class="section-h"><h2>Be A Player</h2></div>
     <div class="panel fr-intro bap-intro">
       <div><h3>Create a player and live her career</h3>
       <p>Build your own Uma from scratch, get drafted, and fight your way up the lineup. In games the camera follows you, and when the puck finds you in a big spot the action pauses so you make the call: shoot, pass, deke, or throw the body. Earn coach trust and skill points, talk to the media, build friendships, negotiate contracts, or ask for a trade.</p></div>
-      <button class="btn primary big" data-bap="new">Create a player</button></div>
+      <div class="fr-intro-btns"><button class="btn primary big" data-bap="new">Create a player</button><button class="btn big" data-bap="import">Import save file</button></div></div>
     ${bapMsg ? `<p class="fr-msg">${esc(bapMsg)}</p>` : ""}
     ${cards ? `<div class="sec-h" style="padding-left:0">Your careers</div><div class="fr-saves">${cards}</div>` : `<p class="note">No careers yet.</p>`}`;
 }
 
 // ---------- create ----------
 function bapStartSetup() {
-  bapSetup = { step: 1, name: "", tag: "", no: 17, pos: "C", style: "Sniper", shoots: "L", look: { hair: "#7A4A2E", eye: "#2F7FC8", blaze: true }, alloc: {}, sp: 12, games: 28, series: 7, injuries: true, moments: true };
+  bapSetup = { step: 1, name: "", tag: "", no: 17, pos: "C", style: "Sniper", shoots: "L", pers: "Hard Worker", pri: "Winning", skn: "", skt: "late", ske: "speed", look: { hair: "#7A4A2E", eye: "#2F7FC8", blaze: true }, alloc: {}, sp: 12, games: 28, series: 7, injuries: true, moments: true };
 }
 function bapPreview() {
-  const s = bapSetup, p = bapMakePlayer({ name: s.name || "New Player", pos: s.pos, style: s.style, shoots: s.shoots, no: s.no, look: s.look });
+  const s = bapSetup, p = bapMakePlayer({ name: s.name || "New Player", pos: s.pos, style: s.style, shoots: s.shoots, no: s.no, look: s.look, pers: s.pers, pri: s.pri, skill: { n: s.skn, t: s.skt, e: s.ske } });
   for (const [k, n] of Object.entries(s.alloc)) p[k] += n;
   p.off = Math.round((p.sht + p.pas) / 2);
   return p;
@@ -79,6 +79,11 @@ function bapSetupHtml() {
       <div class="fr-row"><span>Position</span>${seg("pos", [["C", "Center"], ["LW", "Left wing"], ["RW", "Right wing"], ["D", "Defense"]], s.pos)}</div>
       <div class="fr-row"><span>Style</span>${seg("style", styles.map(x => [x, x]), s.style)}<span class="note">${esc(STYLE_NOTES[s.style] || "")}</span></div>
       <div class="fr-row"><span>Shoots</span>${seg("shoots", [["L", "Left"], ["R", "Right"]], s.shoots)}</div>
+      <div class="fr-row"><span>Personality</span>${seg("pers", Object.keys(PERS_ARCH).map(x => [x, x]), s.pers)}<span class="note">${esc(PERS_HELP[s.pers] || "")} When the game plays for her, this is how she plays.</span></div>
+      <div class="fr-row"><span>Cares most about</span>${seg("pri", PERS_PRIORITIES.map(x => [x, x]), s.pri)}</div>
+      <div class="fr-row"><span>Unique skill</span><input id="bapSkill" value="${esc(s.skn)}" maxlength="40" placeholder="Name your signature move, e.g. Starlight Finale"></div>
+      <div class="fr-row"><span>It fires</span>${seg("skt", ["late", "rush", "slot", "traffic", "behind", "lead", "start"].map(x => [x, SKILL_TRIG[x]]), s.skt)}</div>
+      <div class="fr-row"><span>And gives her</span>${seg("ske", ["speed", "shot", "pass", "hands", "defense", "physical"].map(x => [x, SKILL_FX[x]]), s.ske)}</div>
     </div></div><div class="fr-nav"><button class="btn primary" data-bap="step" data-v="2"${s.name.trim() ? "" : " disabled"}>Next: skill points</button></div>`;
   if (s.step === 2) {
     const keys = BAP_KEYS.filter(k => k !== "fo" || s.pos === "C");
@@ -101,11 +106,12 @@ function bapReadForm() {
   const s = bapSetup; if (!s || s.step !== 1) return;
   const v = id => document.getElementById(id);
   if (v("bapName")) { s.name = v("bapName").value.trim().slice(0, 32); s.tag = v("bapTag").value.trim().slice(0, 9); s.no = Math.max(1, Math.min(99, parseInt(v("bapNo").value, 10) || 17)); }
+  if (v("bapSkill")) s.skn = v("bapSkill").value.trim().slice(0, 40);
 }
 function bapCreate() {
   const s = bapSetup;
   if (league.players.some(p => p.name.toLowerCase() === s.name.toLowerCase())) { bapMsg = "There's already a player named " + s.name + ". Pick another name."; s.step = 1; return; }
-  const F = bapNew(league, { name: s.name, tag: s.tag || s.name.split(" ").slice(-1)[0], no: s.no, pos: s.pos, style: s.style, shoots: s.shoots, look: s.look, sp: s.sp }, { games: s.games, series: s.series, injuries: s.injuries, moments: s.moments });
+  const F = bapNew(league, { name: s.name, tag: s.tag || s.name.split(" ").slice(-1)[0], no: s.no, pos: s.pos, style: s.style, shoots: s.shoots, look: s.look, sp: s.sp, pers: s.pers, pri: s.pri, skill: { n: s.skn || (s.name.split(" ")[0] || "My") + "'s Spark", t: s.skt, e: s.ske } }, { games: s.games, series: s.series, injuries: s.injuries, moments: s.moments });
   const me = bapMe(F); for (const [k, n] of Object.entries(s.alloc)) me[k] += n; me.off = Math.round((me.sht + me.pas) / 2);
   FR = F; bapSetup = null; bapTab = "home"; bapMsg = "";
   try { localStorage.setItem(BAP_LAST, F.id); } catch (e) {}
@@ -168,8 +174,8 @@ function bapHubHtml() {
   const tabs = BAP_TABS.map(([k, l]) => `<button data-bap="tab" data-v="${k}" aria-current="${bapTab === k ? "page" : "false"}">${l}${k === "home" && B.interview ? ` <i class="dot">1</i>` : ""}${k === "player" && B.sp ? ` <i class="dot">${B.sp}</i>` : ""}</button>`).join("");
   const body = { home: bapHomeHtml, player: bapPlayerHtml, career: bapCareerHtml, team: bapTeamHtml, media: frMediaHtml, league: bapLeagueHtml }[bapTab] || bapHomeHtml;
   return `<div class="fr-head bap-head" style="--tc:${esc(t ? t.color : "#555")}">${chibiHead(me.name, 58, t)}<div><h2>${esc(me.name)} <span class="no">#${me.no}</span></h2><span class="note">${me.pos} · ${esc(me.style)} · ${tLogo(me.team, 16)}${t ? esc(t.name) : "Free agent"} · Season ${F.season} · ${phase}</span><span class="bap-role">${esc(bapRoleText(role))}</span></div>
-      <div class="fr-kpis"><span><b>${overall(me)}</b><i>Overall</i></span><span><b>${s.gp}–${s.g}–${s.a}–${s.g + s.a}</b><i>GP-G-A-P</i></span><span><b>${Math.round(B.trust)}</b><i>Coach trust</i>${bapMeter(B.trust, "trust")}</span><span><b>${Math.round(B.hype)}</b><i>Hype</i>${bapMeter(B.hype, "hype")}</span></div>
-      <span class="save-pill" id="frPill"></span><button class="btn" data-bap="saves">All careers</button></div>
+      <div class="fr-kpis"><span><b>${overall(me)}</b><i>Overall</i></span><span><b>${s.gp}–${s.g}–${s.a}–${s.g + s.a}</b><i>GP-G-A-P</i></span><span><b>${Math.round(B.trust)}</b><i>Coach trust</i>${bapMeter(B.trust, "trust")}</span><span><b>${Math.round(B.hype)}</b><i>Hype</i>${bapMeter(B.hype, "hype")}</span><span><b>${moodBadge(moodLevel(me.md))}</b><i>${MOODS[String(moodLevel(me.md))].name} mood</i></span></div>
+      <span class="save-pill" id="frPill"></span><button class="btn" data-bap="export" data-id="${esc(F.id)}" title="Download this career as a file">Download save</button><button class="btn" data-bap="saves">All careers</button></div>
     <nav class="fr-tabs" aria-label="Career sections">${tabs}</nav>
     ${frMsg || bapMsg ? `<p class="fr-msg">${esc(frMsg || bapMsg)}</p>` : ""}
     ${body()}`;
@@ -270,6 +276,8 @@ async function bapAction(b) {
     case "alloc": { const s = bapSetup, p = bapPreview(), k = b.dataset.k, n = +v; if (n > 0) { const c = bapCost(p[k]); if (s.sp >= c) { s.sp -= c; s.alloc[k] = (s.alloc[k] || 0) + 1; } } else if (s.alloc[k]) { s.alloc[k]--; s.sp += bapCost(p[k] - 1); } } break;
     case "create": bapCreate(); break;
     case "open": await frOpen(id); if (FR && FR.mode !== "bap") FR = null; bapTab = "home"; break;
+    case "export": await frExport(id); return;
+    case "import": frImportPick("bap"); return;
     case "del": { const s = frSaves.find(x => x.id === id); if (!(await uiConfirm("Delete “" + (s ? s.name : "this career") + "” for everyone? This can't be undone.", "Delete", true))) return; await frDelete(id); } break;
     case "saves": if (FR && frStore.state === "saving") await frFlush(); FR = null; bapSetup = null; try { localStorage.removeItem(BAP_LAST); } catch (e) {} await frLoadIndex(); break;
     case "draft": bapDraft(FR); frSave(); break;

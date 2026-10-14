@@ -79,7 +79,7 @@
       </div>
       <div class="onice"><span id="awayIce"></span><span id="homeIce"></span></div>
       <div class="stage"><div class="bug" id="bug" aria-live="off"></div>
-        <div class="rinkbox"><canvas id="rink" aria-label="Top-down rink showing the live game"></canvas><div class="banner" id="banner" hidden><div class="bt" id="bannerT"></div><div class="bs" id="bannerS"></div></div><div class="moment" id="moment" hidden role="dialog" aria-label="Your call"></div>
+        <div class="rinkbox"><canvas id="rink" aria-label="Top-down rink showing the live game"></canvas><div class="banner" id="banner" hidden><div class="bt" id="bannerT"></div><div class="bs" id="bannerS"></div></div><div class="moment" id="moment" hidden role="dialog" aria-label="Your call"></div><div class="skillpop" id="skillPop" hidden aria-live="polite"></div>
           <div class="replay-ui" id="replayUi" hidden>
             <div class="replay-tag"><span class="rec-dot" aria-hidden="true"></span>Replay <span id="replaySpeedTxt">· slow motion</span></div>
             <div class="replay-who" id="replayWho"></div>
@@ -184,20 +184,21 @@
         <div class="row">
           <div class="seg" role="group" aria-label="Format" id="fmtSeg"><button data-f="csv" aria-pressed="true">CSV</button><button data-f="json" aria-pressed="false">JSON</button></div>
           <button class="btn" id="copyBtn">Copy</button>
-          <button class="btn" id="saveFileBtn" hidden>Save as file</button>
+          <button class="btn" id="saveFileBtn">Save as file</button>
           <span class="grow"></span>
           <label class="btn" for="fileIn">Load file…</label>
           <input type="file" id="fileIn" accept=".csv,.json,.txt" hidden>
           <button class="btn primary" id="importBtn">Import from text box</button>
         </div>
         <textarea id="ioText" spellcheck="false" aria-label="Roster as text"></textarea>
-        <div class="msgline note" id="ioMsg">CSV columns: name, short, no, team, pos, line, style, sht, pas, hnd, skt, spd, def, chk, fo, sta, dis, clu, goal, friends, groups. Older files with a single off column still import. Separate friends and circles with semicolons. Importing CSV replaces players; JSON replaces teams and players.</div>
+        <div class="msgline note" id="ioMsg">CSV columns: name, short, no, team, pos, line, style, sht, pas, hnd, skt, spd, def, chk, fo, sta, dis, clu, goal, friends, personality, personality2, cares1, cares2. Older files with a single off column still import. Separate friends with semicolons. Importing CSV replaces players; JSON replaces teams and players.</div>
       </div>
       <div class="sheet-wrap"><table class="sheet" id="sheet"></table></div>
     </div>
     <p class="note" style="margin:0">Positions: C, LW, RW, D, G. Lines 1–3 dress a skater on that forward line or defense pair; goalies are Starter or Backup; Extra sits a player. Shooting and Passing replace the old Offense rating. Hands sets how well a player dekes, dangles, saucers passes and protects the puck. Skating is acceleration, edges and balance; Speed is top speed. Checking wins hits and board battles, Faceoffs wins draws, Stamina sets how fast a player tires and recovers, Discipline sets how often they take penalties, and Clutch lifts (or sinks) a player late in close games, in overtime and in shootouts. Hover a column header for details. Stats run 1–99 with Uma-style letter grades. Changes save automatically and apply from the next game.</p>
   </section>
 
+  <input type="file" id="saveFileIn" accept=".json,application/json" hidden>
   <dialog class="settings pcard" id="pcardDlg" aria-labelledby="pcardTitle"><div class="dlg-in"><button class="btn sm fr-x" data-close aria-label="Close">Close</button><div id="pcardBody"></div></div></dialog>
   <dialog class="settings confirm" id="confirmDlg" aria-labelledby="confirmMsg"><form method="dialog"><p id="confirmMsg"></p><div class="confirm-btns"><button class="btn" value="no">Cancel</button><button class="btn primary" id="confirmYes" value="yes">OK</button></div></form></dialog>
   <dialog class="settings fr-box" id="frBoxDlg" aria-labelledby="frBoxTitle"><div class="dlg-in"><button class="btn sm fr-x" data-close aria-label="Close">Close</button><div id="frBoxBody"></div></div></dialog>
@@ -240,6 +241,10 @@
       <section>
         <h3>Replays</h3>
         <label class="set-row"><input type="checkbox" id="autoReplay" checked><span>Show a slow-motion replay after every goal</span></label>
+      </section>
+      <section>
+        <h3>Quick Play</h3>
+        <label class="set-row"><input type="checkbox" data-set="qpMoods"><span>Give every player a random mood each game (Great to Awful, up to ±4% to her play)</span></label>
       </section>
       <section>
         <h3>On the rink</h3>

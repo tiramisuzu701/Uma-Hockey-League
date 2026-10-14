@@ -24,6 +24,46 @@ function segDist(px, py, ax, ay, bx, by) {
   return { d: Math.hypot(px - (ax + dx * t), py - (ay + dy * t)), t };
 }
 function fmtClock(sec) { sec = Math.max(0, Math.ceil(sec)); return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); }
+// ---------- personalities: how a player's character nudges her decisions ----------
+// carry/pass/shoot/deke scale those options; pace favors carrying through the neutral zone over dumping in;
+// risk = saucers, stretch and bank passes, pinches; hit/pen = physical play and penalties; work = winning battles;
+// jit = how much her choices vary from the "best" play; picky = only shoots from good looks
+const PERS_ARCH = {
+  "Ace":         { carry: 1.15, shoot: 1.12, pass: 0.92, deke: 1.05 },
+  "Showboat":    { deke: 1.4, carry: 1.1, risk: 1.25, pass: 0.97 },
+  "Leader":      { pass: 1.05, risk: 0.85, pen: 0.8, jit: 0.8 },
+  "Team Player": { pass: 1.15, shoot: 0.9, carry: 0.92 },
+  "Hothead":     { shoot: 1.1, hit: 1.35, pen: 1.3, risk: 1.05 },
+  "Free Spirit": { risk: 1.3, deke: 1.15, jit: 1.7 },
+  "Analyst":     { risk: 0.8, pass: 1.05, jit: 0.6, picky: 1 },
+  "Timid":       { carry: 0.85, pass: 1.1, hit: 0.6, pen: 0.55, deke: 0.8, shoot: 0.95 },
+  "Speed Demon": { pace: 1.3, carry: 1.08, risk: 1.05 },
+  "Hard Worker": { work: 1.2, hit: 1.1 }
+};
+const PERS_HELP = {
+  "Ace": "Carries it herself, drives the net and shoots a lot.",
+  "Showboat": "Loves the spotlight: dekes, toe drags and risky highlight plays.",
+  "Leader": "Composed and responsible: smart, safe plays and few penalties.",
+  "Team Player": "Unselfish: passes first and sets up her linemates.",
+  "Hothead": "Fiery and competitive: shoots first, hits hard, takes penalties.",
+  "Free Spirit": "Unpredictable: creative passes, sudden rushes, hard to read.",
+  "Analyst": "Methodical: patient, only shoots from good looks, rarely gambles.",
+  "Timid": "Reserved: moves the puck on quickly, avoids contact, almost never in the box.",
+  "Speed Demon": "Always pushing the pace: carries it through the neutral zone instead of dumping it.",
+  "Hard Worker": "Never quits: wins puck battles and grinds on the forecheck."
+};
+const PRI_HELP = { Winning: "Gives a discount to contenders and wants more from losing teams.", Friends: "Cheaper to sign where her friends play.", "Ice time": "Wants a role that matches her talent; unhappy as a healthy scratch.", Loyalty: "Gives a hometown discount to re-sign and rarely leaves.", Money: "Wants top dollar." };
+const PERS_KEYS = ["carry", "pass", "shoot", "deke", "pace", "risk", "hit", "pen", "work", "jit", "picky"];
+const persCache = new WeakMap();
+function persTraits(p) {
+  const pe = p && p.pers, key = pe ? pe.a + "|" + (pe.b || "") : "";
+  const c = p && persCache.get(p); if (c && c.key === key) return c;
+  const A = pe && PERS_ARCH[pe.a] || {}, B = pe && PERS_ARCH[pe.b] || {}, t = { key };
+  for (const k of PERS_KEYS) { const base = k === "picky" ? 0 : 1; t[k] = base + ((A[k] ?? base) - base) + 0.5 * ((B[k] ?? base) - base); }
+  if (p) persCache.set(p, t);
+  return t;
+}
+function persScale(v, m) { return m === 1 ? v : v >= 0 ? v * m : v / m; }
 function periodName(p) { return p === 1 ? "1st" : p === 2 ? "2nd" : p === 3 ? "3rd" : p === 4 ? "OT" : "SO"; }
 function weighted(opts) {
   let tot = 0; for (const o of opts) tot += Math.max(0, o[1]);
@@ -108,6 +148,11 @@ class Game {
     this.playoff = !!(opts && opts.playoff); this.otN = 1; this.league = league; this.fam = league.fam || null; // franchise familiarity between teammates
     // coaching from the bench: hold at intermissions, manual goalie pulls and changes
     this.intHold = false; this.holdInt = false;
+    // moods: a franchise brings each player's own; Quick Play can roll them fresh for the night
+    this.sk = {}; this.skAct = {}; this.teamUntil = [0, 0]; this.skillPop = null; this.skT = 0; // unique skills
+    this.moods = {};
+    for (const p of league.players) if (p.md != null) this.moods[p.id] = moodLevel(p.md);
+    if (opts && opts.randomMoods) for (const p of league.players) if (this.moods[p.id] == null) { const r = rnd(); this.moods[p.id] = r < 0.1 ? 2 : r < 0.35 ? 1 : r < 0.7 ? 0 : r < 0.9 ? -1 : -2; }
     // Be A Player: one skater the viewer makes the big decisions for
     this.bap = opts && opts.bap ? { me: opts.bap.me, moments: opts.bap.moments !== false, auto: false, last: -99, n: 0, log: [], cap: 16 } : null; this.moment = null;
     this.teams = [homeId, awayId].map((id, i) => {
@@ -162,7 +207,7 @@ class Game {
     if (m > 0.62 && this.time - (this.momLog[ti] || -999) > 150 && this.phase !== "final") { this.momLog[ti] = this.time; this.log("momentum", ti, this.teams[ti].team.name + " have all the momentum right now."); }
   }
   canPinch(s) {
-    const a = this.aggr(s.team), st = s.p.style;
+    const a = this.aggr(s.team) * persTraits(s.p).risk, st = s.p.style;
     return (st === "Offensive" && a >= 0.2) || (st === "Two-Way" && a >= 0.6) || a >= 0.85;
   }
   dir(ti) { const base = (this.period % 2 === 1) ? 1 : -1; return ti === 0 ? base : -base; }
@@ -226,8 +271,58 @@ class Game {
   clutchOn() { return this.period >= 4 || (this.period === 3 && this.clock < 480 && Math.abs(this.teams[0].score - this.teams[1].score) <= 1); }
   clutch(p) { return this.clutchOn() ? 1 + (this.r(p, "clu") - 60) / 300 : 1; }
   addFx(s, text) { this.fx.push({ s, x: s.x, y: s.y, text, t: 0, team: s.team }); if (this.fx.length > 8) this.fx.shift(); }
-  spdMul(p) { return 0.68 + 0.32 * Math.pow(this.energy[p.id] / 100, 0.8); }
-  skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)); }
+  spdMul(p) { const a = this.skAct[p.id]; return (0.68 + 0.32 * Math.pow(this.energy[p.id] / 100, 0.8)) * (a && a.e === "speed" && a.until > this.time ? 1.08 : 1); }
+  // ---------- unique skills: each player's signature moment, once a game ----------
+  skillMul(p, ti) {
+    const a = this.skAct[p.id];
+    let m = a && a.until > this.time && (a.e === "pass" || a.e === "hands" || a.e === "defense" || a.e === "physical") ? 1.07 : 1;
+    if (ti != null && this.teamUntil[ti] > this.time) m *= 1.05;
+    return m;
+  }
+  skillOn(p, e) { const a = this.skAct[p.id]; return !!(a && a.e === e && a.until > this.time); }
+  skillCond(s, t) {
+    const ti = s.team, d = this.dir(ti), P = this.puck, T = this.teams[ti], O = this.teams[1 - ti], diff = T.score - O.score;
+    const near = dist(s.x, s.y, P.x, P.y) < 30;
+    switch (t) {
+      case "start": return this.period === 1 && this.clock > PERIOD_LEN - 300 && near;
+      case "late": return (this.period === 3 && this.clock < 360 && Math.abs(diff) <= 1) || this.period === 4;
+      case "lead": return diff > 0 && near;
+      case "behind": return diff < 0 && near;
+      case "rush": return P.carrier === s && d * s.x > -RINK.blueX && d * s.x < RINK.blueX + 6 && Math.hypot(s.vx, s.vy) > 14;
+      case "slot": return P.carrier === s && this.xgAt(s.x, s.y, ti) > 0.08;
+      case "traffic": { const n = this.nearestOpp(s); return !!n && n.d < 4.5 && dist(s.x, s.y, P.x, P.y) < 8; }
+      case "pp": return this.strength(ti) > this.strength(1 - ti) && near;
+      case "pk": return this.strength(ti) < this.strength(1 - ti) && near;
+      case "tired": return this.energy[s.p.id] < 45;
+      case "defend": return d * P.x < -RINK.blueX && P.carrier && P.carrier.team !== ti && near;
+      case "goalie": return (this.gRecent[ti] || []).filter(x => this.time - x < 10).length >= 2;
+    }
+    return false;
+  }
+  skillTick(dt) {
+    this.skT += dt; if (this.skT < 0.5) return; this.skT = 0;
+    const who = this.skaters.filter(x => x.state === "on").concat(this.goalies.filter(Boolean));
+    for (const s of who) {
+      const p = s.p, sk = skillOf(p); if (!sk) continue;
+      const st = this.sk[p.id] || (this.sk[p.id] = { used: 0, until: 0 });
+      if (st.used >= 1 || !this.skillCond(s, sk.t)) continue;
+      const ch = 0.18 * (1 + 0.15 * this.moodOf(p)) * (0.85 + this.r(p, "clu") / 400);
+      if (rnd() < ch) this.fireSkill(s, sk, st);
+    }
+  }
+  fireSkill(s, sk, st) {
+    st.used++; st.until = this.time + 12;
+    this.skAct[s.p.id] = { e: sk.e, until: st.until, n: sk.n };
+    const S = this.stats[s.p.id]; if (S) S.sk = (S.sk || 0) + 1;
+    if (sk.e === "stamina") this.energy[s.p.id] = Math.min(100 - (this.fatigue[s.p.id] || 0), this.energy[s.p.id] + 30);
+    if (sk.e === "team") this.teamUntil[s.team] = st.until;
+    if (sk.e === "slow") for (const o of this.skaters) if (o.team !== s.team && o.state === "on" && dist(o.x, o.y, s.x, s.y) < 22) o.slowUntil = this.time + 8;
+    if (s.g !== "G") this.addFx(s, "✦ " + sk.n);
+    this.log("uskill", s.team, s.p.name + " · " + sk.n + "! " + SKILL_FX[sk.e].replace(/^./, c => c.toUpperCase()) + ".", { pid: s.p.id, skill: sk.n });
+    this.skillPop = { name: s.p.name, n: sk.n, team: s.team, t: this.time, id: (this.skillPop ? this.skillPop.id : 0) + 1 };
+  }
+  moodOf(p) { return (this.moods && this.moods[p.id]) || 0; }
+  skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)) * (1 + 0.02 * this.moodOf(p)) * this.skillMul(p, ti); }
   chemKey(ti) { const ps = this.onIce(ti).map(s => s.p); const g = this.goalies[ti]; if (g) ps.push(g.p); return { ps, key: ps.map(p => p.id).sort().join("|") }; }
   chemValue(ti) { const { ps, key } = this.chemKey(ti); if (!(key in this.chemCache)) this.chemCache[key] = unitChemistry(ps, this.fam).value; return this.chemCache[key]; }
   chemMult(ti) { return 1 + (this.chemValue(ti) - 60) / 200; }
@@ -642,7 +737,7 @@ class Game {
     const empty = this.netEmpty(1 - ti), goalie = this.goalies[1 - ti];
     const st = s.p.style, dd = dist(s.x, s.y, gx, 0);
     const xg = opt.wrap ? opt.wrap / Math.max(0.2, TUNE.goal) : this.xgAt(s.x, s.y, ti);
-    let mods = (0.55 + this.r(s.p, "sht") / 133) * this.skill(s.p) * this.clutch(s.p), tag = "";
+    let mods = (0.55 + this.r(s.p, "sht") / 133) * this.skill(s.p) * this.clutch(s.p) * (this.skillOn(s.p, "shot") ? 1.18 : 1), tag = "";
     if (st === "Sniper") mods *= 1.12; else if (st === "Playmaker") mods *= 0.92; else if (st === "Power Forward" && dd < 16) mods *= 1.12;
     const oneTimer = this.time - s.gotT < 0.7 && s.gotFrom && s.otOK;
     if (oneTimer) { mods *= dd < 13 ? 1.15 : 1.35; tag = "one-timer"; if (areFriends(s.p, s.gotFrom.p)) { mods *= 1.15; tag = "chemistry one-timer"; } }
@@ -664,7 +759,7 @@ class Game {
       if (gs === "Butterfly" && dd < 20) gm *= 0.88;
       if (gs === "Reflex" && (oneTimer || rebound)) gm *= 0.85;
       if (gs === "Hybrid" && dd > 35) gm *= 0.94;
-      gm *= this.gForm[gp.id] || 1;
+      gm *= (this.gForm[gp.id] || 1) * (1 - 0.015 * this.moodOf(gp)) * (this.skillOn(gp, "save") ? 0.75 : 1); // a goalie in a good mood (or on a hot streak) lets in less
       gm /= this.clutch(gp);
       // a scramble in front wears a goalie down: several shots in a few seconds
       const recent = (this.gRecent[1 - ti] || []).filter(t => this.time - t < 5).length;
@@ -795,7 +890,8 @@ class Game {
       const aTxt = (assists.length ? " Assists: " + assists.map(nameOf).join(", ") + "." : " Unassisted.") + (sh.saucer ? " Set up by " + sh.saucer.p.name + "'s saucer pass." : "");
       const tags = [sh.tag, pp ? "PP" : shg ? "SH" : "", sh.empty ? "empty net" : ""].filter(Boolean);
       const how = " (" + (tags.length ? tags.join(", ") + ", " : "") + sh.dist + " ft" + (sh.mph && sh.dist >= 20 && !sh.tipper ? ", " + sh.mph + " mph" : "") + ")";
-      this.log("goal", ti, "GOAL " + T.team.abbr + ": " + scorerSk.p.name + how + "." + aTxt, { scorer: scorerSk.p.id, assists, pp, sh: shg, en: !!sh.empty });
+      const us = this.skAct[scorerSk.p.id] && this.skAct[scorerSk.p.id].until > this.time ? this.skAct[scorerSk.p.id].n : null;
+      this.log("goal", ti, "GOAL " + T.team.abbr + ": " + scorerSk.p.name + how + "." + aTxt + (us ? " ✦ " + us + "." : ""), { scorer: scorerSk.p.id, assists, pp, sh: shg, en: !!sh.empty, uskill: us });
       this.lastGA = this.lastGA || [null, null];
       { const L = this.lastGA[1 - ti]; this.lastGA[1 - ti] = { t: this.time, n: L && this.time - L.t < 40 ? L.n + 1 : 1 }; }
       this.pendingReplay = { ev: this.events[this.events.length - 1], goalT: this.time, team: ti, gx: d * RINK.goalX, scorer: scorerSk.p };
@@ -804,7 +900,7 @@ class Game {
       this.bump(ti, 0.5); this.mom[1 - ti] *= 0.4;
       this.sampleWP(true); this.wp[this.wp.length - 1].goal = ti;
       const fancy = sh.deke || sh.tag === "toe-drag snipe" ? sh.tag.replace(/^./, ch => ch.toUpperCase()) + "!" : "";
-      this.banner = { kind: "goal", team: ti, title: pp ? "Power-play goal" : sh.empty ? "Empty-net goal" : shg ? "Shorthanded goal" : "GOAL", sub: scorerSk.p.name + (fancy ? " · " + fancy : ""), t: 0 };
+      this.banner = { kind: "goal", team: ti, title: pp ? "Power-play goal" : sh.empty ? "Empty-net goal" : shg ? "Shorthanded goal" : "GOAL", sub: scorerSk.p.name + (fancy ? " · " + fancy : "") + (us ? " · ✦ " + us : ""), t: 0 };
       if (pp) { const b = O.box.filter(x => x.active && !x.coin).sort((a, c) => a.left - c.left)[0]; if (b) { if (b.left > MINOR + 0.5) { b.left = MINOR; this.log("ppend", 1 - ti, b.p.name + " stays in the box: the second half of the double minor starts."); } else this.releaseFromBox(1 - ti, b, true); } }
       if (O.pend.length) { this.log("ppend", 1 - ti, "Delayed penalty to " + O.pend[0].p.name + " is wiped out by the goal."); O.pend.shift(); }
       const gStats = goalie ? this.stats[goalie.p.id] : null;
@@ -1047,7 +1143,8 @@ class Game {
     const ti = s.team, d = this.dir(ti), zx = d * s.x, st = s.p.style, isD = s.g === "D";
     const shorth = this.shorthanded(ti), side = s.y >= 0 ? 1 : -1;
     const opts = [];
-    const jit = () => 1 + (rnd() - 0.5) * 0.14;
+    const pt = persTraits(s.p);
+    const jit = () => 1 + (rnd() - 0.5) * 0.14 * pt.jit;
     const setPlay = s.setPlay && s.setPlay.until > this.time ? s.setPlay : null;
     s.setPlay = setPlay;
     const alone = this.breakaway(s);
@@ -1092,7 +1189,7 @@ class Game {
     for (const r of this.skaters) {
       if (r.team !== ti || r === s || r.state !== "on" || r.stun > 0) continue;
       const pe = this.passEV(s, r, { wall, press }); if (!pe) continue;
-      const k = (st === "Playmaker" ? 1.15 : st === "Stay-at-Home" ? 1.08 : 1) * jit();
+      const k = (st === "Playmaker" ? 1.15 : st === "Stay-at-Home" ? 1.08 : 1) * jit() * (pe.saucer || dist(s.x, s.y, r.x, r.y) > 55 ? pt.risk : 1); // saucers and stretch passes are the risky ones
       let ev = pe.ev * k * (zx > RINK.blueX ? 1 - 0.035 * stale : 1);
       if (r === s.gotFrom && this.time - s.gotT < 2.5) ev = ev > 0 ? ev * 0.5 : ev * 1.5;
       // the cycle: low on the wall with a checker on you, leave it for the teammate coming down behind you
@@ -1211,6 +1308,14 @@ class Game {
     if (this.bap && s.p.id === this.bap.me && this.wantMoment(s, zx, press, opts, shorth)) {
       this.openMoment(s, zx > RINK.blueX - 2 ? "attack" : zx > -14 ? "entry" : "breakout", { opts, passCands, wrapInfo, rimInfo, dekeInfo, gdekeInfo, shorth, zx, press });
       return;
+    }
+    // her personality tilts the choice
+    for (const o of opts) {
+      const k = o[0];
+      let m = k === "shoot" ? pt.shoot * (pt.picky ? (clearLook ? 1 + 0.12 * pt.picky : 1 - 0.1 * pt.picky) : 1)
+        : k === "pass" ? pt.pass : k === "rim" ? Math.sqrt(pt.pass) : k === "carry" ? pt.carry * (zx < RINK.blueX ? pt.pace : 1)
+        : k === "dump" ? 1 / pt.pace : k === "deke" || k === "gdeke" || k === "toedrag" || k === "michigan" || k === "wrap" ? pt.deke : 1;
+      o[1] = persScale(o[1], m);
     }
     let choice = opts[0];
 
@@ -1876,7 +1981,7 @@ class Game {
   moveSkaters(dt) {
     const P = this.puck;
     for (const s of this.skaters) {
-      let vmax = s.maxSpd * this.spdMul(s.p) * (s === P.carrier ? 0.92 : 1);
+      let vmax = s.maxSpd * this.spdMul(s.p) * (s === P.carrier ? 0.92 : 1) * (s.slowUntil > this.time ? 0.9 : 1);
       if (s.stun > 0) { vmax *= 0.35; s.stun -= dt; }
       if (this.phase !== "play" && this.phase !== "shootout" && s.state === "on") vmax *= 0.7;
       // skate around the net, not into it, when the target is on the other side of the goal line
@@ -2163,17 +2268,18 @@ class Game {
       if (!bd && rnd() > TUNE.check * dt * (this.shorthanded(o.team) ? 0.55 : 1)) continue;
       if (bd) o.bapDef = null;
       o.checkCool = 0.45;
-      const so = o.p.def * this.skill(o.p), sc = (this.hands(c.p) * 0.6 + this.r(c.p, "skt") * 0.4);
+      const so = o.p.def * this.skill(o.p) * persTraits(o.p).work, sc = (this.hands(c.p) * 0.6 + this.r(c.p, "skt") * 0.4) * Math.sqrt(persTraits(c.p).work);
       const soH = this.r(o.p, "chk") * this.skill(o.p), scH = (this.r(c.p, "skt") * 0.5 + this.r(c.p, "chk") * 0.5) * this.skill(c.p);
       const st = o.p.style;
       const nearBoards = Math.abs(c.y) > 32 || Math.abs(c.x) > 84;
       const hitBase = (this.r(o.p, "chk") - 72) / 200 + (st === "Enforcer" ? 0.8 : st === "Grinder" ? 0.7 : st === "Power Forward" || st === "Stay-at-Home" ? 0.6 : st === "Two-Way" ? 0.4 : 0.28);
       const ag = this.aggr(o.team);
-      const isHit = bd ? bd.kind === "hit" : rnd() < hitBase * (nearBoards ? 1.4 : 0.7) * (0.8 + 0.4 * ag);
+      const opt = persTraits(o.p);
+      const isHit = bd ? bd.kind === "hit" : rnd() < hitBase * (nearBoards ? 1.4 : 0.7) * (0.8 + 0.4 * ag) * opt.hit;
       const d = this.dir(c.team);
       const beaten = d * (c.x - o.x) > 0.5 && Math.hypot(c.vx, c.vy) > Math.hypot(o.vx, o.vy);
       const penP = (isHit ? 0.012 : 0.009) * TUNE.pen * (1.75 - o.p.dis / 100 * 1.25) * (this.e(o.p) < 40 ? 1.35 : 1) *
-        (st === "Enforcer" ? 1.4 : st === "Grinder" ? 1.3 : st === "Power Forward" ? 1.15 : st === "Stay-at-Home" ? 1.1 : 1) * (beaten ? 1.6 : 1) * (0.85 + 0.3 * ag);
+        (st === "Enforcer" ? 1.4 : st === "Grinder" ? 1.3 : st === "Power Forward" ? 1.15 : st === "Stay-at-Home" ? 1.1 : 1) * (beaten ? 1.6 : 1) * (0.85 + 0.3 * ag) * opt.pen;
       if (rnd() < penP) {
         this.callPenalty(o, c, isHit ? PEN_BODY : beaten ? ["hooking", "tripping", "holding"] : PEN_STICK);
         if (rnd() < 0.5) { const P = this.puck; P.carrier = null; c.stun = 0.5; c.cool = 0.6; const a = rnd() * Math.PI * 2; P.vx = Math.cos(a) * 10 + c.vx * 0.4; P.vy = Math.sin(a) * 10 + c.vy * 0.4; }
@@ -2309,7 +2415,7 @@ class Game {
   // ---------- physical play ----------
   fightiness(s) {
     const st = s.p.style;
-    return (st === "Enforcer" ? 3.2 : st === "Grinder" ? 1.4 : st === "Power Forward" ? 1.2 : st === "Stay-at-Home" ? 0.9 : 0.45) * (1.65 - s.p.dis / 100);
+    return (st === "Enforcer" ? 3.2 : st === "Grinder" ? 1.4 : st === "Power Forward" ? 1.2 : st === "Stay-at-Home" ? 0.9 : 0.45) * (1.65 - s.p.dis / 100) * persTraits(s.p).pen;
   }
   afterHit(hitter, victim, boards) {
     const ti = victim.team, P = this.puck;
@@ -2535,6 +2641,7 @@ class Game {
     this.tickEnergy(gdt);
     this.tickPenalties(gdt);
     this.coach(gdt);
+    this.skillTick(dt);
     for (let ti = 0; ti < 2; ti++) this.processBench(ti, false);
     this.assignTargets(dt);
     this.moveSkaters(dt);
