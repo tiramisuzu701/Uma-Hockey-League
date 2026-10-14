@@ -33,6 +33,7 @@ Online leagues with friends would need a shared backend (for example Supabase) a
 ```
 index.html        the built game (this is what GitHub Pages serves)
 art/              character sprite sheets and the Be A Player portrait
+audio/            the menu theme and each club's goal horn (audio/horns)
 src/              the source the page is built from
   page.css          styles
   body.html         page markup
@@ -44,6 +45,8 @@ src/              the source the page is built from
   app.js            Quick Play screens, rink drawing, lines and roster editors
   franchise.js      franchise screens and in-game coaching
   bap.js            Be A Player screens
+  sound.js          menu music, crowd, goal horns and game sounds
+  live.js           the Winning Live celebration after wins
   boot.js           start-up
 build.sh          rebuilds index.html from src/
 tools/            command-line simulations for checking the engine (need Node.js)

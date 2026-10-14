@@ -232,6 +232,8 @@ function runSkipChunk() {
 function frame(ts) {
   const dt = Math.min(0.1, lastTs ? (ts - lastTs) / 1000 : 0); lastTs = ts;
   if (game && game.final && frLive && !frLive.saved) frOnFrame();
+  if (game && typeof sndGameFrame === "function") sndGameFrame();
+  if (game && typeof liveGameFrame === "function") liveGameFrame();
   if (game && game.bap) { game.bap.auto = !!skipping; if (game.moment) showMoment(); else if (momentShown) hideMoment(); }
   if (game) {
     if (replay) { replay.t += dt * replaySpeed; if (replay.t > replay.R.end + 0.5) stopReplay(); else updateReplayUi(); }
@@ -401,7 +403,7 @@ $("#menuCrowd").addEventListener("click", e => {
 $("#menuSettings").addEventListener("click", () => $("#settingsBtn").click());
 
 // ---------- settings ----------
-const SET_DEFAULTS = { qpMoods: true, net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
+const SET_DEFAULTS = { snd: true, vMaster: 0.8, vMusic: 0.6, vSfx: 0.8, vCrowd: 0.6, vHorn: 0.8, live: "big", qpMoods: true, net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
 let settings = Object.assign({}, SET_DEFAULTS);
 try {
   const raw = JSON.parse(localStorage.getItem("tracen-settings") || "null");

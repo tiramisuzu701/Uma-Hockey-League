@@ -181,6 +181,7 @@ function renderFranchise() {
   else root.innerHTML = frHubHtml();
   frPill();
   if (FR && !frSetup && FR.phase !== "draft" && frTab === "lines") renderLines(frLinesCtx());
+  if (FR && !frSetup && settings.live !== "off") frMaybeChampLive();
 }
 
 // ---------- saves ----------
@@ -384,7 +385,7 @@ function frHomeHtml() {
     if (F.phase === "playoffs") main += frBracketHtml();
   } else if (F.phase === "done") {
     const h = F.history[0];
-    main = `<div class="panel fr-champ" style="--tc:${esc(frTeam(h.champ).color)}">${tLogo(h.champ, 80)}<div><span class="note">Season ${h.season} champions</span><h3>${tName(h.champ)} win the Tracen Cup</h3><span class="note">over ${tName(h.ru)} in the final</span></div></div>
+    main = `<div class="panel fr-champ" style="--tc:${esc(frTeam(h.champ).color)}">${tLogo(h.champ, 80)}<div><span class="note">Season ${h.season} champions</span><h3>${tName(h.champ)} win the Tracen Cup</h3><span class="note">over ${tName(h.ru)} in the final</span></div><button class="btn wl-btn" data-fr="live">✦ Winning Live</button></div>
       ${frBracketHtml()}
       <div class="panel"><div class="panel-h"><b>Season awards</b></div><div class="fr-awards">${h.awards.map(a => `<div>${chibiHead(a.who, 46, frTeam(a.team))}<span><i>${esc(a.name)}</i><b>${esc(a.who)}</b><small>${tAbbr(a.team)} · ${esc(a.line)}</small></span></div>`).join("")}</div></div>
       <div class="fr-simbar"><button class="btn primary" data-fr="offseason">Start the offseason</button><span class="note">Players develop, contracts tick down a year, and expiring deals need decisions.</span></div>`;
@@ -657,6 +658,37 @@ function frMoodPanelHtml() {
     ${low ? `<div class="sec-h" style="padding:6px 14px 0">Could use some attention</div><ul class="fr-recent">${low}</ul>` : `<p class="note" style="padding:4px 14px 12px">Nobody is in a bad mood right now.</p>`}</div>`;
 }
 
+// ---------- Winning Live in a franchise ----------
+// the champions' concert: their three best playoff performers (in Be A Player, she takes center stage)
+function frChampLive(F) {
+  const h = F.history[0]; if (!h) return null;
+  const t = F.teams.find(x => x.id === h.champ), ps = F.S ? F.S.pstats : {};
+  const list = F.players.filter(p => p.team === h.champ).map(p => {
+    const s = ps[p.id] || frBlank(), g = posGroup(p) === "G";
+    const v = g ? (s.sv || 0) * 0.05 - (s.ga || 0) * 0.3 + (s.w || 0) * 1.5 : (s.g || 0) * 3 + (s.a || 0) * 2 + (s.pm || 0) * 0.2;
+    return { p, v, line: g ? `${s.w || 0} playoff wins` + (s.sa ? " · " + (s.sv / s.sa).toFixed(3).replace(/^0/, "") : "") : `${s.g || 0} G · ${s.a || 0} A in the playoffs` };
+  }).sort((a, b) => b.v - a.v);
+  if (F.mode === "bap") { const i = list.findIndex(x => x.p.id === F.me); if (i > 0) list.unshift(list.splice(i, 1)[0]); }
+  return { team: t, stars: list.slice(0, 3), title: "Tracen Cup Champions!", sub: "Season " + h.season + " · over the " + (F.teams.find(x => x.id === h.ru) || {}).name };
+}
+// a watched playoff game that clinches a series (or the Cup) gets its own title
+function frLiveOccasion() {
+  if (!frLive || !FR || FR.id !== frLive.fid || !FR.S || !FR.S.po) return "";
+  const g = frGame(FR, frLive.gid); if (!g || !g.po) return "";
+  const s = FR.S.po.series.find(x => x.id === g.po); if (!s) return "";
+  const need = Math.ceil(FR.settings.series / 2), w = [0, 0];
+  for (const gid of s.games) { const x = frGame(FR, gid); if (x && x.st === "final") w[(x.hs > x.as ? x.h : x.a) === s.hi ? 0 : 1]++; }
+  if (Math.max(...w) >= need) return s.round === 2 ? "Tracen Cup Champions!" : "Series clinched!";
+  return "Playoff win";
+}
+// your club (or your player's) just won the Cup: the concert starts on its own, once
+function frMaybeChampLive() {
+  const F = FR; if (!F || F.phase !== "done" || !F.history[0] || F.history[0].season !== F.season || F.liveSeen === F.season) return;
+  if (F.history[0].champ !== F.user) return;
+  F.liveSeen = F.season; frSave();
+  setTimeout(() => openWinningLive(frChampLive(F)), 400);
+}
+
 // ---------- team chemistry and practice ----------
 function frChemPanelHtml() {
   const F = FR, t = frTeam(F.user), cur = t.practice || "auto";
@@ -791,6 +823,7 @@ async function frAction(b) {
     case "stkind": frUi.stKind = v; frUi.stSort = v === "g" ? "w" : v === "t" ? "ppPct" : "pts"; break;
     case "mfilter": frUi.mf = v; break;
     case "tint": frTeam(FR.user).train = v; frSave(); break;
+    case "live": openWinningLive(frChampLive(FR)); return;
     case "prac": frTeam(FR.user).practice = v; frSave(); break;
     case "stpo": frUi.stPo = v === "1"; break;
     case "release": { const p = frP(id); if (!(await uiConfirm("Release " + p.name + "? Half of her salary (" + money(p.con.sal * 0.5) + ") stays on your cap for " + yrs(p.con.yrs) + ".", "Release", true))) return; frRelease(FR, id); if (FR.settings.autoLines) frAutoLines(FR, FR.user); frSave(); } break;

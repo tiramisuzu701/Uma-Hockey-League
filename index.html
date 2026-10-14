@@ -1044,6 +1044,56 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
 .pc-skill { display: grid; gap: 2px; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid #E5C25A; background: color-mix(in srgb, #F2C14E 12%, var(--surface)); }
 .pc-sk-n { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #A97A0C; }
 .pc-sk-g { font-style: italic; }
+
+/* ---------- Winning Live ---------- */
+.wl { position: fixed; inset: 0; z-index: 60; display: grid; place-items: stretch; background: #07081A; opacity: 0; transition: opacity .7s ease; }
+.wl.on { opacity: 1; } .wl.out { opacity: 0; }
+.wl-stage { position: relative; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto auto; color: #fff;
+  background: radial-gradient(120% 70% at 50% 100%, color-mix(in srgb, var(--c1) 55%, #07081A) 0%, #0B0D24 55%, #05060F 100%); }
+.wl-lights span { position: absolute; top: -10%; width: 22vw; height: 120%; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 75%); filter: blur(6px); mix-blend-mode: screen; animation: wlsweep 4.2s ease-in-out infinite alternate; }
+.wl-lights span:nth-child(1) { left: 6%; --a: -22deg; --b: 12deg; } .wl-lights span:nth-child(2) { left: 30%; --a: 14deg; --b: -16deg; animation-duration: 3.4s; background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 70%, transparent), transparent 75%); }
+.wl-lights span:nth-child(3) { left: 52%; --a: -14deg; --b: 18deg; animation-duration: 3.8s; background: linear-gradient(180deg, color-mix(in srgb, var(--c2) 60%, transparent), transparent 75%); } .wl-lights span:nth-child(4) { left: 74%; --a: 20deg; --b: -10deg; animation-duration: 4.6s; }
+@keyframes wlsweep { from { transform: rotate(var(--a)); } to { transform: rotate(var(--b)); } }
+.wl-head { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 4vh 16px 0; text-align: left; }
+.wl-head h2 { margin: 2px 0; font-family: var(--f-display); font-size: clamp(1.6rem, 4.2vw, 3rem); text-transform: uppercase; letter-spacing: .03em; line-height: 1; text-shadow: 0 0 24px color-mix(in srgb, var(--c1) 80%, transparent); }
+.wl-tag { font-family: var(--f-display); letter-spacing: .3em; font-size: .85rem; color: #F2C14E; text-transform: uppercase; }
+.wl-sub { color: #C9D2EA; font-size: .95rem; }
+.wl-logo { filter: drop-shadow(0 0 12px rgba(255,255,255,.35)); }
+.wl-floor { position: relative; z-index: 2; display: grid; align-items: end; padding: 0 12px; }
+.wl-floor::after { content: ""; position: absolute; left: 6%; right: 6%; bottom: 3.6vh; height: 8vh; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,.22), transparent); }
+.wl-perfs { display: flex; justify-content: center; align-items: flex-end; gap: clamp(8px, 4vw, 60px); padding-bottom: 4vh; }
+.wl-perf { display: grid; justify-items: center; gap: 4px; position: relative; z-index: 1; animation: wlin .9s cubic-bezier(.2,.8,.2,1.2) both; animation-delay: var(--d); }
+.wl-perf.center { z-index: 2; }
+.wl-bounce { animation: wlbeat .4545s ease-in-out infinite alternate; animation-delay: var(--d); }
+.wl-perf.center .wl-bounce { animation-name: wlbeatc; }
+@keyframes wlin { from { opacity: 0; transform: translateY(40px) scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes wlbeat { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-10px) rotate(2deg); } }
+@keyframes wlbeatc { from { transform: translateY(0) scale(1); } to { transform: translateY(-14px) scale(1.03); } }
+.wl-img { filter: drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
+.wl-ini { display: grid; place-items: center; border-radius: 50%; background: var(--c1); color: var(--c2); font-family: var(--f-display); font-size: 3rem; border: 4px solid #F2C14E; }
+.wl-name { display: grid; justify-items: center; line-height: 1.15; padding: 4px 12px; border-radius: 99px; background: rgba(5,6,15,.65); border: 1px solid rgba(242,193,78,.5); }
+.wl-name b { font-family: var(--f-display); text-transform: uppercase; letter-spacing: .03em; font-size: .95rem; }
+.wl-perf.center .wl-name { border-color: #F2C14E; background: color-mix(in srgb, var(--c1) 55%, #05060F); }
+.wl-perf.center .wl-name b { font-size: 1.15rem; }
+.wl-name small { color: #C9D2EA; font-size: .78rem; }
+.wl-crowd { position: relative; z-index: 3; height: 12vh; min-height: 70px; background: linear-gradient(0deg, #020309 30%, rgba(2,3,9,0)); }
+.wl-crowd i { position: absolute; left: var(--x); bottom: 18%; width: 5px; height: calc(var(--h) * 2.4); border-radius: 3px; background: var(--c); box-shadow: 0 0 10px var(--c), 0 0 22px var(--c); transform-origin: 50% 100%; animation: wlwave .909s ease-in-out infinite alternate; animation-delay: var(--dl); opacity: .9; }
+@keyframes wlwave { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+.wl-confetti i { position: absolute; top: -4%; left: var(--x); width: 8px; height: 13px; background: var(--c); border-radius: 2px; animation: wlfall 4.2s linear infinite; animation-delay: var(--dl); opacity: .9; z-index: 4; }
+@keyframes wlfall { from { transform: translateY(-5vh) rotate(var(--r)); } to { transform: translateY(110vh) rotate(calc(var(--r) + 720deg)); } }
+.wl-btns { position: absolute; right: 16px; top: 16px; z-index: 6; display: flex; gap: 8px; }
+.wl-btns .btn:not(.primary) { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.3); }
+.wl-btn { border-color: #E5C25A !important; color: #A97A0C; }
+@media (max-width: 640px) { .wl-head { flex-direction: column; text-align: center; padding-top: 7vh; } .wl-btns { top: 10px; right: 10px; } }
+@media (prefers-reduced-motion: reduce) { .wl-lights span, .wl-bounce, .wl-crowd i, .wl-confetti i, .wl-perf { animation: none !important; } }
+.wl-lights, .wl-confetti { position: absolute; inset: 0; pointer-events: none; }
+.wl-stage { grid-template-rows: auto 1fr auto; }
+.wl-head > div { min-width: 0; }
+.wl-head h2 { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .wl-perfs { transform: scale(.68); transform-origin: 50% 100%; gap: 0; } }
+@media (max-width: 460px) { .wl-perfs { transform: scale(.5); } .wl-head h2 { font-size: 1.5rem; } .wl-name small { font-size: .9rem; } }
+.wl-stage { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 460px) { .wl-perfs { transform: scale(.6); } .wl-head { padding-top: 64px; } }
 </style>
 </head><body>
 <div class="wrap">
@@ -1062,7 +1112,7 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
     </nav>
     <div class="top-r"><span class="save-pill" id="savePill" data-s="idle">Loading roster…</span>
       <button class="btn icon" id="testBtn" aria-haspopup="dialog" title="Test tools"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M21.7 18.3 13.4 10a5.5 5.5 0 0 0-7-7l3.3 3.3-1.4 3.6-3.6 1.4L1.4 8a5.5 5.5 0 0 0 7 7l8.3 8.3a2 2 0 0 0 2.8 0l2.2-2.2a2 2 0 0 0 0-2.8z"/></svg> Test tools</button>
-      <button class="btn icon" id="settingsBtn" aria-haspopup="dialog" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg> Settings</button></div>
+      <button class="btn icon" id="sndBtn" aria-pressed="true"></button><button class="btn icon" id="settingsBtn" aria-haspopup="dialog" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg> Settings</button></div>
   </header>
 
   <!-- MAIN MENU -->
@@ -1149,6 +1199,7 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
       <button class="btn" id="skipPeriodBtn">Skip to end of period</button>
       <button class="btn bap-skip" id="skipShiftBtn" hidden>Skip to my shift</button>
       <button class="btn" id="skipGameBtn">Skip to end of game</button>
+      <button class="btn wl-btn" id="liveBtn" hidden>✦ Winning Live</button>
       <div class="zoomer" role="group" aria-label="Rink zoom"><button class="btn" id="zoomOut" aria-label="Zoom out">−</button><span id="zoomTxt">120%</span><button class="btn" id="zoomIn" aria-label="Zoom in">+</button></div>
       <label class="toggle">Scorebug <select id="netQuick" aria-label="Scorebug style"></select></label>
       <span class="grow"></span>
@@ -1291,7 +1342,17 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
         <label class="set-row"><input type="checkbox" id="autoReplay" checked><span>Show a slow-motion replay after every goal</span></label>
       </section>
       <section>
+        <h3>Sound</h3>
+        <label class="set-row"><input type="checkbox" id="setSnd"><span>Sound on (menu music, crowd, goal horns and game sounds)</span></label>
+        <label class="set-range"><span>Master volume</span><input type="range" id="setVolMaster" min="0" max="100" step="5"><output id="setVolMasterOut"></output></label>
+        <label class="set-range"><span>Menu music</span><input type="range" id="setVolMusic" min="0" max="100" step="5"><output id="setVolMusicOut"></output></label>
+        <label class="set-range"><span>Game sounds</span><input type="range" id="setVolSfx" min="0" max="100" step="5"><output id="setVolSfxOut"></output></label>
+        <label class="set-range"><span>Crowd</span><input type="range" id="setVolCrowd" min="0" max="100" step="5"><output id="setVolCrowdOut"></output></label>
+        <label class="set-range"><span>Goal horns</span><input type="range" id="setVolHorn" min="0" max="100" step="5"><output id="setVolHornOut"></output></label>
+      </section>
+      <section>
         <h3>Quick Play</h3>
+        <label class="set-row"><span>Winning Live after a win</span><select id="setLive"><option value="big">Big games only (playoffs, hat tricks, shutouts, comebacks)</option><option value="all">After every win</option><option value="off">Never on its own (the button still works)</option></select></label>
         <label class="set-row"><input type="checkbox" data-set="qpMoods"><span>Give every player a random mood each game (Great to Awful, up to ±4% to her play)</span></label>
       </section>
       <section>
@@ -2078,6 +2139,7 @@ class Game {
     // coaching from the bench: hold at intermissions, manual goalie pulls and changes
     this.intHold = false; this.holdInt = false;
     // moods: a franchise brings each player's own; Quick Play can roll them fresh for the night
+    this.sfx = []; // sound cues for the page: what happened, where, how loud
     this.sk = {}; this.skAct = {}; this.teamUntil = [0, 0]; this.skillPop = null; this.skT = 0; // unique skills
     this.moods = {};
     for (const p of league.players) if (p.md != null) this.moods[p.id] = moodLevel(p.md);
@@ -2250,6 +2312,7 @@ class Game {
     this.log("uskill", s.team, s.p.name + " · " + sk.n + "! " + SKILL_FX[sk.e].replace(/^./, c => c.toUpperCase()) + ".", { pid: s.p.id, skill: sk.n });
     this.skillPop = { name: s.p.name, n: sk.n, team: s.team, t: this.time, id: (this.skillPop ? this.skillPop.id : 0) + 1 };
   }
+  snd(k, x, y, v, team) { if (this.sfx.length < 48) this.sfx.push({ k, x, y, v: v == null ? 1 : v, team, t: this.time }); }
   moodOf(p) { return (this.moods && this.moods[p.id]) || 0; }
   skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)) * (1 + 0.02 * this.moodOf(p)) * this.skillMul(p, ti); }
   chemKey(ti) { const ps = this.onIce(ti).map(s => s.p); const g = this.goalies[ti]; if (g) ps.push(g.p); return { ps, key: ps.map(p => p.id).sort().join("|") }; }
@@ -2397,6 +2460,7 @@ class Game {
   }
   whistle(fx, fy, reason, type) {
     if (this.phase === "stoppage" || this.final) return;
+    this.snd("whistle", fx, fy, 1);
     const P = this.puck;
     P.carrier = null; P.pass = null; P.shot = null; P.vx *= 0.3; P.vy *= 0.3;
     if (reason) this.log(type || "stop", -1, reason);
@@ -2545,7 +2609,7 @@ class Game {
     return busy;
   }
   dropPuck() {
-    this.ozPasses = [0, 0];
+    this.ozPasses = [0, 0]; this.snd("drop", this.face.x, this.face.y, 0.7);
     const cs = [0, 1].map(ti => this.onIce(ti).filter(s => s.g === "F").sort((a, b) => dist(a.x, a.y, this.face.x, this.face.y) - dist(b.x, b.y, this.face.x, this.face.y))[0] || this.onIce(ti)[0]);
     if (!cs[0] || !cs[1]) return;
     const sc = s => this.r(s.p, "fo") * 0.85 * this.clutch(s.p) + s.p.def * 0.1 + s.p.dis * 0.05;
@@ -2631,6 +2695,7 @@ class Game {
     const spd = speed || PASS_SPEED;
     P.vx = dx / d * spd; P.vy = dy / d * spd;
     P.pass = { from, to, interceptor, tx: target.x, ty: target.y, left: d + 3, fromTeam: from.team };
+    this.snd("pass", from.x, from.y, clamp(spd / 70, 0.35, 1));
     if (to && to.team === from.team && this.dir(to.team) * target.x > RINK.blueX + 6 && this.dir(to.team) * target.x < RINK.goalX - 3 && this.oneTimerOK(from.x, from.y, target.x, target.y, to.team) && this.xgAt(target.x, target.y, to.team) > 0.05) P.pass.ot = true;
     this.setRelease(from.team);
     from.cool = 0.35;
@@ -2752,7 +2817,8 @@ class Game {
       if (rnd() > pOn) {
         outcome = "miss";
         const far = s.y >= 0 ? -1 : 1, r = rnd();
-        if (r < 0.45) { tx = gx + d * 9; ty = far * (4.5 + rnd() * 9); }           // wide to the far side: rims around the end boards
+        if (!empty && dd < 50 && rnd() < 0.16) { opt.post = true; tx = gx + d * 0.4; ty = (rnd() < 0.5 ? 1 : -1) * 3.05; } // rings off the iron
+        else if (r < 0.45) { tx = gx + d * 9; ty = far * (4.5 + rnd() * 9); }           // wide to the far side: rims around the end boards
         else if (r < 0.75) { tx = gx + d * 9; ty = -far * (4.5 + rnd() * 6); }     // wide on the near side
         else { tx = gx - d * (4 + rnd() * 10); ty = (rnd() - 0.5) * 30; opt.glass = true; } // high off the glass, drops back in front
       }
@@ -2769,8 +2835,9 @@ class Game {
     P.carrier = null; P.x = s.x + dx / L * 1.5; P.y = s.y + dy / L * 1.5;
     const spd = opt.forced ? 45 : empty && dd > 60 ? 70 : SHOT_SPEED;
     P.vx = dx / L * spd; P.vy = dy / L * spd;
-    P.shot = { mph, pGoal, glass: !!opt.glass, shooter: s, outcome, blocker: m.blocker, tipper, tx, ty, team: ti, dist: Math.round(dd), tag, left: L + 1, empty, deke: !!opt.forced, saucer: P.lastPassSaucer && P.lastPassSaucer.to === s && this.time - P.lastPassSaucer.t < 1.5 ? P.lastPassSaucer.from : null };
+    P.shot = { mph, pGoal, glass: !!opt.glass, post: !!opt.post, shooter: s, outcome, blocker: m.blocker, tipper, tx, ty, team: ti, dist: Math.round(dd), tag, left: L + 1, empty, deke: !!opt.forced, saucer: P.lastPassSaucer && P.lastPassSaucer.to === s && this.time - P.lastPassSaucer.t < 1.5 ? P.lastPassSaucer.from : null };
     P.pass = null;
+    this.snd("shot", s.x, s.y, mph ? clamp(mph / 95, 0.4, 1.1) : 0.8);
     this.setRelease(ti);
     this.lastShot = { t: this.time, team: ti }; this.ozPasses[ti] = 0; this.lastShotY = s.y;
     this.bump(ti, 0.02);
@@ -2782,7 +2849,7 @@ class Game {
     const T = this.teams[ti], O = this.teams[1 - ti];
     const goalie = this.goalies[1 - ti];
     if (sh.outcome === "block") {
-      this.stats[sh.blocker.p.id].blk++;
+      this.stats[sh.blocker.p.id].blk++; this.snd("block", P.x, P.y, 0.8);
       this.log("block", 1 - ti, sh.blocker.p.name + " blocks " + s.p.name + "'s shot.");
       P.shot = null; P.lastTouchTeam = 1 - ti; P.touched = true; P.release = null;
       const a = Math.atan2(P.vy, P.vx) + Math.PI + (rnd() - 0.5) * 2.8;
@@ -2792,6 +2859,12 @@ class Game {
       return;
     }
     if (sh.outcome === "miss") {
+      if (sh.post) {
+        this.log("miss", ti, s.p.name + " rings it off the post from " + sh.dist + " ft!");
+        this.snd("post", P.x, P.y, 1); P.shot = null;
+        P.vx = -P.vx * (0.3 + rnd() * 0.2); P.vy = (rnd() - 0.5) * 24;
+        return;
+      }
       this.log("miss", ti, s.p.name + (sh.empty ? " misses the empty net from " : " misses wide from ") + sh.dist + " ft.");
       P.shot = null;
       if (sh.glass) { const a = Math.atan2(-P.vy, -P.vx) + (rnd() - 0.5) * 2.2, v = 11 + rnd() * 9; P.vx = Math.cos(a) * v; P.vy = Math.sin(a) * v; } // drops off the glass and skips back into play
@@ -2803,6 +2876,7 @@ class Game {
     T.sog++; st.sog++;
     if (!sh.empty && goalie) this.stats[goalie.p.id].sa++;
     if (sh.outcome === "goal") {
+      this.snd("goal", P.x, P.y, 1, ti);
       const pp = this.strength(ti) > this.strength(1 - ti), shg = this.strength(ti) < this.strength(1 - ti);
       T.score++; st.g++; if (pp) { T.ppG++; st.ppg++; } if (shg) { T.shG++; st.shg++; }
       if (!sh.empty && goalie) this.stats[goalie.p.id].ga++;
@@ -2842,7 +2916,7 @@ class Game {
       return;
     }
     // save
-    this.stats[goalie.p.id].sv++;
+    this.stats[goalie.p.id].sv++; this.snd("save", goalie.x, goalie.y, sh.pGoal > 0.14 ? 1 : 0.7, 1 - ti);
     this.bump(ti, 0.025); if (sh.pGoal > 0.14 || sh.deke) this.bump(1 - ti, 0.12); // a big stop swings it back
     this.lastSave = { t: this.time, team: 1 - ti };
     P.shot = null; P.touched = true; P.release = null; P.lastTouchTeam = 1 - ti;
@@ -4021,7 +4095,8 @@ class Game {
         if (front) { P.x = Math.sign(P.x) * (RINK.goalX - 0.4); P.vx = -P.vx * 0.3; }
         else { P.y = (P.y >= 0 ? 1 : -1) * 3.5; P.vy = -P.vy * 0.5; }
       }
-      const hit = containPuck(P, P.pass && P.pass.rim);
+      const sp0 = Math.hypot(P.vx, P.vy), hit = containPuck(P, P.pass && P.pass.rim);
+      if (hit && sp0 > 16) this.snd("boards", P.x, P.y, clamp(sp0 / 70, 0.25, 1));
       if (hit && P.pass) { if (P.pass.bank) this.bankRedirect(); else if (!P.pass.rim) P.pass = null; }
       if (P.shot && Math.abs(P.x) > 99) this.resolveShot();
       if (this.phase !== "play") return;
@@ -4348,6 +4423,7 @@ class Game {
   }
   afterHit(hitter, victim, boards) {
     const ti = victim.team, P = this.puck;
+    this.snd(boards ? "hitb" : "hit", victim.x, victim.y, 1);
     this.out = this.out || {};
     // injuries: rare, worse into the boards, worse from the heavy hitters
     const pInj = 0.003 * (boards ? 1.7 : 1) * (hitter.p.style === "Enforcer" || hitter.p.style === "Power Forward" ? 1.3 : 1) * (victim.p.style === "Power Forward" || victim.p.style === "Enforcer" ? 0.6 : 1);
@@ -6500,6 +6576,8 @@ function runSkipChunk() {
 function frame(ts) {
   const dt = Math.min(0.1, lastTs ? (ts - lastTs) / 1000 : 0); lastTs = ts;
   if (game && game.final && frLive && !frLive.saved) frOnFrame();
+  if (game && typeof sndGameFrame === "function") sndGameFrame();
+  if (game && typeof liveGameFrame === "function") liveGameFrame();
   if (game && game.bap) { game.bap.auto = !!skipping; if (game.moment) showMoment(); else if (momentShown) hideMoment(); }
   if (game) {
     if (replay) { replay.t += dt * replaySpeed; if (replay.t > replay.R.end + 0.5) stopReplay(); else updateReplayUi(); }
@@ -6669,7 +6747,7 @@ $("#menuCrowd").addEventListener("click", e => {
 $("#menuSettings").addEventListener("click", () => $("#settingsBtn").click());
 
 // ---------- settings ----------
-const SET_DEFAULTS = { qpMoods: true, net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
+const SET_DEFAULTS = { snd: true, vMaster: 0.8, vMusic: 0.6, vSfx: 0.8, vCrowd: 0.6, vHorn: 0.8, live: "big", qpMoods: true, net: "un", names: true, arrows: true, sticks: true, rings: true, passes: true, lineInfo: false, zoom: 1.2, icon: 1.15, bugSize: 1, motion: "device" };
 let settings = Object.assign({}, SET_DEFAULTS);
 try {
   const raw = JSON.parse(localStorage.getItem("tracen-settings") || "null");
@@ -8018,6 +8096,7 @@ function renderFranchise() {
   else root.innerHTML = frHubHtml();
   frPill();
   if (FR && !frSetup && FR.phase !== "draft" && frTab === "lines") renderLines(frLinesCtx());
+  if (FR && !frSetup && settings.live !== "off") frMaybeChampLive();
 }
 
 // ---------- saves ----------
@@ -8221,7 +8300,7 @@ function frHomeHtml() {
     if (F.phase === "playoffs") main += frBracketHtml();
   } else if (F.phase === "done") {
     const h = F.history[0];
-    main = `<div class="panel fr-champ" style="--tc:${esc(frTeam(h.champ).color)}">${tLogo(h.champ, 80)}<div><span class="note">Season ${h.season} champions</span><h3>${tName(h.champ)} win the Tracen Cup</h3><span class="note">over ${tName(h.ru)} in the final</span></div></div>
+    main = `<div class="panel fr-champ" style="--tc:${esc(frTeam(h.champ).color)}">${tLogo(h.champ, 80)}<div><span class="note">Season ${h.season} champions</span><h3>${tName(h.champ)} win the Tracen Cup</h3><span class="note">over ${tName(h.ru)} in the final</span></div><button class="btn wl-btn" data-fr="live">✦ Winning Live</button></div>
       ${frBracketHtml()}
       <div class="panel"><div class="panel-h"><b>Season awards</b></div><div class="fr-awards">${h.awards.map(a => `<div>${chibiHead(a.who, 46, frTeam(a.team))}<span><i>${esc(a.name)}</i><b>${esc(a.who)}</b><small>${tAbbr(a.team)} · ${esc(a.line)}</small></span></div>`).join("")}</div></div>
       <div class="fr-simbar"><button class="btn primary" data-fr="offseason">Start the offseason</button><span class="note">Players develop, contracts tick down a year, and expiring deals need decisions.</span></div>`;
@@ -8494,6 +8573,37 @@ function frMoodPanelHtml() {
     ${low ? `<div class="sec-h" style="padding:6px 14px 0">Could use some attention</div><ul class="fr-recent">${low}</ul>` : `<p class="note" style="padding:4px 14px 12px">Nobody is in a bad mood right now.</p>`}</div>`;
 }
 
+// ---------- Winning Live in a franchise ----------
+// the champions' concert: their three best playoff performers (in Be A Player, she takes center stage)
+function frChampLive(F) {
+  const h = F.history[0]; if (!h) return null;
+  const t = F.teams.find(x => x.id === h.champ), ps = F.S ? F.S.pstats : {};
+  const list = F.players.filter(p => p.team === h.champ).map(p => {
+    const s = ps[p.id] || frBlank(), g = posGroup(p) === "G";
+    const v = g ? (s.sv || 0) * 0.05 - (s.ga || 0) * 0.3 + (s.w || 0) * 1.5 : (s.g || 0) * 3 + (s.a || 0) * 2 + (s.pm || 0) * 0.2;
+    return { p, v, line: g ? `${s.w || 0} playoff wins` + (s.sa ? " · " + (s.sv / s.sa).toFixed(3).replace(/^0/, "") : "") : `${s.g || 0} G · ${s.a || 0} A in the playoffs` };
+  }).sort((a, b) => b.v - a.v);
+  if (F.mode === "bap") { const i = list.findIndex(x => x.p.id === F.me); if (i > 0) list.unshift(list.splice(i, 1)[0]); }
+  return { team: t, stars: list.slice(0, 3), title: "Tracen Cup Champions!", sub: "Season " + h.season + " · over the " + (F.teams.find(x => x.id === h.ru) || {}).name };
+}
+// a watched playoff game that clinches a series (or the Cup) gets its own title
+function frLiveOccasion() {
+  if (!frLive || !FR || FR.id !== frLive.fid || !FR.S || !FR.S.po) return "";
+  const g = frGame(FR, frLive.gid); if (!g || !g.po) return "";
+  const s = FR.S.po.series.find(x => x.id === g.po); if (!s) return "";
+  const need = Math.ceil(FR.settings.series / 2), w = [0, 0];
+  for (const gid of s.games) { const x = frGame(FR, gid); if (x && x.st === "final") w[(x.hs > x.as ? x.h : x.a) === s.hi ? 0 : 1]++; }
+  if (Math.max(...w) >= need) return s.round === 2 ? "Tracen Cup Champions!" : "Series clinched!";
+  return "Playoff win";
+}
+// your club (or your player's) just won the Cup: the concert starts on its own, once
+function frMaybeChampLive() {
+  const F = FR; if (!F || F.phase !== "done" || !F.history[0] || F.history[0].season !== F.season || F.liveSeen === F.season) return;
+  if (F.history[0].champ !== F.user) return;
+  F.liveSeen = F.season; frSave();
+  setTimeout(() => openWinningLive(frChampLive(F)), 400);
+}
+
 // ---------- team chemistry and practice ----------
 function frChemPanelHtml() {
   const F = FR, t = frTeam(F.user), cur = t.practice || "auto";
@@ -8628,6 +8738,7 @@ async function frAction(b) {
     case "stkind": frUi.stKind = v; frUi.stSort = v === "g" ? "w" : v === "t" ? "ppPct" : "pts"; break;
     case "mfilter": frUi.mf = v; break;
     case "tint": frTeam(FR.user).train = v; frSave(); break;
+    case "live": openWinningLive(frChampLive(FR)); return;
     case "prac": frTeam(FR.user).practice = v; frSave(); break;
     case "stpo": frUi.stPo = v === "1"; break;
     case "release": { const p = frP(id); if (!(await uiConfirm("Release " + p.name + "? Half of her salary (" + money(p.con.sal * 0.5) + ") stays on your cap for " + yrs(p.con.yrs) + ".", "Release", true))) return; frRelease(FR, id); if (FR.settings.autoLines) frAutoLines(FR, FR.user); frSave(); } break;
@@ -8844,6 +8955,7 @@ function renderBap() {
     if (last && frSaves.some(s => s.id === last && s.mode === "bap")) { frOpen(last, true).then(() => { if (FR && FR.mode !== "bap") FR = null; renderBap(); }); return; }
   }
   bapRegisterLooks();
+  if (FR && FR.mode === "bap" && settings.live !== "off" && typeof frMaybeChampLive === "function") setTimeout(frMaybeChampLive, 0);
   if (bapSetup) root.innerHTML = bapSetupHtml();
   else if (!FR) root.innerHTML = bapSavesHtml();
   else if (!FR.bap.seen) root.innerHTML = bapDraftHtml();
@@ -9129,6 +9241,392 @@ function bapWire() {
   });
 }
 bapWire();
+// ---------- sound: menu music, the crowd, and the sounds of the game ----------
+// Music is the menu theme on a loop (the file has its own 1-second fade at each end), faded in and out
+// over a second whenever you move between the menus and a game. Everything else is synthesized live.
+const SND = { ctx: null, out: null, sfx: null, crowdBus: null, crowd: null, unlocked: false, music: null, musicVol: 0, musicTarget: 0, musicRaf: 0,
+  lastEv: {}, lastScore: null, lastId: null, crowdLevel: 0, swell: 0, noise: null };
+const MUSIC_SRC = "audio/menu-theme.mp3";
+const MUSIC_FADE = 1.0; // seconds
+// each club's goal horn: 16.5 seconds, fading out over the last 3.5; it sounds 0.15 s after a home goal
+const HORN_TEAMS = ["FCH", "NKY", "KYO", "TKZ", "SAP", "HKD", "NIG", "KOK", "FKS", "CKY"], HORN_DELAY = 150;
+SND.horns = {}; SND.hornCur = null; SND.hornRaf = 0;
+function sndHornEl(id) {
+  if (!HORN_TEAMS.includes(id)) return null;
+  if (!SND.horns[id]) { const a = new Audio("audio/horns/" + id + ".mp3"); a.preload = "auto"; SND.horns[id] = a; }
+  return SND.horns[id];
+}
+function sndHorn(id) {
+  const a = sndHornEl(id); if (!a || !SND.unlocked || !sndOn()) return;
+  setTimeout(() => {
+    if (currentView() !== "game" || skipping) return;
+    if (SND.hornCur && SND.hornCur !== a) SND.hornCur.pause();
+    cancelAnimationFrame(SND.hornRaf);
+    try { a.currentTime = 0; a.volume = Math.min(1, sndVol("vHorn")); const p = a.play(); if (p && p.catch) p.catch(() => {}); SND.hornCur = a; } catch (e) {}
+  }, HORN_DELAY);
+}
+// leaving the game: let the horn trail off instead of cutting it
+function sndHornStop(fast) {
+  const a = SND.hornCur; if (!a || a.paused) return;
+  const v0 = a.volume, t0 = performance.now(), dur = fast ? 250 : 600;
+  cancelAnimationFrame(SND.hornRaf);
+  const step = now => { const k = Math.min(1, (now - t0) / dur); try { a.volume = v0 * (1 - k); } catch (e) {} if (k < 1) SND.hornRaf = requestAnimationFrame(step); else a.pause(); };
+  SND.hornRaf = requestAnimationFrame(step);
+}
+
+function sndOn() { return settings.snd !== false; }
+function sndVol(k) { return (sndOn() ? (settings.vMaster ?? 0.8) : 0) * (settings[k] ?? 0.7); }
+
+// browsers only allow sound after the viewer interacts with the page
+function sndUnlock() {
+  if (SND.unlocked) return;
+  SND.unlocked = true;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) {
+      SND.ctx = new AC();
+      SND.out = SND.ctx.createGain(); SND.out.connect(SND.ctx.destination);
+      SND.sfx = SND.ctx.createGain(); SND.sfx.connect(SND.out);
+      SND.crowdBus = SND.ctx.createGain(); SND.crowdBus.gain.value = 0; SND.crowdBus.connect(SND.out);
+      // a few seconds of noise to build everything from
+      const len = SND.ctx.sampleRate * 3, buf = SND.ctx.createBuffer(2, len, SND.ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.99765 * b0 + w * 0.099; b1 = 0.963 * b1 + w * 0.2965; b2 = 0.57 * b2 + w * 1.0527; d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.16; } }
+      SND.noise = buf;
+    }
+  } catch (e) { SND.ctx = null; }
+  sndApplyVolumes();
+  sndRoute();
+}
+["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { sndUnlock(); if (SND.ctx && SND.ctx.state === "suspended") SND.ctx.resume(); }, { passive: true }));
+
+function sndApplyVolumes() {
+  if (SND.sfx) SND.sfx.gain.value = sndVol("vSfx");
+  sndMusicTo(SND.musicTarget > 0 ? 1 : 0, true);
+}
+
+// ---------- music ----------
+function sndMusicEl() {
+  if (!SND.music) {
+    const a = new Audio(MUSIC_SRC); a.loop = true; a.preload = "auto"; a.volume = 0;
+    SND.music = a;
+  }
+  return SND.music;
+}
+// fade the music toward on (1) or off (0) over MUSIC_FADE seconds
+function sndMusicTo(on, instant) {
+  SND.musicTarget = on;
+  if (!SND.unlocked) return;
+  if (!sndOn()) sndHornStop(true);
+  const a = sndMusicEl(), goal = on ? sndVol("vMusic") : 0;
+  if (on && goal > 0 && a.paused) { a.volume = SND.musicVol = 0; const p = a.play(); if (p && p.catch) p.catch(() => {}); }
+  cancelAnimationFrame(SND.musicRaf);
+  if (instant && !on) { a.volume = SND.musicVol = 0; a.pause(); return; }
+  const from = SND.musicVol, t0 = performance.now(), dur = instant ? 1 : MUSIC_FADE * 1000;
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), v = from + (goal - from) * k;
+    SND.musicVol = v; try { a.volume = Math.max(0, Math.min(1, v)); } catch (e) {}
+    if (k < 1) SND.musicRaf = requestAnimationFrame(step);
+    else if (goal <= 0.0001) a.pause();
+  };
+  SND.musicRaf = requestAnimationFrame(step);
+}
+// menus get the theme; a game gets the crowd
+function sndRoute() {
+  const inGame = currentView() === "game";
+  if (!inGame) sndHornStop();
+  sndMusicTo(inGame ? 0 : 1);
+  sndCrowdTo(inGame && game && !game.final ? 1 : inGame && game ? 0.35 : 0);
+}
+addEventListener("hashchange", () => setTimeout(sndRoute, 0));
+document.addEventListener("visibilitychange", () => { if (document.hidden) { if (SND.music) SND.music.pause(); if (SND.ctx) SND.ctx.suspend(); } else { if (SND.ctx) SND.ctx.resume(); SND.musicVol = 0; sndRoute(); } });
+
+// ---------- the crowd: a constant murmur that swells with the play ----------
+function sndCrowdBuild() {
+  if (!SND.ctx || SND.crowd) return;
+  const c = SND.ctx, src = c.createBufferSource(); src.buffer = SND.noise; src.loop = true;
+  const lp = c.createBiquadFilter(); lp.type = "bandpass"; lp.frequency.value = 650; lp.Q.value = 0.6;
+  const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 160;
+  const g = c.createGain(); g.gain.value = 0.55;
+  // a slow wobble so it breathes like a room full of people
+  const lfo = c.createOscillator(), lfoG = c.createGain(); lfo.frequency.value = 0.13; lfoG.gain.value = 0.12; lfo.connect(lfoG); lfoG.connect(g.gain); lfo.start();
+  src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(SND.crowdBus); src.start();
+  // a second, brighter layer for the "ooh"s and roars
+  const src2 = c.createBufferSource(); src2.buffer = SND.noise; src2.loop = true; src2.playbackRate.value = 1.13;
+  const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1100; bp.Q.value = 0.9;
+  const g2 = c.createGain(); g2.gain.value = 0;
+  src2.connect(bp); bp.connect(g2); g2.connect(SND.crowdBus); src2.start();
+  SND.crowd = { g, g2, bp };
+}
+function sndCrowdTo(level) {
+  SND.crowdLevel = level;
+  if (!SND.ctx) return;
+  sndCrowdBuild();
+  const t = SND.ctx.currentTime;
+  SND.crowdBus.gain.cancelScheduledValues(t);
+  SND.crowdBus.gain.setTargetAtTime(level * sndVol("vCrowd") * 0.9, t, 0.45);
+}
+// a roar: big for a home goal, a smaller pop for the visitors, a quick "ooh" for a big chance
+function sndRoar(size, dur) {
+  if (!SND.ctx || !SND.crowd || SND.crowdLevel <= 0) return;
+  const t = SND.ctx.currentTime, g = SND.crowd.g2.gain;
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(size, t + 0.25); g.setTargetAtTime(size * 0.6, t + 0.3, dur * 0.35); g.setTargetAtTime(0, t + dur, dur * 0.3);
+  SND.crowd.bp.frequency.setTargetAtTime(900 + size * 700, t, 0.2); SND.crowd.bp.frequency.setTargetAtTime(1100, t + dur, 0.6);
+  if (size > 0.8) for (let i = 0; i < 26; i++) sndClap(t + 0.4 + Math.random() * dur * 0.8, 0.25 + Math.random() * 0.25);
+}
+function sndClap(when, v) {
+  const c = SND.ctx, s = c.createBufferSource(); s.buffer = SND.noise; s.playbackRate.value = 1.6;
+  const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1400 + Math.random() * 900; f.Q.value = 1.2;
+  const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(v * 0.5, when + 0.004); g.gain.exponentialRampToValueAtTime(0.001, when + 0.09);
+  s.connect(f); f.connect(g); g.connect(SND.crowdBus); s.start(when, Math.random() * 2, 0.12);
+}
+
+// ---------- effects ----------
+function sndPan(x) { if (!SND.ctx.createStereoPanner) return null; const p = SND.ctx.createStereoPanner(); p.pan.value = Math.max(-0.8, Math.min(0.8, (x || 0) / 110)); return p; }
+function sndOut(node, x) { const p = sndPan(x); if (p) { node.connect(p); p.connect(SND.sfx); } else node.connect(SND.sfx); }
+// a burst of filtered noise
+function sndNoise(t, { f = 2000, q = 1, type = "bandpass", a = 0.002, d = 0.06, v = 0.5, rate = 1, x = 0 }) {
+  const c = SND.ctx, s = c.createBufferSource(); s.buffer = SND.noise; s.playbackRate.value = rate;
+  const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+  s.connect(fl); fl.connect(g); sndOut(g, x); s.start(t, Math.random() * 2.5, a + d + 0.05);
+}
+// a pitched tone with a quick decay
+function sndTone(t, { f = 440, type = "sine", a = 0.002, d = 0.2, v = 0.3, x = 0, glide = 0 }) {
+  const c = SND.ctx, o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (glide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * glide), t + a + d);
+  const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+  o.connect(g); sndOut(g, x); o.start(t); o.stop(t + a + d + 0.05);
+}
+const SND_FX = {
+  // stick on puck: a sharp click with a little body
+  pass: (t, e) => { sndNoise(t, { f: 2600, q: 1.4, d: 0.035, v: 0.35 * e.v, x: e.x }); sndTone(t, { f: 380, d: 0.05, v: 0.12 * e.v, x: e.x, glide: 0.6 }); },
+  shot: (t, e) => { sndNoise(t, { f: 1700, q: 0.8, d: 0.07, v: 0.6 * e.v, x: e.x }); sndNoise(t, { f: 4200, q: 2, d: 0.03, v: 0.25 * e.v, x: e.x }); sndTone(t, { f: 160, d: 0.09, v: 0.28 * e.v, x: e.x, glide: 0.5 }); },
+  // the iron: inharmonic ring that hangs in the air
+  post: (t, e) => { sndNoise(t, { f: 3000, q: 1, d: 0.03, v: 0.4, x: e.x }); [[740, 0.22, 1.1], [1316, 0.14, 0.9], [2049, 0.1, 0.7], [2970, 0.06, 0.5], [3820, 0.04, 0.35]].forEach(([f, v, d]) => sndTone(t, { f, v, d, x: e.x, type: "sine" })); },
+  save: (t, e) => { sndNoise(t, { f: 420, type: "lowpass", q: 0.7, d: 0.11, v: 0.55 * e.v, x: e.x }); sndTone(t, { f: 110, d: 0.12, v: 0.2 * e.v, x: e.x, glide: 0.7 }); },
+  block: (t, e) => { sndNoise(t, { f: 520, type: "lowpass", d: 0.08, v: 0.45, x: e.x }); },
+  boards: (t, e) => { sndNoise(t, { f: 700, q: 0.8, d: 0.12, v: 0.4 * e.v, x: e.x }); sndTone(t, { f: 95, d: 0.16, v: 0.25 * e.v, x: e.x, glide: 0.8 }); },
+  hit: (t, e) => { sndNoise(t, { f: 300, type: "lowpass", d: 0.16, v: 0.6, x: e.x }); sndTone(t, { f: 70, d: 0.18, v: 0.35, x: e.x, glide: 0.6 }); },
+  // into the boards: the thud plus the glass and panels rattling
+  hitb: (t, e) => { SND_FX.hit(t, e); sndNoise(t + 0.01, { f: 1800, q: 0.7, d: 0.35, v: 0.3, x: e.x, rate: 0.8 }); sndNoise(t + 0.03, { f: 520, q: 1.5, d: 0.25, v: 0.3, x: e.x }); },
+  drop: (t, e) => { sndNoise(t, { f: 2200, q: 2, d: 0.025, v: 0.2, x: e.x }); },
+  // a referee's pea whistle: two close pitches warbling together
+  whistle: (t, e) => {
+    const c = SND.ctx, d = 0.42, g = c.createGain(), am = c.createOscillator(), amG = c.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.02); g.gain.setValueAtTime(0.16, t + d - 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    am.frequency.value = 28; amG.gain.value = 0.06; am.connect(amG); amG.connect(g.gain);
+    for (const f of [2860, 3010]) { const o = c.createOscillator(); o.type = "triangle"; o.frequency.value = f; o.connect(g); o.start(t); o.stop(t + d + 0.05); }
+    am.start(t); am.stop(t + d + 0.05); sndOut(g, e.x);
+  }
+};
+const SND_GAP = { pass: 0.05, shot: 0.05, boards: 0.09, drop: 0.3, whistle: 0.6, hit: 0.1, hitb: 0.1, save: 0.08, block: 0.08, post: 0.2 };
+
+// called every frame while a game is on screen
+function sndGameFrame() {
+  if (!game) return;
+  const live = SND.ctx && SND.unlocked && sndOn() && currentView() === "game" && !skipping && !replay && SND.ctx.state === "running";
+  const q = game.sfx; game.sfx = [];
+  // a new game: reset the score tracker
+  if (SND.lastId !== game) { SND.lastId = game; SND.lastScore = null; SND.wasFinal = game.final; sndHornStop(true); sndHornEl(game.teams[0].team.id); sndRoute(); }
+  const sc = [game.teams[0].score, game.teams[1].score], so = game.so ? game.so.goals.slice() : [0, 0];
+  if (SND.lastScore && live) {
+    if (sc[0] > SND.lastScore[0]) { sndRoar(1.25, 5.5); sndHorn(game.teams[0].team.id); } // home goal: the horn, and the building comes down
+    else if (sc[1] > SND.lastScore[1]) sndRoar(0.45, 2.2);                                   // away goal: their fans make some noise
+    else if (so[0] > SND.lastSO[0]) sndRoar(0.8, 2.5);                                        // shootout goals get a cheer, not the horn
+    else if (so[1] > SND.lastSO[1]) sndRoar(0.35, 1.5);
+    // (a home shootout win adds the deciding goal to the score, so it gets the horn above)
+  }
+  SND.lastScore = sc; SND.lastSO = so; SND.wasFinal = game.final;
+  if (game.final && SND.crowdLevel > 0.35) sndCrowdTo(0.35);
+  if (!live) return;
+  // how loud the room is: louder late in a close game
+  const close = Math.abs(game.teams[0].score - game.teams[1].score) <= 1, late = game.period >= 3 && game.clock < 300;
+  const want = game.final ? 0.35 : game.phase === "intermission" ? 0.45 : close && late ? 1.25 : 1;
+  if (Math.abs(want - SND.crowdLevel) > 0.05) sndCrowdTo(want);
+  const t = SND.ctx.currentTime + 0.01;
+  for (const e of q) {
+    const f = SND_FX[e.k]; if (!f) continue;
+    if (t - (SND.lastEv[e.k] || 0) < (SND_GAP[e.k] || 0.05)) continue;
+    SND.lastEv[e.k] = t;
+    try { f(t, e); } catch (x) {}
+    // a big save gets an "ooh" from the crowd
+    if (e.k === "save" && e.v >= 1) sndRoar(0.3, 1.2);
+    if (e.k === "post") sndRoar(0.4, 1.4);
+  }
+}
+
+// ---------- settings ----------
+function sndSettingsWire() {
+  const dlg = $("#settingsDlg"); if (!dlg) return;
+  const rows = [["vMaster", "setVolMaster"], ["vMusic", "setVolMusic"], ["vSfx", "setVolSfx"], ["vCrowd", "setVolCrowd"], ["vHorn", "setVolHorn"]];
+  for (const [k, id] of rows) {
+    const el = document.getElementById(id); if (!el) continue;
+    el.value = Math.round((settings[k] ?? 0.7) * 100);
+    const out = document.getElementById(id + "Out"); if (out) out.textContent = el.value + "%";
+    el.addEventListener("input", () => { settings[k] = +el.value / 100; if (out) out.textContent = el.value + "%"; saveSettings(); sndApplyVolumes(); sndCrowdTo(SND.crowdLevel); });
+  }
+  const on = $("#setSnd"); if (on) { on.checked = sndOn(); on.addEventListener("change", () => { settings.snd = on.checked; saveSettings(); sndQuickSync(); sndUnlock(); sndApplyVolumes(); sndRoute(); }); }
+  const qb = $("#sndBtn"); if (qb) qb.addEventListener("click", () => { settings.snd = !sndOn(); saveSettings(); const o = $("#setSnd"); if (o) o.checked = sndOn(); sndQuickSync(); sndUnlock(); sndApplyVolumes(); sndRoute(); });
+  sndQuickSync();
+}
+function sndQuickSync() {
+  const b = $("#sndBtn"); if (!b) return;
+  b.setAttribute("aria-pressed", String(sndOn())); b.title = sndOn() ? "Sound on (click to mute)" : "Sound off (click to unmute)";
+  b.innerHTML = sndOn()
+    ? `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sound`
+    : `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Muted`;
+}
+sndSettingsWire();
+// ---------- Winning Live: the post-game concert for the winners ----------
+// The winning team's three stars take the stage, center spot to the best of the night, with a synthesized
+// pop track, sweeping lights, confetti and a sea of penlights in the team's colors.
+const LIVE = { open: false, t0: 0, timer: 0, music: null, data: null };
+const LIVE_LEN = 16; // seconds
+
+function liveStarsFromGame(g) {
+  const w = g.teams[0].score > g.teams[1].score ? 0 : 1, T = g.teams[w];
+  const list = [];
+  for (const p of T.lineup.roster) {
+    const s = g.stats[p.id]; if (!s || !s.toi) continue;
+    let v = s.g * 3.2 + s.a * 2 + s.sog * 0.25 + s.tk * 0.12 + s.blk * 0.25 + s.hit * 0.08 + s.pm * 0.3 + (s.sk ? 0.6 : 0);
+    if (posGroup(p) === "G") v = s.sv * 0.18 - s.ga * 0.9 + (s.ga === 0 && s.sa > 10 ? 3 : 0);
+    const line = posGroup(p) === "G" ? `${s.sv} saves` + (s.ga === 0 && s.sa ? " · shutout" : "") : `${s.g} G · ${s.a} A`;
+    list.push({ p, v, line, team: T.team });
+  }
+  list.sort((a, b) => b.v - a.v);
+  // Be A Player: if she's on the winning side and played her part, she takes center stage
+  if (g.bap) { const i = list.findIndex(x => x.p.id === g.bap.me); if (i > 0 && i < 6) list.unshift(list.splice(i, 1)[0]); }
+  return { team: T.team, w, stars: list.slice(0, 3) };
+}
+// a game worth a concert: playoffs, a hat trick, a shutout or a comeback (Settings decide how often)
+function liveBigGame(g) {
+  if (g.playoff) return "Playoff win";
+  const w = g.teams[0].score > g.teams[1].score ? 0 : 1;
+  if (Object.values(g.stats).some(s => s.g >= 3) && g.events.some(e => e.type === "goal" && e.team === w)) {
+    const ht = g.teams[w].lineup.roster.find(p => g.stats[p.id] && g.stats[p.id].g >= 3); if (ht) return "Hat trick for " + ht.name;
+  }
+  if (g.teams[1 - w].score === 0) return "Shutout";
+  let lowest = 0, d = 0; for (const e of g.events) if (e.type === "goal") { d += e.team === w ? 1 : -1; lowest = Math.min(lowest, d); }
+  if (lowest <= -2) return "Comeback win";
+  return "";
+}
+function liveFromGame(g, occasion) {
+  const r = liveStarsFromGame(g); if (!r.stars.length) return null;
+  const [h, a] = [g.teams[0].score, g.teams[1].score];
+  return { team: r.team, stars: r.stars, title: occasion || (r.team.name + " win!"),
+    sub: g.teams[1].team.abbr + " " + a + " – " + h + " " + g.teams[0].team.abbr + (g.decision && g.decision !== "REG" ? " (" + g.decision + ")" : "") };
+}
+
+// ---------- the stage ----------
+function liveHtml(d) {
+  const t = d.team, c1 = t.color || "#2F67D8", c2 = t.color2 || "#FFFFFF";
+  const order = [d.stars[1], d.stars[0], d.stars[2]].filter(Boolean); // center to the best
+  const perf = order.map((st, i) => {
+    const center = st === d.stars[0], size = center ? 210 : 160;
+    const img = hasChibi("b", st.p.name) ? chibiFull("b", st.p.name, size, "wl-img") : hasChibi("a", st.p.name) ? chibiFull("a", st.p.name, size, "wl-img") : `<span class="wl-ini" style="width:${size * 0.7}px;height:${size * 0.7}px">${esc(String(st.p.name).split(/\s+/).map(w => w[0]).join("").slice(0, 2))}</span>`;
+    return `<div class="wl-perf${center ? " center" : ""}" style="--d:${(i * 0.13).toFixed(2)}s"><div class="wl-bounce">${img}</div><div class="wl-name"><b>${esc(st.p.name)}</b><small>${esc(st.line)}</small></div></div>`;
+  }).join("");
+  const sticks = Array.from({ length: 42 }, (_, i) => `<i style="--x:${(i * 2.4 + (i % 3) * 0.7).toFixed(1)}%;--h:${(8 + (i * 7) % 9)}px;--dl:${((i * 0.37) % 1).toFixed(2)}s;--c:${i % 3 === 1 ? c2 : c1}"></i>`).join("");
+  const conf = Array.from({ length: 46 }, (_, i) => `<i style="--x:${(i * 13.7) % 100}%;--dl:${((i * 0.29) % 4).toFixed(2)}s;--c:${["#F2C14E", c1, c2, "#FF6FA8", "#7FE0C4"][i % 5]};--r:${(i * 47) % 360}deg"></i>`).join("");
+  return `<div class="wl-stage" style="--c1:${esc(c1)};--c2:${esc(c2)}">
+    <div class="wl-lights"><span></span><span></span><span></span><span></span></div>
+    <div class="wl-confetti" aria-hidden="true">${conf}</div>
+    <div class="wl-head"><span class="wl-logo">${teamLogoSvg(t, 54)}</span><div><span class="wl-tag">✦ Winning Live ✦</span><h2>${esc(d.title)}</h2><span class="wl-sub">${esc(d.sub || "")}</span></div></div>
+    <div class="wl-floor"><div class="wl-perfs">${perf}</div></div>
+    <div class="wl-crowd" aria-hidden="true">${sticks}</div>
+    <div class="wl-btns"><button class="btn" id="wlEncore">Encore</button><button class="btn primary" id="wlClose">Close</button></div>
+  </div>`;
+}
+function openWinningLive(d) {
+  if (!d || !d.stars || !d.stars.length) return;
+  let el = $("#winLive");
+  if (!el) { el = document.createElement("div"); el.id = "winLive"; el.className = "wl"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Winning Live"); document.body.appendChild(el); }
+  LIVE.data = d; LIVE.open = true;
+  el.innerHTML = liveHtml(d); el.hidden = false; el.classList.remove("out"); void el.offsetWidth; el.classList.add("on");
+  $("#wlClose").addEventListener("click", closeWinningLive);
+  $("#wlEncore").addEventListener("click", () => { liveMusicStop(true); openWinningLive(LIVE.data); });
+  if (typeof sndHornStop === "function") sndHornStop();
+  if (typeof sndCrowdTo === "function") sndCrowdTo(0.25);
+  liveMusicStart(d.team);
+  clearTimeout(LIVE.timer); LIVE.timer = setTimeout(closeWinningLive, LIVE_LEN * 1000);
+  setTimeout(() => { const b = $("#wlClose"); if (b) b.focus({ preventScroll: true }); }, 50);
+}
+function closeWinningLive() {
+  const el = $("#winLive"); if (!el || !LIVE.open) return;
+  LIVE.open = false; clearTimeout(LIVE.timer);
+  liveMusicStop();
+  el.classList.add("out");
+  setTimeout(() => { if (!LIVE.open) { el.hidden = true; el.innerHTML = ""; el.classList.remove("on", "out"); } }, 700);
+  if (typeof sndRoute === "function") sndRoute();
+}
+addEventListener("keydown", e => { if (e.key === "Escape" && LIVE.open) { e.preventDefault(); closeWinningLive(); } });
+
+// ---------- the song: an upbeat four-chord pop loop, faded in and out over a second ----------
+function liveMusicStart(team) {
+  if (typeof SND === "undefined" || !SND.ctx || !sndOn()) return;
+  const c = SND.ctx, out = c.createGain(), now = c.currentTime + 0.05, vol = Math.min(1, sndVol("vMusic") * 0.9);
+  out.gain.setValueAtTime(0.0001, now); out.gain.linearRampToValueAtTime(vol, now + 1); // 1-second fade-in
+  const end = now + LIVE_LEN; out.gain.setValueAtTime(vol, end - 1); out.gain.linearRampToValueAtTime(0.0001, end); // and out
+  out.connect(SND.out);
+  // each club plays in its own key
+  const key = 57 + Math.floor(nameHash(team.id || team.name || "x", 5) * 7), bpm = 132, beat = 60 / bpm;
+  const prog = [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]]; // I V vi IV
+  const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+  const nodes = [];
+  const note = (t, f, d, type, v, filt) => {
+    const o = c.createOscillator(); o.type = type; o.frequency.value = f;
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    if (filt) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = filt; o.connect(lp); lp.connect(g); } else o.connect(g);
+    g.connect(out); o.start(t); o.stop(t + d + 0.05); nodes.push(o);
+  };
+  const hit = (t, f, q, d, v, type) => {
+    const s = c.createBufferSource(); s.buffer = SND.noise; const fl = c.createBiquadFilter(); fl.type = type || "highpass"; fl.frequency.value = f; fl.Q.value = q;
+    const g = c.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random() * 2, d + 0.05); nodes.push(s);
+  };
+  const bars = Math.floor(LIVE_LEN / (beat * 4));
+  for (let b = 0; b < bars; b++) {
+    const ch = prog[b % 4], t0 = now + b * beat * 4;
+    for (let k = 0; k < 4; k++) {
+      const t = t0 + k * beat;
+      // kick on every beat, a little pitch drop
+      const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+      g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16); o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.2); nodes.push(o);
+      if (k % 2 === 1) hit(t, 1800, 0.7, 0.14, 0.32, "bandpass");                 // snare
+      hit(t + beat / 2, 7000, 0.5, 0.05, 0.12); hit(t, 8000, 0.5, 0.03, 0.06);   // hats
+      note(t, hz(key - 24 + ch[0]), beat * 0.9, "triangle", 0.28);               // bass
+      note(t + beat / 2, hz(key - 24 + ch[0] + 12), beat * 0.4, "triangle", 0.14);
+    }
+    for (const n of ch) note(t0, hz(key - 12 + n), beat * 3.6, "sawtooth", 0.045, 1800); // pad
+    // a bright hook over the top
+    const hook = [ch[2] + 12, ch[1] + 12, ch[0] + 12, ch[1] + 12, ch[2] + 12, ch[2] + 14, ch[2] + 12, ch[1] + 12];
+    hook.forEach((n, i) => note(t0 + i * beat / 2, hz(key + n), beat * 0.45, "square", b < 1 ? 0.0001 : 0.05, 3200));
+  }
+  LIVE.music = { out, nodes };
+}
+function liveMusicStop(now) {
+  const m = LIVE.music; if (!m || !SND.ctx) return; LIVE.music = null;
+  const t = SND.ctx.currentTime;
+  m.out.gain.cancelScheduledValues(t); m.out.gain.setValueAtTime(m.out.gain.value, t); m.out.gain.linearRampToValueAtTime(0.0001, t + (now ? 0.15 : 1));
+  setTimeout(() => { for (const n of m.nodes) { try { n.stop(); } catch (e) {} } try { m.out.disconnect(); } catch (e) {} }, now ? 250 : 1100);
+}
+
+// ---------- when it plays ----------
+// after a watched game: a button always, and on its own for big games (Settings: big games / every win / never)
+let liveShownFor = null;
+function liveGameFrame() {
+  const b = $("#liveBtn"); if (!b || !game) return;
+  const show = game.final && !!game.stars;
+  if (b.hidden === show) b.hidden = !show;
+  if (!show || liveShownFor === game || currentView() !== "game" || skipping) return;
+  liveShownFor = game;
+  const mode = settings.live || "big";
+  if (mode === "off") return;
+  const why = (typeof frLiveOccasion === "function" && frLiveOccasion()) || liveBigGame(game);
+  if (mode === "all" || why) setTimeout(() => { if (game && game.final && currentView() === "game" && !LIVE.open) openWinningLive(liveFromGame(game, why)); }, 3500);
+}
+(() => { const b = $("#liveBtn"); if (b) b.addEventListener("click", () => { if (game && game.final) openWinningLive(liveFromGame(game, liveBigGame(game) || null)); }); })();
+(() => { const s = $("#setLive"); if (!s) return; s.value = settings.live || "big"; s.addEventListener("change", () => { settings.live = s.value; saveSettings(); }); })();
 // ---------- boot ----------
 fillTeamSelects();
 showView();

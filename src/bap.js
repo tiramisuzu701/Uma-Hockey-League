@@ -37,6 +37,7 @@ function renderBap() {
     if (last && frSaves.some(s => s.id === last && s.mode === "bap")) { frOpen(last, true).then(() => { if (FR && FR.mode !== "bap") FR = null; renderBap(); }); return; }
   }
   bapRegisterLooks();
+  if (FR && FR.mode === "bap" && settings.live !== "off" && typeof frMaybeChampLive === "function") setTimeout(frMaybeChampLive, 0);
   if (bapSetup) root.innerHTML = bapSetupHtml();
   else if (!FR) root.innerHTML = bapSavesHtml();
   else if (!FR.bap.seen) root.innerHTML = bapDraftHtml();

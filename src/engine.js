@@ -149,6 +149,7 @@ class Game {
     // coaching from the bench: hold at intermissions, manual goalie pulls and changes
     this.intHold = false; this.holdInt = false;
     // moods: a franchise brings each player's own; Quick Play can roll them fresh for the night
+    this.sfx = []; // sound cues for the page: what happened, where, how loud
     this.sk = {}; this.skAct = {}; this.teamUntil = [0, 0]; this.skillPop = null; this.skT = 0; // unique skills
     this.moods = {};
     for (const p of league.players) if (p.md != null) this.moods[p.id] = moodLevel(p.md);
@@ -321,6 +322,7 @@ class Game {
     this.log("uskill", s.team, s.p.name + " · " + sk.n + "! " + SKILL_FX[sk.e].replace(/^./, c => c.toUpperCase()) + ".", { pid: s.p.id, skill: sk.n });
     this.skillPop = { name: s.p.name, n: sk.n, team: s.team, t: this.time, id: (this.skillPop ? this.skillPop.id : 0) + 1 };
   }
+  snd(k, x, y, v, team) { if (this.sfx.length < 48) this.sfx.push({ k, x, y, v: v == null ? 1 : v, team, t: this.time }); }
   moodOf(p) { return (this.moods && this.moods[p.id]) || 0; }
   skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)) * (1 + 0.02 * this.moodOf(p)) * this.skillMul(p, ti); }
   chemKey(ti) { const ps = this.onIce(ti).map(s => s.p); const g = this.goalies[ti]; if (g) ps.push(g.p); return { ps, key: ps.map(p => p.id).sort().join("|") }; }
@@ -468,6 +470,7 @@ class Game {
   }
   whistle(fx, fy, reason, type) {
     if (this.phase === "stoppage" || this.final) return;
+    this.snd("whistle", fx, fy, 1);
     const P = this.puck;
     P.carrier = null; P.pass = null; P.shot = null; P.vx *= 0.3; P.vy *= 0.3;
     if (reason) this.log(type || "stop", -1, reason);
@@ -616,7 +619,7 @@ class Game {
     return busy;
   }
   dropPuck() {
-    this.ozPasses = [0, 0];
+    this.ozPasses = [0, 0]; this.snd("drop", this.face.x, this.face.y, 0.7);
     const cs = [0, 1].map(ti => this.onIce(ti).filter(s => s.g === "F").sort((a, b) => dist(a.x, a.y, this.face.x, this.face.y) - dist(b.x, b.y, this.face.x, this.face.y))[0] || this.onIce(ti)[0]);
     if (!cs[0] || !cs[1]) return;
     const sc = s => this.r(s.p, "fo") * 0.85 * this.clutch(s.p) + s.p.def * 0.1 + s.p.dis * 0.05;
@@ -702,6 +705,7 @@ class Game {
     const spd = speed || PASS_SPEED;
     P.vx = dx / d * spd; P.vy = dy / d * spd;
     P.pass = { from, to, interceptor, tx: target.x, ty: target.y, left: d + 3, fromTeam: from.team };
+    this.snd("pass", from.x, from.y, clamp(spd / 70, 0.35, 1));
     if (to && to.team === from.team && this.dir(to.team) * target.x > RINK.blueX + 6 && this.dir(to.team) * target.x < RINK.goalX - 3 && this.oneTimerOK(from.x, from.y, target.x, target.y, to.team) && this.xgAt(target.x, target.y, to.team) > 0.05) P.pass.ot = true;
     this.setRelease(from.team);
     from.cool = 0.35;
@@ -823,7 +827,8 @@ class Game {
       if (rnd() > pOn) {
         outcome = "miss";
         const far = s.y >= 0 ? -1 : 1, r = rnd();
-        if (r < 0.45) { tx = gx + d * 9; ty = far * (4.5 + rnd() * 9); }           // wide to the far side: rims around the end boards
+        if (!empty && dd < 50 && rnd() < 0.16) { opt.post = true; tx = gx + d * 0.4; ty = (rnd() < 0.5 ? 1 : -1) * 3.05; } // rings off the iron
+        else if (r < 0.45) { tx = gx + d * 9; ty = far * (4.5 + rnd() * 9); }           // wide to the far side: rims around the end boards
         else if (r < 0.75) { tx = gx + d * 9; ty = -far * (4.5 + rnd() * 6); }     // wide on the near side
         else { tx = gx - d * (4 + rnd() * 10); ty = (rnd() - 0.5) * 30; opt.glass = true; } // high off the glass, drops back in front
       }
@@ -840,8 +845,9 @@ class Game {
     P.carrier = null; P.x = s.x + dx / L * 1.5; P.y = s.y + dy / L * 1.5;
     const spd = opt.forced ? 45 : empty && dd > 60 ? 70 : SHOT_SPEED;
     P.vx = dx / L * spd; P.vy = dy / L * spd;
-    P.shot = { mph, pGoal, glass: !!opt.glass, shooter: s, outcome, blocker: m.blocker, tipper, tx, ty, team: ti, dist: Math.round(dd), tag, left: L + 1, empty, deke: !!opt.forced, saucer: P.lastPassSaucer && P.lastPassSaucer.to === s && this.time - P.lastPassSaucer.t < 1.5 ? P.lastPassSaucer.from : null };
+    P.shot = { mph, pGoal, glass: !!opt.glass, post: !!opt.post, shooter: s, outcome, blocker: m.blocker, tipper, tx, ty, team: ti, dist: Math.round(dd), tag, left: L + 1, empty, deke: !!opt.forced, saucer: P.lastPassSaucer && P.lastPassSaucer.to === s && this.time - P.lastPassSaucer.t < 1.5 ? P.lastPassSaucer.from : null };
     P.pass = null;
+    this.snd("shot", s.x, s.y, mph ? clamp(mph / 95, 0.4, 1.1) : 0.8);
     this.setRelease(ti);
     this.lastShot = { t: this.time, team: ti }; this.ozPasses[ti] = 0; this.lastShotY = s.y;
     this.bump(ti, 0.02);
@@ -853,7 +859,7 @@ class Game {
     const T = this.teams[ti], O = this.teams[1 - ti];
     const goalie = this.goalies[1 - ti];
     if (sh.outcome === "block") {
-      this.stats[sh.blocker.p.id].blk++;
+      this.stats[sh.blocker.p.id].blk++; this.snd("block", P.x, P.y, 0.8);
       this.log("block", 1 - ti, sh.blocker.p.name + " blocks " + s.p.name + "'s shot.");
       P.shot = null; P.lastTouchTeam = 1 - ti; P.touched = true; P.release = null;
       const a = Math.atan2(P.vy, P.vx) + Math.PI + (rnd() - 0.5) * 2.8;
@@ -863,6 +869,12 @@ class Game {
       return;
     }
     if (sh.outcome === "miss") {
+      if (sh.post) {
+        this.log("miss", ti, s.p.name + " rings it off the post from " + sh.dist + " ft!");
+        this.snd("post", P.x, P.y, 1); P.shot = null;
+        P.vx = -P.vx * (0.3 + rnd() * 0.2); P.vy = (rnd() - 0.5) * 24;
+        return;
+      }
       this.log("miss", ti, s.p.name + (sh.empty ? " misses the empty net from " : " misses wide from ") + sh.dist + " ft.");
       P.shot = null;
       if (sh.glass) { const a = Math.atan2(-P.vy, -P.vx) + (rnd() - 0.5) * 2.2, v = 11 + rnd() * 9; P.vx = Math.cos(a) * v; P.vy = Math.sin(a) * v; } // drops off the glass and skips back into play
@@ -874,6 +886,7 @@ class Game {
     T.sog++; st.sog++;
     if (!sh.empty && goalie) this.stats[goalie.p.id].sa++;
     if (sh.outcome === "goal") {
+      this.snd("goal", P.x, P.y, 1, ti);
       const pp = this.strength(ti) > this.strength(1 - ti), shg = this.strength(ti) < this.strength(1 - ti);
       T.score++; st.g++; if (pp) { T.ppG++; st.ppg++; } if (shg) { T.shG++; st.shg++; }
       if (!sh.empty && goalie) this.stats[goalie.p.id].ga++;
@@ -913,7 +926,7 @@ class Game {
       return;
     }
     // save
-    this.stats[goalie.p.id].sv++;
+    this.stats[goalie.p.id].sv++; this.snd("save", goalie.x, goalie.y, sh.pGoal > 0.14 ? 1 : 0.7, 1 - ti);
     this.bump(ti, 0.025); if (sh.pGoal > 0.14 || sh.deke) this.bump(1 - ti, 0.12); // a big stop swings it back
     this.lastSave = { t: this.time, team: 1 - ti };
     P.shot = null; P.touched = true; P.release = null; P.lastTouchTeam = 1 - ti;
@@ -2092,7 +2105,8 @@ class Game {
         if (front) { P.x = Math.sign(P.x) * (RINK.goalX - 0.4); P.vx = -P.vx * 0.3; }
         else { P.y = (P.y >= 0 ? 1 : -1) * 3.5; P.vy = -P.vy * 0.5; }
       }
-      const hit = containPuck(P, P.pass && P.pass.rim);
+      const sp0 = Math.hypot(P.vx, P.vy), hit = containPuck(P, P.pass && P.pass.rim);
+      if (hit && sp0 > 16) this.snd("boards", P.x, P.y, clamp(sp0 / 70, 0.25, 1));
       if (hit && P.pass) { if (P.pass.bank) this.bankRedirect(); else if (!P.pass.rim) P.pass = null; }
       if (P.shot && Math.abs(P.x) > 99) this.resolveShot();
       if (this.phase !== "play") return;
@@ -2419,6 +2433,7 @@ class Game {
   }
   afterHit(hitter, victim, boards) {
     const ti = victim.team, P = this.puck;
+    this.snd(boards ? "hitb" : "hit", victim.x, victim.y, 1);
     this.out = this.out || {};
     // injuries: rare, worse into the boards, worse from the heavy hitters
     const pInj = 0.003 * (boards ? 1.7 : 1) * (hitter.p.style === "Enforcer" || hitter.p.style === "Power Forward" ? 1.3 : 1) * (victim.p.style === "Power Forward" || victim.p.style === "Enforcer" ? 0.6 : 1);

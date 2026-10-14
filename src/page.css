@@ -1037,3 +1037,53 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
 .pc-skill { display: grid; gap: 2px; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid #E5C25A; background: color-mix(in srgb, #F2C14E 12%, var(--surface)); }
 .pc-sk-n { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #A97A0C; }
 .pc-sk-g { font-style: italic; }
+
+/* ---------- Winning Live ---------- */
+.wl { position: fixed; inset: 0; z-index: 60; display: grid; place-items: stretch; background: #07081A; opacity: 0; transition: opacity .7s ease; }
+.wl.on { opacity: 1; } .wl.out { opacity: 0; }
+.wl-stage { position: relative; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto auto; color: #fff;
+  background: radial-gradient(120% 70% at 50% 100%, color-mix(in srgb, var(--c1) 55%, #07081A) 0%, #0B0D24 55%, #05060F 100%); }
+.wl-lights span { position: absolute; top: -10%; width: 22vw; height: 120%; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 75%); filter: blur(6px); mix-blend-mode: screen; animation: wlsweep 4.2s ease-in-out infinite alternate; }
+.wl-lights span:nth-child(1) { left: 6%; --a: -22deg; --b: 12deg; } .wl-lights span:nth-child(2) { left: 30%; --a: 14deg; --b: -16deg; animation-duration: 3.4s; background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 70%, transparent), transparent 75%); }
+.wl-lights span:nth-child(3) { left: 52%; --a: -14deg; --b: 18deg; animation-duration: 3.8s; background: linear-gradient(180deg, color-mix(in srgb, var(--c2) 60%, transparent), transparent 75%); } .wl-lights span:nth-child(4) { left: 74%; --a: 20deg; --b: -10deg; animation-duration: 4.6s; }
+@keyframes wlsweep { from { transform: rotate(var(--a)); } to { transform: rotate(var(--b)); } }
+.wl-head { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 4vh 16px 0; text-align: left; }
+.wl-head h2 { margin: 2px 0; font-family: var(--f-display); font-size: clamp(1.6rem, 4.2vw, 3rem); text-transform: uppercase; letter-spacing: .03em; line-height: 1; text-shadow: 0 0 24px color-mix(in srgb, var(--c1) 80%, transparent); }
+.wl-tag { font-family: var(--f-display); letter-spacing: .3em; font-size: .85rem; color: #F2C14E; text-transform: uppercase; }
+.wl-sub { color: #C9D2EA; font-size: .95rem; }
+.wl-logo { filter: drop-shadow(0 0 12px rgba(255,255,255,.35)); }
+.wl-floor { position: relative; z-index: 2; display: grid; align-items: end; padding: 0 12px; }
+.wl-floor::after { content: ""; position: absolute; left: 6%; right: 6%; bottom: 3.6vh; height: 8vh; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,.22), transparent); }
+.wl-perfs { display: flex; justify-content: center; align-items: flex-end; gap: clamp(8px, 4vw, 60px); padding-bottom: 4vh; }
+.wl-perf { display: grid; justify-items: center; gap: 4px; position: relative; z-index: 1; animation: wlin .9s cubic-bezier(.2,.8,.2,1.2) both; animation-delay: var(--d); }
+.wl-perf.center { z-index: 2; }
+.wl-bounce { animation: wlbeat .4545s ease-in-out infinite alternate; animation-delay: var(--d); }
+.wl-perf.center .wl-bounce { animation-name: wlbeatc; }
+@keyframes wlin { from { opacity: 0; transform: translateY(40px) scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes wlbeat { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-10px) rotate(2deg); } }
+@keyframes wlbeatc { from { transform: translateY(0) scale(1); } to { transform: translateY(-14px) scale(1.03); } }
+.wl-img { filter: drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
+.wl-ini { display: grid; place-items: center; border-radius: 50%; background: var(--c1); color: var(--c2); font-family: var(--f-display); font-size: 3rem; border: 4px solid #F2C14E; }
+.wl-name { display: grid; justify-items: center; line-height: 1.15; padding: 4px 12px; border-radius: 99px; background: rgba(5,6,15,.65); border: 1px solid rgba(242,193,78,.5); }
+.wl-name b { font-family: var(--f-display); text-transform: uppercase; letter-spacing: .03em; font-size: .95rem; }
+.wl-perf.center .wl-name { border-color: #F2C14E; background: color-mix(in srgb, var(--c1) 55%, #05060F); }
+.wl-perf.center .wl-name b { font-size: 1.15rem; }
+.wl-name small { color: #C9D2EA; font-size: .78rem; }
+.wl-crowd { position: relative; z-index: 3; height: 12vh; min-height: 70px; background: linear-gradient(0deg, #020309 30%, rgba(2,3,9,0)); }
+.wl-crowd i { position: absolute; left: var(--x); bottom: 18%; width: 5px; height: calc(var(--h) * 2.4); border-radius: 3px; background: var(--c); box-shadow: 0 0 10px var(--c), 0 0 22px var(--c); transform-origin: 50% 100%; animation: wlwave .909s ease-in-out infinite alternate; animation-delay: var(--dl); opacity: .9; }
+@keyframes wlwave { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+.wl-confetti i { position: absolute; top: -4%; left: var(--x); width: 8px; height: 13px; background: var(--c); border-radius: 2px; animation: wlfall 4.2s linear infinite; animation-delay: var(--dl); opacity: .9; z-index: 4; }
+@keyframes wlfall { from { transform: translateY(-5vh) rotate(var(--r)); } to { transform: translateY(110vh) rotate(calc(var(--r) + 720deg)); } }
+.wl-btns { position: absolute; right: 16px; top: 16px; z-index: 6; display: flex; gap: 8px; }
+.wl-btns .btn:not(.primary) { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.3); }
+.wl-btn { border-color: #E5C25A !important; color: #A97A0C; }
+@media (max-width: 640px) { .wl-head { flex-direction: column; text-align: center; padding-top: 7vh; } .wl-btns { top: 10px; right: 10px; } }
+@media (prefers-reduced-motion: reduce) { .wl-lights span, .wl-bounce, .wl-crowd i, .wl-confetti i, .wl-perf { animation: none !important; } }
+.wl-lights, .wl-confetti { position: absolute; inset: 0; pointer-events: none; }
+.wl-stage { grid-template-rows: auto 1fr auto; }
+.wl-head > div { min-width: 0; }
+.wl-head h2 { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .wl-perfs { transform: scale(.68); transform-origin: 50% 100%; gap: 0; } }
+@media (max-width: 460px) { .wl-perfs { transform: scale(.5); } .wl-head h2 { font-size: 1.5rem; } .wl-name small { font-size: .9rem; } }
+.wl-stage { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 460px) { .wl-perfs { transform: scale(.6); } .wl-head { padding-top: 64px; } }

@@ -12,7 +12,7 @@ echo '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barl
 echo '<style>[hidden]{display:none!important}'; cat src/page.css; echo '</style>'
 echo '</head><body>'
 cat src/body.html
-echo '<script>'; cat src/data.js src/logo.js src/chibi.js src/engine.js src/fcore.js src/app.js src/franchise.js src/bap.js src/boot.js; echo '</script>'
+echo '<script>'; cat src/data.js src/logo.js src/chibi.js src/engine.js src/fcore.js src/app.js src/franchise.js src/bap.js src/sound.js src/live.js src/boot.js; echo '</script>'
 echo '</body></html>'
 } > index.html
 echo "Built index.html ($(wc -c < index.html) bytes)"
