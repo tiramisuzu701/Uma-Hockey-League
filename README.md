@@ -3,7 +3,7 @@
 A hockey simulator starring the Uma Musume cast. Ten clubs, a full game engine you can watch shift by shift, and three ways to play:
 
 - **Quick Play**: pick two clubs and drop the puck. Watch live, skip ahead, see replays, box scores, shot maps and win probability.
-- **Franchise**: draft a club from scratch, manage contracts under the salary cap, field trade offers, train players, coach from the bench (line changes at intermission, goalie pulls and changes), and chase the Tracen Cup.
+- **Franchise**: draft a club from scratch, manage contracts under the salary cap, field trade offers, train players, build team chemistry with practices, coach from the bench (line changes at intermission, goalie pulls and changes), and chase the Tracen Cup.
 - **Be A Player**: create your own player, play the draft combine, get drafted, and make the big decisions in key moments as your career unfolds.
 
 It's a single static page: no server, no build tools, no dependencies.

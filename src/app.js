@@ -272,7 +272,11 @@ function playerCardHtml(p) {
     stats = g === "G" ? `<p class="note">This game: ${s.sv} saves on ${s.sa} shots.</p>` : `<p class="note">This game: ${s.g} G, ${s.a} A, ${s.sog} SOG, ${s.hit} hits, ${fmtClock(Math.round(s.toi))} on ice.</p>`;
   }
   const mates = pcardPlayers().filter(x => x.team === p.team && x.id !== p.id);
-  const fr = (p.friends || []).map(n => { const on = mates.some(m => m.name === n); return `<span class="pc-tag${on ? " on" : ""}" title="${on ? "On the same team" : ""}">${esc(n)}</span>`; }).join("");
+  // friendship runs both ways: her own list plus everyone who lists her; teammates first
+  const all = pcardPlayers(), fset = new Map();
+  for (const n of p.friends || []) { const q = all.find(x => x.name.toLowerCase() === n.toLowerCase()); if (q) fset.set(q.name, q); }
+  for (const q of all) if (q.id !== p.id && (q.friends || []).some(n => n.toLowerCase() === p.name.toLowerCase())) fset.set(q.name, q);
+  const fr = [...fset.values()].sort((a, b) => (b.team === p.team) - (a.team === p.team) || a.name.localeCompare(b.name)).map(q => { const on = q.team === p.team && p.team !== "FA" && p.team !== "POOL"; return `<span class="pc-tag${on ? " on" : ""}" title="${on ? "On the same team" : ""}" data-pname="${esc(q.name)}">${esc(q.name)}</span>`; }).join("");
   const extra = [];
   if (F && p.con && t) extra.push(money(p.con.sal) + " × " + p.con.yrs + (p.con.yrs === 1 ? " yr" : " yrs"));
   if (F && typeof frPotential === "function" && F.mode !== "bap") extra.push("Potential: " + frPotential(p));
@@ -284,7 +288,7 @@ function playerCardHtml(p) {
     <p class="note pc-style">${esc(STYLE_NOTES[p.style] || "")}</p>
     ${F && typeof frPcardDraft === "function" ? frPcardDraft(p) : ""}
     <div class="pc-rs">${bars}</div>${stats}
-    ${fr || (p.groups || []).length ? `<div class="pc-fr">${fr ? `<b>Friends</b>${fr}` : ""}${(p.groups || []).length ? `<b>Circles</b>${p.groups.map(x => `<span class="pc-tag">${esc(x)}</span>`).join("")}` : ""}</div>` : ""}`;
+    ${fr ? `<div class="pc-fr"><b>Friends</b>${fr}</div>` : ""}`;
 }
 function openPlayerCard(name) {
   const p = pcardPlayers().find(x => x.name === name) || league.players.find(x => x.name === name); if (!p) return;
@@ -297,6 +301,7 @@ document.addEventListener("click", e => {
 }, true);
 $("#pcardDlg").addEventListener("click", e => {
   if (e.target.closest("[data-close]") || e.target === $("#pcardDlg")) { $("#pcardDlg").close(); return; }
+  const ft = e.target.closest(".pc-tag[data-pname]"); if (ft) { openPlayerCard(ft.dataset.pname); return; }
   const b = e.target.closest("[data-fr]"); if (b && typeof frAction === "function") { $("#pcardDlg").close(); frAction(b); }
 });
 // keyboard: Enter or Space on a clickable name opens the card
@@ -1183,12 +1188,9 @@ function renderLines(ctx) {
   const grid = ctx.grid, openTeams = ctx.open;
   if (!grid) return;
   if (!openInit && ctx.L === league && league.teams[0]) { openTeams.add(league.teams[0].id); openInit = true; }
-  const linksOf = ch => {
-    const circles = {};
-    for (const l of ch.links) if (l.kind === "group") circles[l.group || "Circle"] = (circles[l.group || "Circle"] || 0) + 1;
-    return ch.links.filter(l => l.kind === "friend").map(l => `<span class="link friend">${esc(l.a.tag)} &amp; ${esc(l.b.tag)}</span>`).join("") +
-      Object.entries(circles).map(([g, n]) => `<span class="link">${esc(g)} circle · ${n} pair${n > 1 ? "s" : ""}</span>`).join("");
-  };
+  const linksOf = ch => ch.links.filter(l => l.kind === "friend").map(l => `<span class="link friend">${esc(l.a.tag)} &amp; ${esc(l.b.tag)}</span>`).join("") +
+    (ch.fam ? `<span class="link fam" title="Built up by playing and practicing together">Familiarity +${ch.fam}</span>` : "");
+  const fam = ctx.L.fam || null;
   const meter = ch => `<span class="meter"><span class="bar"><i style="width:${ch.value}%"></i></span><b>${ch.value}</b> ${chemLabel(ch.value)}</span>`;
   const optLabel = p => `${p.name} · ${p.pos} · ${overall(p)}`;
   // one dropdown slot; ds = data attributes describing where it writes
@@ -1212,18 +1214,18 @@ function renderLines(ctx) {
     let lines = "";
     for (let i = 0; i < N_FLINES; i++) {
       const F = L.fLines[i] || [], D = i < N_DPAIRS ? L.dPairs[i] || [] : [];
-      const ch = unitChemistry([...F, ...D, L.goalie].filter(Boolean));
+      const ch = unitChemistry([...F, ...(i < N_DPAIRS ? D : unitPair(L, i)), L.goalie].filter(Boolean), fam);
       const byPos = pos => F.find(p => p.pos === pos) || null;
       const Fo = [byPos("LW"), byPos("C"), byPos("RW")]; const left = F.filter(p => !Fo.includes(p)); for (let k = 0; k < 3; k++) if (!Fo[k]) Fo[k] = left.shift() || null;
       lines += `<div class="unit"><div class="unit-h"><span class="label">${i < N_DPAIRS ? `Line ${i + 1} + pair ${i + 1}` : "Line " + (i + 1)}</span>${meter(ch)}</div>
         <div class="slots">${["LW", "C", "RW"].map((pos, k) => sel(t, R, Fo[k], pos, { team: t.id, kind: "line", u: i, k, pos }, { prefer: "F" })).join("")}</div>
         ${i < N_DPAIRS ? `<div class="slots d">${["LD", "RD"].map((lab, k) => sel(t, R, D[k], lab, { team: t.id, kind: "pair", u: i, k, pos: "D" }, { prefer: "D" })).join("")}</div>` : ""}
-        <div class="links">${linksOf(ch) || '<span class="note">No friendships on this unit yet.</span>'}</div></div>`;
+        <div class="links">${i >= N_DPAIRS && L.dPairs.length ? `<span class="note">Chemistry counts the pair this line plays with most (pair ${L.dPairs.length}).</span>` : ""}${linksOf(ch) || '<span class="note">No friendships on this unit yet.</span>'}</div></div>`;
     }
     const goalies = `<div class="unit gunit"><span class="label">Goalies</span><div class="slots d">${["Starter", "Backup"].map((lab, k) => sel(t, R, L.goalies[k], lab, { team: t.id, kind: "goal", u: 0, k, pos: "G" }, { goalie: true })).join("")}</div></div>`;
     const stUnit = (kind, i, u) => {
       if (!u) return "";
-      const ch = unitChemistry([...u.slots, L.goalie].filter(Boolean));
+      const ch = unitChemistry([...u.slots, L.goalie].filter(Boolean), fam);
       const lab = kind.toUpperCase() + (i + 1), names = kind === "pp" ? PP_SLOTS : PK_SLOTS;
       const one = k => sel(t, R, u.slots[k], names[k], { team: t.id, kind, u: i, k }, { auto: true, isAuto: !u.custom[k], prefer: kind === "pp" ? (k === 4 ? "D" : k === 3 ? null : "F") : (k >= 2 ? "D" : "F") });
       const rows = kind === "pp" ? `<div class="slots">${[0, 1, 2].map(one).join("")}</div><div class="slots d">${[3, 4].map(one).join("")}</div>`
@@ -1234,7 +1236,7 @@ function renderLines(ctx) {
     const special = `<div class="st-head"><span class="note">Dashed slots are on Auto.</span>${anyCustom ? `<button class="btn" data-autost="${esc(t.id)}">Set all to auto</button>` : ""}</div>
       <div class="st-grid"><div>${stUnit("pp", 0, L.pp[0])}${stUnit("pp", 1, L.pp[1])}</div><div>${stUnit("pk", 0, L.pk[0])}${stUnit("pk", 1, L.pk[1])}</div></div>`;
     const avg = R.length ? Math.round(R.reduce((s, p) => s + overall(p), 0) / R.length) : 0;
-    const ch1 = L.fLines[0] ? unitChemistry([...L.fLines[0], ...(L.dPairs[0] || []), L.goalie].filter(Boolean)).value : 0;
+    const ch1 = L.fLines[0] ? unitChemistry([...L.fLines[0], ...(L.dPairs[0] || []), L.goalie].filter(Boolean), fam).value : 0;
     return `<details class="panel tcard" data-team="${esc(t.id)}"${openTeams.has(t.id) ? " open" : ""}>
       <summary class="tcard-h"><span class="tlogo">${teamLogoSvg(t, 30)}</span><h2>${esc(t.name)}</h2>
         <span class="meta">${R.length} players · avg OVR ${avg} · top line chem ${ch1}</span><span class="caret" aria-hidden="true"></span></summary>
@@ -1345,11 +1347,11 @@ function renderRoster() {
   if (![...tf.options].some(o => o.value === filterTeam)) filterTeam = "ALL";
   tf.value = filterTeam;
   renderTeamTable();
-  const rows = league.players.filter(p => (filterTeam === "ALL" || p.team === filterTeam) && (!searchQ || (p.name + " " + p.tag + " " + p.style + " " + p.groups.join(" ")).toLowerCase().includes(searchQ)));
+  const rows = league.players.filter(p => (filterTeam === "ALL" || p.team === filterTeam) && (!searchQ || (p.name + " " + p.tag + " " + p.style + " " + p.friends.join(" ")).toLowerCase().includes(searchQ)));
   const order = id => { const i = league.teams.findIndex(t => t.id === id); return i < 0 ? 99 : i; };
   const grp = p => p.pos === "G" ? 2 : p.pos === "D" ? 1 : 0;
   rows.sort((a, b) => order(a.team) - order(b.team) || grp(a) - grp(b) || (a.line || 9) - (b.line || 9) || POSITIONS.indexOf(a.pos) - POSITIONS.indexOf(b.pos));
-  const head = `<thead><tr><th>No</th><th>Name</th><th>Short</th><th>Team</th><th>Pos</th><th>Line</th><th>Playstyle</th>${STAT_FIELDS.map(f => `<th title="${STAT_TIP[f]}">${STAT_ABBR[f]}</th>`).join("")}<th>OVR</th><th>Friends</th><th>Circles</th><th><span hidden>Remove</span></th></tr></thead>`;
+  const head = `<thead><tr><th>No</th><th>Name</th><th>Short</th><th>Team</th><th>Pos</th><th>Line</th><th>Playstyle</th>${STAT_FIELDS.map(f => `<th title="${STAT_TIP[f]}">${STAT_ABBR[f]}</th>`).join("")}<th>OVR</th><th>Friends</th><th><span hidden>Remove</span></th></tr></thead>`;
   const body = rows.map(p => {
     const id = p.id;
     const stat = f => `<span class="stat"><input class="cell num" type="number" min="1" max="99" id="r-${id}-${f}" data-id="${id}" data-f="${f}" value="${p[f]}" aria-label="${STAT_LABEL[f]} for ${esc(p.name)}"><span class="gr" data-g="${grade(p[f])}">${grade(p[f])}</span></span>`;
@@ -1367,7 +1369,6 @@ function renderRoster() {
       ${STAT_FIELDS.map(f => `<td>${stat(f)}</td>`).join("")}
       <td><span class="ovr" id="ovr-${id}">${overall(p)} <span class="gr" data-g="${grade(overall(p))}">${grade(overall(p))}</span></span></td>
       <td><input class="cell list" id="r-${id}-friends" data-id="${id}" data-f="friends" value="${esc(p.friends.join(", "))}" aria-label="Friends" placeholder="Names, comma separated"></td>
-      <td><input class="cell list" style="min-width:140px" id="r-${id}-groups" data-id="${id}" data-f="groups" value="${esc(p.groups.join(", "))}" aria-label="Circles" placeholder="e.g. Spica"></td>
       <td><button class="del" data-del="${id}" aria-label="Remove ${esc(p.name)}" title="Remove">×</button></td></tr>`;
   }).join("");
   $("#sheet").innerHTML = head + `<tbody>${body || `<tr><td colspan="23" class="note" style="padding:14px">No players match. Clear the search or add a player.</td></tr>`}</tbody>`;
@@ -1470,11 +1471,11 @@ $("#resetWrap").addEventListener("click", e => {
 
 // ---------- import / export ----------
 let ioFmt = "csv";
-const CSV_COLS = ["name", "short", "no", "team", "pos", "line", "style", "sht", "pas", "hnd", "skt", "spd", "def", "chk", "fo", "sta", "dis", "clu", "goal", "friends", "groups"];
+const CSV_COLS = ["name", "short", "no", "team", "pos", "line", "style", "sht", "pas", "hnd", "skt", "spd", "def", "chk", "fo", "sta", "dis", "clu", "goal", "friends"];
 const CSV_IN = CSV_COLS.concat(["off"]); // older exports have one Offense column
 function toCSV() {
   const q = v => { v = String(v ?? ""); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-  return [CSV_COLS.join(",")].concat(league.players.map(p => [p.name, p.tag, p.no, p.team, p.pos, p.line, p.style, ...STAT_FIELDS.map(f => p[f]), p.friends.join("; "), p.groups.join("; ")].map(q).join(","))).join("\n");
+  return [CSV_COLS.join(",")].concat(league.players.map(p => [p.name, p.tag, p.no, p.team, p.pos, p.line, p.style, ...STAT_FIELDS.map(f => p[f]), p.friends.join("; ")].map(q).join(","))).join("\n");
 }
 function parseCSV(text) {
   const rows = []; let row = [], f = "", inq = false;

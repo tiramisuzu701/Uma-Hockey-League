@@ -105,7 +105,7 @@ function zoneOf(x) { return x > RINK.blueX ? 1 : x < -RINK.blueX ? -1 : 0; }
 
 class Game {
   constructor(league, homeId, awayId, opts) {
-    this.playoff = !!(opts && opts.playoff); this.otN = 1; this.league = league;
+    this.playoff = !!(opts && opts.playoff); this.otN = 1; this.league = league; this.fam = league.fam || null; // franchise familiarity between teammates
     // coaching from the bench: hold at intermissions, manual goalie pulls and changes
     this.intHold = false; this.holdInt = false;
     // Be A Player: one skater the viewer makes the big decisions for
@@ -229,7 +229,7 @@ class Game {
   spdMul(p) { return 0.68 + 0.32 * Math.pow(this.energy[p.id] / 100, 0.8); }
   skill(p) { const ti = this.pTeam ? this.pTeam[p.id] : undefined; return (0.8 + 0.2 * this.energy[p.id] / 100) * (ti == null ? 1 : 1 + 0.08 * this.momo(ti)); }
   chemKey(ti) { const ps = this.onIce(ti).map(s => s.p); const g = this.goalies[ti]; if (g) ps.push(g.p); return { ps, key: ps.map(p => p.id).sort().join("|") }; }
-  chemValue(ti) { const { ps, key } = this.chemKey(ti); if (!(key in this.chemCache)) this.chemCache[key] = unitChemistry(ps).value; return this.chemCache[key]; }
+  chemValue(ti) { const { ps, key } = this.chemKey(ti); if (!(key in this.chemCache)) this.chemCache[key] = unitChemistry(ps, this.fam).value; return this.chemCache[key]; }
   chemMult(ti) { return 1 + (this.chemValue(ti) - 60) / 200; }
   xgAt(x, y, ti) {
     const d = this.dir(ti), gx = d * RINK.goalX;

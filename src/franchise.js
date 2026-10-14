@@ -94,6 +94,7 @@ async function frOpen(id, quiet) {
   let fromLocal = false;
   if (local && (!F || (local.updated || 0) > (F.updated || 0))) { F = local; fromLocal = true; }
   if (!F) { if (!quiet) frMsg = "Couldn't open that franchise."; return; }
+  frMigrateChem(F);
   FR = F; frSetup = null; frTab = "home"; frStore.state = "idle"; frUi.rosterTeam = F.user; frUi.trade = { team: null, mine: new Set(), theirs: new Set(), msg: "", ok: false };
   try { localStorage.setItem(F.mode === "bap" ? "tracen-bap-last" : FR_LAST, id); } catch (e) {}
   if (fromLocal && frStore.db && !frStore.readOnly) frSave(); // push the newer local copy up to the shared save
@@ -462,7 +463,7 @@ function frLinesHtml() {
 }
 function frLinesCtx() {
   if (!FR) return qpLinesCtx();
-  const L = { teams: FR.teams, players: FR.players.filter(p => !p.inj) };
+  const L = { teams: FR.teams, players: FR.players.filter(p => !p.inj), fam: FR.fam || null };
   frUi.open.add(FR.user);
   return { grid: $("#frLinesGrid"), L, teams: FR.teams.filter(t => t.id === FR.user), open: frUi.open, save: kind => { if (kind === "lines" && FR.settings.autoLines) { FR.settings.autoLines = false; const c = document.querySelector('[data-fr-chk="autoLines"]'); if (c) c.checked = false; } frSave(); } };
 }
@@ -578,9 +579,30 @@ function frTrainingHtml() {
       <td class="num"><b>${v}</b></td><td><div class="fr-prog" title="${Math.round(prog * 100)}% to the next point"><i style="width:${(prog * 100).toFixed(0)}%"></i></div></td><td class="num note">${p.inj ? "injured" : "~" + Math.max(1, Math.ceil((1 - prog) / Math.max(0.05, gain))) + " wk"}</td></tr>`;
   }).join("");
   const seg = [["light", "Light"], ["normal", "Normal"], ["hard", "Hard"]].map(([k, l]) => `<button data-fr="tint" data-v="${k}" aria-pressed="${inten === k}">${l}</button>`).join("");
-  return `<div class="panel"><div class="panel-h"><b>Training</b><div class="seg">${seg}</div><span class="note">${inten === "hard" ? "Faster progress, but players can get hurt in practice." : inten === "light" ? "Slower progress, no practice injuries." : "Steady progress."} Ratings tick up once a week during the season.</span></div>
+  return `${frChemPanelHtml()}<div class="panel"><div class="panel-h"><b>Training</b><div class="seg">${seg}</div><span class="note">${inten === "hard" ? "Faster progress, but players can get hurt in practice." : inten === "light" ? "Slower progress, no practice injuries." : "Steady progress."} Ratings tick up once a week during the season.</span></div>
     <p class="note" style="padding:0 14px">Each player works on one skill. Auto picks the weakest skill that matters for her style. Higher potential and lower ratings improve faster. The other clubs train too.</p>
     <div class="tscroll"><table class="fr-tbl"><thead><tr><th>Player</th><th>OVR</th><th>Potential</th><th>Focus</th><th class="num">Now</th><th>Next point</th><th class="num">ETA</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+// ---------- team chemistry and practice ----------
+function frChemPanelHtml() {
+  const F = FR, t = frTeam(F.user), cur = t.practice || "auto";
+  const ch = frTeamChem(F, F.user), next = frPracticeKind(F, t);
+  const ranks = F.teams.map(x => ({ id: x.id, v: frTeamChem(F, x.id).avg })).sort((a, b) => b.v - a.v), rk = ranks.findIndex(r => r.id === F.user) + 1;
+  const seg = Object.entries(PRACTICE_NAMES).map(([k, l]) => `<button data-fr="prac" data-v="${k}" aria-pressed="${cur === k}">${l}</button>`).join("");
+  const units = ch.units.map(u => {
+    const fr = u.links.length, lab = u.i < ch.L.dPairs.length ? "Line " + (u.i + 1) + " + pair " + (u.i + 1) : "Line " + (u.i + 1) + " + pair " + ch.L.dPairs.length;
+    return `<div class="fr-chem-u"><div class="fr-chem-h"><b>${lab}</b><span class="meter"><span class="bar"><i style="width:${u.value}%"></i></span><b>${u.value}</b> ${chemLabel(u.value)}</span></div>
+      <div class="fr-chem-ps">${u.ps.map(p => chibiHead(p.name, 26, t)).join("")}</div>
+      <small class="note">${fr} friend pair${fr === 1 ? "" : "s"} (+${fr * CHEM_FRIEND}) · familiarity +${u.fam}</small></div>`;
+  }).join("");
+  const newsF = F.news.filter(n => n.team === F.user && /^New friends/.test(n.txt)).slice(0, 3).map(n => `<li>${esc(n.txt)}</li>`).join("");
+  const daysTo = F.phase === "season" ? 7 - (F.day % 7) : null;
+  return `<div class="panel"><div class="panel-h"><b>Team chemistry</b><span class="note">Average ${ch.avg.toFixed(0)} · ${rk}${["st", "nd", "rd"][rk - 1] || "th"} in the league</span></div>
+    <p class="note" style="padding:0 14px">A unit starts at ${CHEM_BASE}. Every pair of friends on it adds ${CHEM_FRIEND}, and every pair builds familiarity (up to +${CHEM_FAM_MAX} each) by playing games together and at practice. Moving players between lines keeps what they built with old linemates, but new pairings start fresh.</p>
+    <div class="fr-chem">${units}</div>
+    <div class="fr-simbar"><b>Team practice</b><div class="seg">${seg}</div><span class="note">${esc(PRACTICE_HELP[cur])}${cur === "auto" ? " Next week: " + PRACTICE_NAMES[next].toLowerCase() + "." : ""}${daysTo ? " Next practice in " + daysTo + " day" + (daysTo > 1 ? "s" : "") + "." : ""}</span></div>
+    ${newsF ? `<ul class="fr-recent">${newsF}</ul>` : ""}</div>`;
 }
 
 // ---------- watching a franchise game ----------
@@ -694,6 +716,7 @@ async function frAction(b) {
     case "stkind": frUi.stKind = v; frUi.stSort = v === "g" ? "w" : v === "t" ? "ppPct" : "pts"; break;
     case "mfilter": frUi.mf = v; break;
     case "tint": frTeam(FR.user).train = v; frSave(); break;
+    case "prac": frTeam(FR.user).practice = v; frSave(); break;
     case "stpo": frUi.stPo = v === "1"; break;
     case "release": { const p = frP(id); if (!(await uiConfirm("Release " + p.name + "? Half of her salary (" + money(p.con.sal * 0.5) + ") stays on your cap for " + yrs(p.con.yrs) + ".", "Release", true))) return; frRelease(FR, id); if (FR.settings.autoLines) frAutoLines(FR, FR.user); frSave(); } break;
     case "relines": frAutoLines(FR, FR.user); frSave(); break;

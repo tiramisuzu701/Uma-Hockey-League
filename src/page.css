@@ -987,3 +987,12 @@ dialog.pcard .dlg-in { padding: 16px 18px; position: relative; display: grid; ga
 .fr-coachset > .note { flex-basis: 100%; margin-top: -6px; }
 .fr-coachset .tac { min-width: 220px; }
 @media (max-width: 640px) { .cb-more { margin-left: 0; } .coach-h b { font-size: 1.02rem; } }
+
+/* ---------- team chemistry ---------- */
+.fr-chem { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 8px; padding: 4px 14px 10px; }
+.fr-chem-u { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.fr-chem-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.fr-chem-ps { display: flex; flex-wrap: wrap; gap: 3px; }
+.link.fam { background: color-mix(in srgb, var(--ok) 16%, transparent); }
+.pc-tag[data-pname] { cursor: pointer; }
+.pc-tag[data-pname]:hover { border-color: var(--accent); }

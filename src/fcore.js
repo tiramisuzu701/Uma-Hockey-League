@@ -78,13 +78,42 @@ function frAutoLines(F, tid) {
       const p = left.splice(j, 1)[0]; if (p) p.line = L;
     }
   }
+  frChemShuffle(F, fs, ds, gs[0], overall);
   const t = F.teams.find(x => x.id === tid); if (t) { t.pp = null; t.pk = null; }
+}
+// fine-tune auto lines for chemistry: swap players between lines (or pairs) when friendship and
+// familiarity are worth more than the small drop in who gets the top minutes
+function frChemShuffle(F, fs, ds, g, ovr) {
+  const FW = [0.4, 0.32, 0.28], DW = [0.53, 0.47], LAMBDA = 0.035;
+  const lines = [1, 2, 3].map(L => fs.filter(p => p.line === L)), pairs = [1, 2].map(L => ds.filter(p => p.line === L));
+  if (lines.some(l => l.length !== 3) || pairs.some(l => l.length !== 2)) return;
+  const score = () => {
+    let s = 0;
+    lines.forEach((l, i) => { s += FW[i] * l.reduce((a, p) => a + ovr(p), 0); s += LAMBDA * unitChemistry([...l, ...pairs[Math.min(i, 1)], g].filter(Boolean), F.fam).value; });
+    pairs.forEach((l, i) => { s += DW[i] * l.reduce((a, p) => a + ovr(p), 0); });
+    return s;
+  };
+  let best = score();
+  for (let it = 0; it < 4; it++) {
+    let improved = false;
+    const groups = [lines, pairs];
+    for (const G of groups) for (let i = 0; i < G.length; i++) for (let j = i + 1; j < G.length; j++) for (let a = 0; a < G[i].length; a++) for (let b = 0; b < G[j].length; b++) {
+      const A = G[i][a], B = G[j][b];
+      if (G === lines && A.pos !== B.pos) continue; // keep a center on every line
+      G[i][a] = B; G[j][b] = A;
+      const sc = score();
+      if (sc > best + 0.01) { best = sc; improved = true; } else { G[i][a] = A; G[j][b] = B; }
+    }
+    if (!improved) break;
+  }
+  lines.forEach((l, i) => l.forEach(p => p.line = i + 1));
+  pairs.forEach((l, i) => { l.forEach(p => p.line = i + 1); const [x, y] = l; const lx = shootsOf(x) === "L", ly = shootsOf(y) === "L"; x.side = lx || !ly ? "L" : "R"; y.side = x.side === "L" ? "R" : "L"; });
 }
 // the league object the engine and lineup builder read: injured players stay home
 function frGameLeague(F, ids, copy) {
   const set = new Set(ids);
   const players = F.players.filter(p => set.has(p.team) && !p.inj);
-  const L = { teams: F.teams.filter(t => set.has(t.id)), players };
+  const L = { teams: F.teams.filter(t => set.has(t.id)), players, fam: F.fam || null };
   return copy ? JSON.parse(JSON.stringify(L)) : L;
 }
 // which goalie starts: the backup gets every Nth game
@@ -129,7 +158,7 @@ function frTeamsFrom(league) {
 function frNew(league, opts) {
   const F = { v: FR_VERSION, id: frId(), name: opts.name || "My franchise", created: Date.now(), season: 1, phase: "draft",
     user: opts.user, settings: Object.assign({ games: 28, series: 7, trades: "normal", autoLines: true, injuries: true }, opts.settings || {}),
-    teams: frTeamsFrom(league), players: [], news: [], offers: [], history: [], day: 0, off: null };
+    teams: frTeamsFrom(league), players: [], news: [], offers: [], history: [], day: 0, off: null, fam: {}, chemV: 1 };
   if (opts.teamEdit) Object.assign(F.teams.find(t => t.id === opts.user), opts.teamEdit);
   F.players = JSON.parse(JSON.stringify(league.players)).map(p => {
     p.team = "POOL"; p.line = 0; p.inj = null; p.dev = Math.round((nameHash(p.name, 91) * 2.4 - 1) * 10) / 10;
@@ -271,14 +300,14 @@ function frSide(F, tid, starter) {
   const fs = L.fLines.length === 3 ? [0.4, 0.32, 0.28] : L.fLines.length === 2 ? [0.55, 0.45] : [1];
   const ds = L.dPairs.length === 2 ? [0.53, 0.47] : [1];
   let O = 0, D = 0, chem = 0;
-  L.fLines.forEach((u, i) => { O += fs[i] * avg(u.map(offF)) * 0.7; D += fs[i] * avg(u.map(defF)) * 0.4; chem += fs[i] * unitChemistry(u).value; });
+  L.fLines.forEach((u, i) => { O += fs[i] * avg(u.map(offF)) * 0.7; D += fs[i] * avg(u.map(defF)) * 0.4; chem += fs[i] * unitChemistry([...u, ...unitPair(L, i), L.goalies[0]].filter(Boolean), F.fam).value; });
   L.dPairs.forEach((u, i) => { O += ds[i] * avg(u.map(offD)) * 0.3; D += ds[i] * avg(u.map(defD)) * 0.6; });
   const g = L.goalies[0];
   const share = {};
   L.fLines.forEach((u, i) => u.forEach(p => share[p.id] = { s: fs[i], u: i, g: "F" }));
   L.dPairs.forEach((u, i) => u.forEach(p => share[p.id] = { s: ds[i], u: i, g: "D" }));
   const agg = (t.tactics && t.tactics.agg != null ? t.tactics.agg : 50) / 100;
-  return { tid, L, O: O + (chem - 45) / 12, D, G: g ? frRt(g, "goal") * 0.9 + frRt(g, "clu") * 0.1 : 50, g, share, agg,
+  return { tid, L, O: O + (chem - FR_CHEM_MID) / 14, D, G: g ? frRt(g, "goal") * 0.9 + frRt(g, "clu") * 0.1 : 50, g, share, agg,
     dis: avg([...L.fLines.flat(), ...L.dPairs.flat()].map(p => frRt(p, "dis"))), chk: avg([...L.fLines.flat(), ...L.dPairs.flat()].map(p => frRt(p, "chk"))) };
 }
 function frBlank() { return { gp: 0, g: 0, a: 0, pm: 0, pim: 0, sog: 0, ppg: 0, ppa: 0, shg: 0, sha: 0, gwg: 0, hit: 0, blk: 0, toi: 0, gs: 0, w: 0, l: 0, otl: 0, sa: 0, sv: 0, ga: 0, so: 0 }; }
@@ -424,6 +453,7 @@ function frApply(F, game, res) {
   const hat = Object.entries(res.ps).filter(([, s]) => s.g >= 3);
   for (const [pid, s] of hat) { const p = F.players.find(x => x.id === pid); if (p && (p.team === F.user || s.g >= 4)) frNews(F, (s.g >= 4 ? s.g + " goals! " : "Hat trick! ") + p.name + " scores " + (s.g >= 4 ? s.g : "three") + " for " + p.team + ".", p.team); }
   if (F.mode === "bap" && (game.h === F.user || game.a === F.user)) bapAfterGame(F, game, res);
+  for (const tid of [game.h, game.a]) frFamUnits(F, tid, FAM_GAME, 0.5); // playing together builds chemistry
   for (let ti = 0; ti < 2; ti++) { const gid = res.gids[ti]; const s = gid && res.ps[gid]; if (s && s.so && s.sa >= 15) { const p = F.players.find(x => x.id === gid); if (p) frNews(F, "Shutout for " + p.name + ": " + s.sv + " saves.", p.team); } }
 }
 
@@ -684,6 +714,8 @@ function frStartOffseason(F) {
   if (F.phase !== "done") return;
   if (F.mode === "bap") bapSeasonClose(F);
   F.phase = "offseason";
+  // a summer apart: some of the familiarity fades
+  for (const k of Object.keys(F.fam || {})) { F.fam[k] = Math.round(F.fam[k] * 0.75 * 100) / 100; if (F.fam[k] < 0.15) delete F.fam[k]; }
   const dev = [];
   for (const p of F.players) {
     const before = overall(p), g = posGroup(p);
@@ -769,6 +801,70 @@ function frNextSeason(F) {
   frStartSeason(F);
 }
 
+// ---------- team chemistry: friends, plus familiarity built in games and at practice ----------
+const FAM_GAME = 0.022, FAM_LINES = 0.2, FAM_BOND = 0.07, FRIEND_ODDS = 0.07, FR_CHEM_MID = 58;
+const PRACTICE_NAMES = { auto: "Auto", lines: "Line rushes", bonding: "Team bonding", skills: "Skills" };
+const PRACTICE_HELP = {
+  auto: "The coaching staff picks each week: line rushes while the lines are still learning each other, team bonding now and then, skills once the units click.",
+  lines: "Each line and pair drills together, with the starting goalie: a big chemistry boost for the current units, less individual training.",
+  bonding: "Team dinners and off-ice time: a little chemistry between everyone, and teammates who get along can become friends. Less individual training.",
+  skills: "Individual work only: 30% more training progress, no chemistry practice."
+};
+// older saves: the new friends list, circles gone, familiarity starts empty
+function frMigrateChem(F) {
+  if (!F || F.chemV) return;
+  applyFriendsV11(F.players); F.fam = F.fam || {}; F.chemV = 1;
+}
+function frFamAdd(F, a, b, v) {
+  if (!a || !b || a.id === b.id) return;
+  F.fam = F.fam || {}; const k = famKey(a, b);
+  F.fam[k] = Math.min(CHEM_FAM_MAX, Math.round(((F.fam[k] || 0) + v) * 100) / 100);
+}
+// a line with its D pair and the starting goalie: the group that shares the ice
+function frUnitsOf(L) { return L.fLines.map((u, i) => [...u, ...(unitPair(L, i)), L.goalies[0]].filter(Boolean)); }
+function frFamUnits(F, tid, v, ppShare) {
+  if (!F.teams.some(t => t.id === tid)) return;
+  const L = frLineupFor(F, tid);
+  for (const u of frUnitsOf(L)) for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) frFamAdd(F, u[i], u[j], v);
+  if (ppShare) for (const u of [...L.pp, ...L.pk]) { if (!u) continue; const s = u.slots.filter(Boolean); for (let i = 0; i < s.length; i++) for (let j = i + 1; j < s.length; j++) frFamAdd(F, s[i], s[j], v * ppShare); }
+}
+function frTeamChem(F, tid) {
+  const L = frLineupFor(F, tid);
+  const units = frUnitsOf(L).map((ps, i) => Object.assign({ i, ps }, unitChemistry(ps, F.fam)));
+  const avg = units.length ? units.reduce((a, u) => a + u.value, 0) / units.length : 0;
+  return { units, avg, L };
+}
+function frPracticeKind(F, t) {
+  const k = t.practice || "auto"; if (k !== "auto") return k;
+  const ch = frTeamChem(F, t.id), wk = Math.floor(F.day / 7);
+  if (ch.avg < 64) return wk % 3 === 2 ? "bonding" : "lines";
+  return wk % 2 ? "bonding" : ch.avg >= 80 ? "skills" : "lines";
+}
+function frPractice(F, t) {
+  const kind = frPracticeKind(F, t); t.prWeek = kind;
+  const mine = t.id === F.user && F.mode !== "bap";
+  const before = mine ? frTeamChem(F, t.id).units.map(u => u.value) : null;
+  if (kind === "lines") frFamUnits(F, t.id, FAM_LINES, 0.4);
+  const made = [];
+  if (kind === "bonding") {
+    const ps = F.players.filter(p => p.team === t.id && !p.inj);
+    const cand = [];
+    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+      frFamAdd(F, ps[i], ps[j], FAM_BOND);
+      if (!areFriends(ps[i], ps[j]) && famOf(F.fam, ps[i], ps[j]) >= 1.2) cand.push([ps[i], ps[j]]);
+    }
+    for (const [a, b] of frShuffle(cand)) {
+      if (made.length >= 2) break;
+      if (frRand() < FRIEND_ODDS + famOf(F.fam, a, b) * 0.02) { a.friends.push(b.name); b.friends.push(a.name); made.push(a.name + " and " + b.name); }
+    }
+  }
+  if (made.length && (mine || (F.mode === "bap" && t.id === F.user))) frNews(F, "New friends: " + made.join(", ") + " have hit it off at team bonding.", t.id, "training");
+  if (mine && kind !== "skills") {
+    const after = frTeamChem(F, t.id).units.map(u => u.value);
+    frNews(F, "Practice (" + PRACTICE_NAMES[kind].toLowerCase() + "): " + after.map((v, i) => "Line " + (i + 1) + " " + before[i] + (v !== before[i] ? " → " + v : "")).join(", ") + ".", t.id, "training");
+  }
+}
+
 // ---------- training: a weekly focus for every player ----------
 const TRAIN_KEYS = { F: ["sht", "pas", "hnd", "skt", "def", "chk", "fo", "sta"], D: ["def", "chk", "pas", "sht", "skt", "hnd", "sta"], G: ["goal", "sta", "clu"] };
 const TRAIN_NAMES = { sht: "Shooting", pas: "Passing", hnd: "Hands", skt: "Skating", def: "Defense", chk: "Checking", fo: "Faceoffs", sta: "Stamina", goal: "Goaltending", clu: "Clutch" };
@@ -786,10 +882,12 @@ function frAutoFocus(p) {
 function frFocusOf(p) { return p.tf && TRAIN_KEYS[posGroup(p)].includes(p.tf) ? p.tf : frAutoFocus(p); }
 function frTrainGain(F, p) {
   const t = F.teams.find(x => x.id === p.team), k = frFocusOf(p), v = Number(p[k] ?? 60);
-  return 0.8 * (1 + 0.35 * (p.dev || 0)) * (TRAIN_INT[(t && t.train) || "normal"] || 1) * Math.max(0.2, Math.min(1.2, (95 - v) / 30));
+  const prac = t && t.prWeek ? (t.prWeek === "skills" ? 1.3 : 0.85) : 1; // skills practice trades team chemistry for individual work
+  return 0.8 * (1 + 0.35 * (p.dev || 0)) * (TRAIN_INT[(t && t.train) || "normal"] || 1) * prac * Math.max(0.2, Math.min(1.2, (95 - v) / 30));
 }
 function frTrainingWeek(F) {
   const ups = [];
+  for (const t of F.teams) frPractice(F, t);
   for (const p of F.players) {
     if (!F.teams.some(t => t.id === p.team) || p.inj || p.id === F.me) continue;
     const t = F.teams.find(x => x.id === p.team), k = frFocusOf(p);
