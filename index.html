@@ -9243,7 +9243,7 @@ function bapWire() {
 bapWire();
 // ---------- sound: menu music, the crowd, and the sounds of the game ----------
 // Music is the menu theme on a loop (the file has its own 1-second fade at each end), faded in and out
-// over a second whenever you move between the menus and a game. Everything else is synthesized live.
+// over a second whenever you move between the menus and a game. The crowd is recorded; the game's own sounds are synthesized live.
 const SND = { ctx: null, out: null, sfx: null, crowdBus: null, crowd: null, unlocked: false, music: null, musicVol: 0, musicTarget: 0, musicRaf: 0,
   lastEv: {}, lastScore: null, lastId: null, crowdLevel: 0, swell: 0, noise: null };
 const MUSIC_SRC = "audio/menu-theme.mp3";
@@ -9338,64 +9338,74 @@ function sndRoute() {
   sndCrowdTo(inGame && game && !game.final ? 1 : inGame && game ? 0.35 : 0);
 }
 addEventListener("hashchange", () => setTimeout(sndRoute, 0));
-document.addEventListener("visibilitychange", () => { if (document.hidden) { if (SND.music) SND.music.pause(); if (SND.ctx) SND.ctx.suspend(); } else { if (SND.ctx) SND.ctx.resume(); SND.musicVol = 0; sndRoute(); } });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { if (SND.music) SND.music.pause(); if (SND.ctx) SND.ctx.suspend(); if (SND.crowd) { for (const b of SND.crowd.beds) b.pause(); for (const r of SND.crowd.playing) r.a.pause(); SND.crowd.playing = []; SND.crowd.bedVol = 0; } } else { if (SND.ctx) SND.ctx.resume(); SND.musicVol = 0; sndRoute(); } });
 
 // ---------- the crowd: real arena recordings ----------
 // A looping bed of crowd ambience, plus recorded reactions: big roars for home goals, smaller cheers,
-// the visiting section's cheer (quieter and further away), and "ooh"s for big saves and posts.
+// the visiting section's cheer (quieter), and "ooh"s for big saves and posts.
+// These play as plain audio elements, the same way the music and horns do, so they load anywhere the page runs.
 const CROWD_DIR = "audio/crowd/";
 const CROWD_POOLS = { home: 4, cheer: 3, away: 3, ooh: 3 };
-function crowdLoad(name) {
-  return fetch(CROWD_DIR + name + ".mp3").then(r => { if (!r.ok) throw new Error(name); return r.arrayBuffer(); })
-    .then(b => new Promise((res, rej) => SND.ctx.decodeAudioData(b, res, rej)));
-}
-async function sndCrowdPrepare() {
-  try {
-    const amb = await crowdLoad("crowd-ambience"), c = SND.ctx;
-    const s = c.createBufferSource(); s.buffer = amb; s.loop = true;
-    // skip the few milliseconds of silence mp3 adds at each end, so the loop has no gap
-    s.loopStart = 0.06; s.loopEnd = amb.duration - 0.06;
-    const g = c.createGain(); g.gain.value = 1; s.connect(g); g.connect(SND.crowdBus);
-    s.start(0, 0.06 + Math.random() * (amb.duration - 0.2));
-    SND.crowd.bed = g;
-  } catch (e) { console.warn("crowd ambience", e); }
-  for (const k in CROWD_POOLS) for (let i = 1; i <= CROWD_POOLS[k]; i++)
-    crowdLoad(k + i).then(b => SND.crowd.pools[k].push(b)).catch(e => console.warn("crowd", k + i, e));
-}
+const CROWD_XFADE = 2.5; // seconds the ambience overlaps itself when it loops, so there is never a gap
+function crowdEl(name) { const a = new Audio(CROWD_DIR + name + ".mp3"); a.preload = "auto"; return a; }
 function sndCrowdBuild() {
-  if (!SND.ctx || SND.crowd) return;
-  SND.crowd = { pools: { home: [], cheer: [], away: [], ooh: [] }, bed: null, last: {}, busyUntil: 0 };
-  sndCrowdPrepare();
+  if (SND.crowd) return;
+  const pools = {}; for (const k in CROWD_POOLS) { pools[k] = []; for (let i = 1; i <= CROWD_POOLS[k]; i++) pools[k].push(crowdEl(k + i)); }
+  SND.crowd = { beds: [crowdEl("crowd-ambience"), crowdEl("crowd-ambience")], cur: 0, bedVol: 0, playing: [], pools, last: {}, busyUntil: 0, timer: 0, fadeIn: null };
+}
+// the loudness the crowd is heading for, and how loud it is right now (eased like a fader)
+function crowdBusGoal() { return SND.crowdLevel * sndVol("vCrowd") * 0.9; }
+function crowdTick() {
+  const C = SND.crowd; if (!C) return;
+  const goal = document.hidden ? 0 : crowdBusGoal();
+  C.bedVol += (goal - C.bedVol) * 0.2;
+  if (Math.abs(goal - C.bedVol) < 0.002) C.bedVol = goal;
+  const bed = C.beds[C.cur], other = C.beds[1 - C.cur];
+  if (C.bedVol <= 0.0005 && goal === 0) { for (const b of C.beds) if (!b.paused) b.pause(); clearInterval(C.timer); C.timer = 0; }
+  else {
+    if (bed.paused) { try { if (!bed.currentTime || bed.ended) bed.currentTime = Math.random() * 60; } catch (e) {} const p = bed.play(); if (p && p.catch) p.catch(() => {}); }
+    // nearly at the end: start the other copy from the top and crossfade
+    const d = bed.duration;
+    if (d && isFinite(d) && bed.currentTime > d - CROWD_XFADE && other.paused) { try { other.currentTime = 0.05; } catch (e) {} const p = other.play(); if (p && p.catch) p.catch(() => {}); C.fadeIn = performance.now(); }
+    if (C.fadeIn != null) {
+      const k = Math.min(1, (performance.now() - C.fadeIn) / (CROWD_XFADE * 1000));
+      try { other.volume = Math.min(1, C.bedVol * Math.sin(k * Math.PI / 2)); bed.volume = Math.min(1, C.bedVol * Math.cos(k * Math.PI / 2)); } catch (e) {}
+      if (k >= 1) { bed.pause(); C.cur = 1 - C.cur; C.fadeIn = null; }
+    } else try { bed.volume = Math.min(1, C.bedVol); } catch (e) {}
+  }
+  // reactions follow the crowd fader too (so the slider and leaving the game affect them)
+  C.playing = C.playing.filter(r => !r.a.ended && !r.a.paused);
+  for (const r of C.playing) try { r.a.volume = Math.max(0, Math.min(1, r.v * C.bedVol)); } catch (e) {}
 }
 function sndCrowdTo(level) {
   SND.crowdLevel = level;
-  if (!SND.ctx) return;
+  if (!SND.unlocked) return;
   sndCrowdBuild();
-  const t = SND.ctx.currentTime;
-  SND.crowdBus.gain.cancelScheduledValues(t);
-  SND.crowdBus.gain.setTargetAtTime(level * sndVol("vCrowd") * 0.9, t, 0.45);
+  const C = SND.crowd;
+  if (!C.timer && (crowdBusGoal() > 0 || C.bedVol > 0)) C.timer = setInterval(crowdTick, 50);
+  if (crowdBusGoal() === 0) for (const r of C.playing) { try { r.a.pause(); } catch (e) {} }
 }
 // a reaction from the stands: size 1+ is a home goal, 0.7+ a home shootout goal, smaller is the visitors'
 // section; kind "ooh" is a near miss (size sets how loud)
 function sndRoar(size, dur, kind) {
-  if (!SND.ctx || !SND.crowd || SND.crowdLevel <= 0) return;
-  const c = SND.ctx, now = c.currentTime, P = SND.crowd.pools;
-  let k, vol, far = false;
+  const C = SND.crowd; if (!C || !SND.unlocked || SND.crowdLevel <= 0 || !sndOn()) return;
+  const now = performance.now() / 1000;
+  let k, vol;
   if (kind === "ooh") {
-    if (now < SND.crowd.busyUntil || now - (SND.crowd.last.ooh || -9) < 3) return; // not over a cheer, and not every save
+    if (now < C.busyUntil || now - (C.last.ooh || -9) < 3) return; // not over a cheer, and not every save
     k = "ooh"; vol = 0.45 + 0.45 * Math.min(1, size);
   } else if (size >= 1) { k = "home"; vol = 1; }
   else if (size >= 0.7) { k = "cheer"; vol = 0.85; }
-  else { k = "away"; vol = size >= 0.4 ? 0.5 : 0.38; far = true; }
-  const pool = P[k]; if (!pool.length) return;
+  else { k = "away"; vol = size >= 0.4 ? 0.5 : 0.38; }
+  const pool = C.pools[k];
   // don't play the same clip twice in a row
-  let i = Math.floor(Math.random() * pool.length); if (pool.length > 1 && i === SND.crowd.last[k + "i"]) i = (i + 1) % pool.length;
-  SND.crowd.last[k + "i"] = i; SND.crowd.last[k] = now;
-  const s = c.createBufferSource(); s.buffer = pool[i]; s.playbackRate.value = 0.98 + Math.random() * 0.04;
-  const g = c.createGain(); g.gain.value = vol;
-  if (far) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400; s.connect(lp); lp.connect(g); } else s.connect(g);
-  g.connect(SND.crowdBus); s.start(now + 0.02);
-  if (kind !== "ooh") SND.crowd.busyUntil = now + pool[i].duration * 0.8;
+  let i = Math.floor(Math.random() * pool.length); if (pool.length > 1 && i === C.last[k + "i"]) i = (i + 1) % pool.length;
+  C.last[k + "i"] = i; C.last[k] = now;
+  const a = pool[i].paused ? pool[i] : pool[i].cloneNode();
+  try { a.currentTime = 0; a.preservesPitch = false; a.mozPreservesPitch = false; a.webkitPreservesPitch = false; a.playbackRate = 0.98 + Math.random() * 0.04; a.volume = Math.max(0, Math.min(1, vol * C.bedVol)); } catch (e) {}
+  const p = a.play(); if (p && p.catch) p.catch(() => {});
+  C.playing.push({ a, v: vol });
+  if (kind !== "ooh") C.busyUntil = now + ({ home: 7, cheer: 5, away: 3.5 })[k];
 }
 
 // ---------- effects ----------
