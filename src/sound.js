@@ -97,22 +97,32 @@ function sndRoute() {
 addEventListener("hashchange", () => setTimeout(sndRoute, 0));
 document.addEventListener("visibilitychange", () => { if (document.hidden) { if (SND.music) SND.music.pause(); if (SND.ctx) SND.ctx.suspend(); } else { if (SND.ctx) SND.ctx.resume(); SND.musicVol = 0; sndRoute(); } });
 
-// ---------- the crowd: a constant murmur that swells with the play ----------
+// ---------- the crowd: real arena recordings ----------
+// A looping bed of crowd ambience, plus recorded reactions: big roars for home goals, smaller cheers,
+// the visiting section's cheer (quieter and further away), and "ooh"s for big saves and posts.
+const CROWD_DIR = "audio/crowd/";
+const CROWD_POOLS = { home: 4, cheer: 3, away: 3, ooh: 3 };
+function crowdLoad(name) {
+  return fetch(CROWD_DIR + name + ".mp3").then(r => { if (!r.ok) throw new Error(name); return r.arrayBuffer(); })
+    .then(b => new Promise((res, rej) => SND.ctx.decodeAudioData(b, res, rej)));
+}
+async function sndCrowdPrepare() {
+  try {
+    const amb = await crowdLoad("crowd-ambience"), c = SND.ctx;
+    const s = c.createBufferSource(); s.buffer = amb; s.loop = true;
+    // skip the few milliseconds of silence mp3 adds at each end, so the loop has no gap
+    s.loopStart = 0.06; s.loopEnd = amb.duration - 0.06;
+    const g = c.createGain(); g.gain.value = 1; s.connect(g); g.connect(SND.crowdBus);
+    s.start(0, 0.06 + Math.random() * (amb.duration - 0.2));
+    SND.crowd.bed = g;
+  } catch (e) { console.warn("crowd ambience", e); }
+  for (const k in CROWD_POOLS) for (let i = 1; i <= CROWD_POOLS[k]; i++)
+    crowdLoad(k + i).then(b => SND.crowd.pools[k].push(b)).catch(e => console.warn("crowd", k + i, e));
+}
 function sndCrowdBuild() {
   if (!SND.ctx || SND.crowd) return;
-  const c = SND.ctx, src = c.createBufferSource(); src.buffer = SND.noise; src.loop = true;
-  const lp = c.createBiquadFilter(); lp.type = "bandpass"; lp.frequency.value = 650; lp.Q.value = 0.6;
-  const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 160;
-  const g = c.createGain(); g.gain.value = 0.55;
-  // a slow wobble so it breathes like a room full of people
-  const lfo = c.createOscillator(), lfoG = c.createGain(); lfo.frequency.value = 0.13; lfoG.gain.value = 0.12; lfo.connect(lfoG); lfoG.connect(g.gain); lfo.start();
-  src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(SND.crowdBus); src.start();
-  // a second, brighter layer for the "ooh"s and roars
-  const src2 = c.createBufferSource(); src2.buffer = SND.noise; src2.loop = true; src2.playbackRate.value = 1.13;
-  const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1100; bp.Q.value = 0.9;
-  const g2 = c.createGain(); g2.gain.value = 0;
-  src2.connect(bp); bp.connect(g2); g2.connect(SND.crowdBus); src2.start();
-  SND.crowd = { g, g2, bp };
+  SND.crowd = { pools: { home: [], cheer: [], away: [], ooh: [] }, bed: null, last: {}, busyUntil: 0 };
+  sndCrowdPrepare();
 }
 function sndCrowdTo(level) {
   SND.crowdLevel = level;
@@ -122,20 +132,27 @@ function sndCrowdTo(level) {
   SND.crowdBus.gain.cancelScheduledValues(t);
   SND.crowdBus.gain.setTargetAtTime(level * sndVol("vCrowd") * 0.9, t, 0.45);
 }
-// a roar: big for a home goal, a smaller pop for the visitors, a quick "ooh" for a big chance
-function sndRoar(size, dur) {
+// a reaction from the stands: size 1+ is a home goal, 0.7+ a home shootout goal, smaller is the visitors'
+// section; kind "ooh" is a near miss (size sets how loud)
+function sndRoar(size, dur, kind) {
   if (!SND.ctx || !SND.crowd || SND.crowdLevel <= 0) return;
-  const t = SND.ctx.currentTime, g = SND.crowd.g2.gain;
-  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
-  g.linearRampToValueAtTime(size, t + 0.25); g.setTargetAtTime(size * 0.6, t + 0.3, dur * 0.35); g.setTargetAtTime(0, t + dur, dur * 0.3);
-  SND.crowd.bp.frequency.setTargetAtTime(900 + size * 700, t, 0.2); SND.crowd.bp.frequency.setTargetAtTime(1100, t + dur, 0.6);
-  if (size > 0.8) for (let i = 0; i < 26; i++) sndClap(t + 0.4 + Math.random() * dur * 0.8, 0.25 + Math.random() * 0.25);
-}
-function sndClap(when, v) {
-  const c = SND.ctx, s = c.createBufferSource(); s.buffer = SND.noise; s.playbackRate.value = 1.6;
-  const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1400 + Math.random() * 900; f.Q.value = 1.2;
-  const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(v * 0.5, when + 0.004); g.gain.exponentialRampToValueAtTime(0.001, when + 0.09);
-  s.connect(f); f.connect(g); g.connect(SND.crowdBus); s.start(when, Math.random() * 2, 0.12);
+  const c = SND.ctx, now = c.currentTime, P = SND.crowd.pools;
+  let k, vol, far = false;
+  if (kind === "ooh") {
+    if (now < SND.crowd.busyUntil || now - (SND.crowd.last.ooh || -9) < 3) return; // not over a cheer, and not every save
+    k = "ooh"; vol = 0.45 + 0.45 * Math.min(1, size);
+  } else if (size >= 1) { k = "home"; vol = 1; }
+  else if (size >= 0.7) { k = "cheer"; vol = 0.85; }
+  else { k = "away"; vol = size >= 0.4 ? 0.5 : 0.38; far = true; }
+  const pool = P[k]; if (!pool.length) return;
+  // don't play the same clip twice in a row
+  let i = Math.floor(Math.random() * pool.length); if (pool.length > 1 && i === SND.crowd.last[k + "i"]) i = (i + 1) % pool.length;
+  SND.crowd.last[k + "i"] = i; SND.crowd.last[k] = now;
+  const s = c.createBufferSource(); s.buffer = pool[i]; s.playbackRate.value = 0.98 + Math.random() * 0.04;
+  const g = c.createGain(); g.gain.value = vol;
+  if (far) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400; s.connect(lp); lp.connect(g); } else s.connect(g);
+  g.connect(SND.crowdBus); s.start(now + 0.02);
+  if (kind !== "ooh") SND.crowd.busyUntil = now + pool[i].duration * 0.8;
 }
 
 // ---------- effects ----------
@@ -207,8 +224,8 @@ function sndGameFrame() {
     SND.lastEv[e.k] = t;
     try { f(t, e); } catch (x) {}
     // a big save gets an "ooh" from the crowd
-    if (e.k === "save" && e.v >= 1) sndRoar(0.3, 1.2);
-    if (e.k === "post") sndRoar(0.4, 1.4);
+    if (e.k === "save" && e.v >= 1) sndRoar(0.6, 1, "ooh");
+    if (e.k === "post") sndRoar(0.9, 1, "ooh");
   }
 }
 
